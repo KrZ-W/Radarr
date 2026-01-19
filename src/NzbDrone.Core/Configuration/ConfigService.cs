@@ -135,6 +135,29 @@ namespace NzbDrone.Core.Configuration
             set { SetValue("CertificationCountry", value); }
         }
 
+        public string RegionalTranslationVariants
+        {
+            get
+            {
+                // Allow empty value if explicitly set, only use default if never configured
+                if (IsDefined("RegionalTranslationVariants"))
+                {
+                    return GetValue("RegionalTranslationVariants", string.Empty);
+                }
+
+                return "fr-CA,en-CA,es-MX,pt-BR";
+            }
+
+            set { SetValue("RegionalTranslationVariants", value); }
+        }
+
+        public RegionalTranslationSearchMode RegionalTranslationSearchMode
+        {
+            get { return GetValueEnum("RegionalTranslationSearchMode", RegionalTranslationSearchMode.Standard); }
+
+            set { SetValue("RegionalTranslationSearchMode", value); }
+        }
+
         public int MaximumSize
         {
             get { return GetValueInt("MaximumSize", 0); }

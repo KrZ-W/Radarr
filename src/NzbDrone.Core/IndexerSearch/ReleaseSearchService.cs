@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Instrumentation.Extensions;
+using NzbDrone.Core.Configuration;
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.IndexerSearch.Definitions;
@@ -28,6 +29,7 @@ namespace NzbDrone.Core.IndexerSearch
         private readonly IMovieService _movieService;
         private readonly IMovieTranslationService _movieTranslationService;
         private readonly IQualityProfileService _qualityProfileService;
+        private readonly IConfigService _configService;
         private readonly Logger _logger;
 
         public ReleaseSearchService(IIndexerFactory indexerFactory,
@@ -35,6 +37,7 @@ namespace NzbDrone.Core.IndexerSearch
                                 IMovieService movieService,
                                 IMovieTranslationService movieTranslationService,
                                 IQualityProfileService qualityProfileService,
+                                IConfigService configService,
                                 Logger logger)
         {
             _indexerFactory = indexerFactory;
@@ -42,6 +45,7 @@ namespace NzbDrone.Core.IndexerSearch
             _movieService = movieService;
             _movieTranslationService = movieTranslationService;
             _qualityProfileService = qualityProfileService;
+            _configService = configService;
             _logger = logger;
         }
 
@@ -84,8 +88,19 @@ namespace NzbDrone.Core.IndexerSearch
                 movie.MovieMetadata.Value.OriginalTitle
             };
 
-            // Add Translation of wanted languages to search query
-            foreach (var translation in translations.Where(a => wantedLanguages.Contains(a.Language)))
+            // Filter translations based on RegionalTranslationSearchMode
+            var wantedTranslations = translations.Where(a => wantedLanguages.Contains(a.Language)).ToList();
+            var searchMode = _configService.RegionalTranslationSearchMode;
+
+            IEnumerable<MovieTranslation> filteredTranslations = searchMode switch
+            {
+                RegionalTranslationSearchMode.Standard => wantedTranslations.DistinctBy(t => t.Language),
+                RegionalTranslationSearchMode.OnePerRegion => wantedTranslations.DistinctBy(t => t.RegionalLanguage ?? t.Language.ToString()),
+                RegionalTranslationSearchMode.AllTitles => wantedTranslations.DistinctBy(t => t.CleanTitle),
+                _ => wantedTranslations.DistinctBy(t => t.Language)
+            };
+
+            foreach (var translation in filteredTranslations)
             {
                 queryTranslations.Add(translation.Title);
             }
