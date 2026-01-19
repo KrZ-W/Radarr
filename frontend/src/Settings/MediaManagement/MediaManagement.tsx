@@ -461,6 +461,60 @@ function MediaManagement() {
               </FormGroup>
             </FieldSet>
 
+            {showAdvancedSettings ? (
+              <FieldSet legend={translate('RegionalTranslations')}>
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                >
+                  <FormLabel>{translate('RegionalTranslationSearchMode')}</FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.SELECT}
+                    name="regionalTranslationSearchMode"
+                    helpText={translate('RegionalTranslationSearchModeHelpText')}
+                    values={[
+                      {
+                        key: 'standard',
+                        get value() {
+                          return translate('RegionalTranslationSearchModeStandard');
+                        },
+                      },
+                      {
+                        key: 'onePerRegion',
+                        get value() {
+                          return translate('RegionalTranslationSearchModeOnePerRegion');
+                        },
+                      },
+                      {
+                        key: 'allTitles',
+                        get value() {
+                          return translate('RegionalTranslationSearchModeAllTitles');
+                        },
+                      },
+                    ]}
+                    onChange={handleInputChange}
+                    {...settings.regionalTranslationSearchMode}
+                  />
+                </FormGroup>
+
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                >
+                  <FormLabel>{translate('RegionalTranslationVariants')}</FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.TEXT}
+                    name="regionalTranslationVariants"
+                    helpText={translate('RegionalTranslationVariantsHelpText')}
+                    onChange={handleInputChange}
+                    {...settings.regionalTranslationVariants}
+                  />
+                </FormGroup>
+              </FieldSet>
+            ) : null}
+
             {showAdvancedSettings && !isWindows ? (
               <FieldSet legend={translate('Permissions')}>
                 <FormGroup
