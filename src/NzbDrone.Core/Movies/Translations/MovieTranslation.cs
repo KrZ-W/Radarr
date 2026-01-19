@@ -9,5 +9,6 @@ namespace NzbDrone.Core.Movies.Translations
         public string CleanTitle { get; set; }
         public string Overview { get; set; }
         public Language Language { get; set; }
+        public string RegionalLanguage { get; set; }
     }
 }
