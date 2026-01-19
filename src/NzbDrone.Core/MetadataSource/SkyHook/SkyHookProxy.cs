@@ -632,7 +632,8 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
                 Title = arg.Title,
                 Overview = arg.Overview,
                 CleanTitle = arg.Title.CleanMovieTitle(),
-                Language = IsoLanguages.Find(arg.Language.ToLower())?.Language
+                Language = IsoLanguages.Find(arg.Language.ToLower())?.Language,
+                RegionalLanguage = !string.IsNullOrEmpty(arg.Iso31661) ? $"{arg.Language}-{arg.Iso31661}".ToLower() : null
             };
 
             return newAlternativeTitle;
