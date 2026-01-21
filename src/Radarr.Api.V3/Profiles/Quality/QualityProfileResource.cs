@@ -39,6 +39,7 @@ namespace Radarr.Api.V3.Profiles.Quality
         public int Format { get; set; }
         public string Name { get; set; }
         public int Score { get; set; }
+        public bool Priority { get; set; }
     }
 
     public static class ProfileResourceMapper
@@ -88,7 +89,8 @@ namespace Radarr.Api.V3.Profiles.Quality
             {
                 Format = model.Format.Id,
                 Name = model.Format.Name,
-                Score = model.Score
+                Score = model.Score,
+                Priority = model.Priority
             };
         }
 
@@ -136,7 +138,8 @@ namespace Radarr.Api.V3.Profiles.Quality
             return new ProfileFormatItem
             {
                 Format = new CustomFormat { Id = resource.Format },
-                Score = resource.Score
+                Score = resource.Score,
+                Priority = resource.Priority
             };
         }
 
