@@ -22,11 +22,20 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("enus")]
         [TestCase("enusa")]
         [TestCase("wo")]
-        [TestCase("fr-CA")]
         public void unknown_or_invalid_code_should_return_null(string isoCode)
         {
             var result = IsoLanguages.Find(isoCode);
             result.Should().Be(null);
+        }
+
+        [TestCase("fr")]
+        [TestCase("fra")]
+        [TestCase("fr-FR")]
+        [TestCase("fr-CA")]
+        public void should_return_french(string isoCode)
+        {
+            var result = IsoLanguages.Find(isoCode);
+            result.Language.Should().Be(Language.French);
         }
 
         [TestCase("pt")]

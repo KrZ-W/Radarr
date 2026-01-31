@@ -92,7 +92,7 @@ namespace NzbDrone.Core.IndexerSearch
             var wantedTranslations = translations.Where(a => wantedLanguages.Contains(a.Language)).ToList();
             var searchMode = _configService.RegionalTranslationSearchMode;
 
-            IEnumerable<MovieTranslation> filteredTranslations = searchMode switch
+            var filteredTranslations = searchMode switch
             {
                 RegionalTranslationSearchMode.Standard => wantedTranslations.DistinctBy(t => t.Language),
                 RegionalTranslationSearchMode.OnePerRegion => wantedTranslations.DistinctBy(t => t.RegionalLanguage ?? t.Language.ToString()),
@@ -103,6 +103,15 @@ namespace NzbDrone.Core.IndexerSearch
             foreach (var translation in filteredTranslations)
             {
                 queryTranslations.Add(translation.Title);
+            }
+
+            // In AllTitles mode, also include alternative titles (from TMDB, user-added, etc.)
+            if (searchMode == RegionalTranslationSearchMode.AllTitles)
+            {
+                foreach (var altTitle in movie.MovieMetadata.Value.AlternativeTitles)
+                {
+                    queryTranslations.Add(altTitle.Title);
+                }
             }
 
             spec.SceneTitles = queryTranslations.Where(t => t.IsNotNullOrWhiteSpace()).Distinct(StringComparer.InvariantCultureIgnoreCase).ToList();

@@ -148,7 +148,10 @@ namespace NzbDrone.Core.Configuration
                 return "fr-CA,en-CA,es-MX,pt-BR";
             }
 
-            set { SetValue("RegionalTranslationVariants", value); }
+            set
+            {
+                SetValue("RegionalTranslationVariants", value);
+            }
         }
 
         public RegionalTranslationSearchMode RegionalTranslationSearchMode
