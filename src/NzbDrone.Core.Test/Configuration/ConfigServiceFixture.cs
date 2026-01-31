@@ -72,6 +72,8 @@ namespace NzbDrone.Core.Test.Configuration
             });
 
             Mocker.GetMock<IConfigRepository>().Setup(c => c.All()).Returns(values);
+            Mocker.GetMock<IConfigRepository>().Setup(c => c.Get(It.IsAny<string>())).Returns<string>(key =>
+                values.FirstOrDefault(v => v.Key == key));
 
             foreach (var propertyInfo in allProperties)
             {
