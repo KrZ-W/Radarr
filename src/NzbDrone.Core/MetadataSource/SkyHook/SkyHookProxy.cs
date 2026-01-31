@@ -627,13 +627,15 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
 
         private static MovieTranslation MapTranslation(TranslationResource arg)
         {
+            var languageCode = arg.Language?.ToLower();
+
             var newAlternativeTitle = new MovieTranslation
             {
                 Title = arg.Title,
                 Overview = arg.Overview,
                 CleanTitle = arg.Title.CleanMovieTitle(),
-                Language = IsoLanguages.Find(arg.Language.ToLower())?.Language,
-                RegionalLanguage = !string.IsNullOrEmpty(arg.Iso31661) ? $"{arg.Language}-{arg.Iso31661}".ToLower() : null
+                Language = IsoLanguages.Find(languageCode)?.Language,
+                RegionalLanguage = languageCode
             };
 
             return newAlternativeTitle;
