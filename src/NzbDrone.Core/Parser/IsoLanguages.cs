@@ -92,9 +92,21 @@ namespace NzbDrone.Core.Parser
 
                 if (isoArray.Length > 1)
                 {
-                    isoLanguages = isoLanguages.Any(l => l.CountryCode == isoArray[1].ToLower()) ?
-                        isoLanguages.Where(l => l.CountryCode == isoArray[1].ToLower()).ToList() :
-                        isoLanguages.Where(l => string.IsNullOrEmpty(l.CountryCode)).ToList();
+                    var countryCode = isoArray[1].ToLower();
+                    var exactMatch = isoLanguages.Where(l => l.CountryCode == countryCode).ToList();
+
+                    if (exactMatch.Any())
+                    {
+                        isoLanguages = exactMatch;
+                    }
+                    else
+                    {
+                        // Fall back to entry with empty country code, or if none exists
+                        // (e.g. French, German, Chinese, Portuguese), keep all entries
+                        // so FirstOrDefault below returns the base language
+                        var emptyCountry = isoLanguages.Where(l => string.IsNullOrEmpty(l.CountryCode)).ToList();
+                        isoLanguages = emptyCountry.Any() ? emptyCountry : isoLanguages;
+                    }
                 }
 
                 return isoLanguages.FirstOrDefault();

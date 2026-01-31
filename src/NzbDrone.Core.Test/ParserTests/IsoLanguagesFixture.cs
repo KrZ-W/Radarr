@@ -32,6 +32,8 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("fra")]
         [TestCase("fr-FR")]
         [TestCase("fr-CA")]
+        [TestCase("fr-BE")]
+        [TestCase("fr-CH")]
         public void should_return_french(string isoCode)
         {
             var result = IsoLanguages.Find(isoCode);
@@ -41,17 +43,32 @@ namespace NzbDrone.Core.Test.ParserTests
         [TestCase("pt")]
         [TestCase("por")]
         [TestCase("pt-PT")]
+        [TestCase("pt-AO")]
         public void should_return_portuguese(string isoCode)
         {
             var result = IsoLanguages.Find(isoCode);
             result.Language.Should().Be(Language.Portuguese);
         }
 
+        [TestCase("de")]
+        [TestCase("deu")]
+        [TestCase("de-DE")]
+        [TestCase("de-AT")]
         [TestCase("de-AU")]
-        public void should_not_return_portuguese(string isoCode)
+        [TestCase("de-CH")]
+        public void should_return_german(string isoCode)
         {
             var result = IsoLanguages.Find(isoCode);
-            result.Should().Be(null);
+            result.Language.Should().Be(Language.German);
+        }
+
+        [TestCase("zh-CN")]
+        [TestCase("zh-TW")]
+        [TestCase("zh-HK")]
+        public void should_return_chinese(string isoCode)
+        {
+            var result = IsoLanguages.Find(isoCode);
+            result.Language.Should().Be(Language.Chinese);
         }
 
         [TestCase("te")]
@@ -137,6 +154,109 @@ namespace NzbDrone.Core.Test.ParserTests
         {
             var result = IsoLanguages.Find(isoCode);
             result.Language.Should().Be(Language.Georgian);
+        }
+
+        // Regression: empty country code languages with unknown region (fallback to empty country entry)
+        [TestCase("es")]
+        [TestCase("es-AR")]
+        [TestCase("es-CO")]
+        public void should_return_spanish_for_unknown_regions(string isoCode)
+        {
+            var result = IsoLanguages.Find(isoCode);
+            result.Should().NotBeNull();
+            result.Language.Should().Be(Language.Spanish);
+        }
+
+        [TestCase("es-MX")]
+        public void should_return_spanish_latino(string isoCode)
+        {
+            var result = IsoLanguages.Find(isoCode);
+            result.Should().NotBeNull();
+            result.Language.Should().Be(Language.SpanishLatino);
+        }
+
+        [TestCase("it")]
+        [TestCase("it-IT")]
+        [TestCase("it-CH")]
+        public void should_return_italian(string isoCode)
+        {
+            var result = IsoLanguages.Find(isoCode);
+            result.Should().NotBeNull();
+            result.Language.Should().Be(Language.Italian);
+        }
+
+        [TestCase("nl")]
+        [TestCase("nl-BE")]
+        [TestCase("nl-NL")]
+        public void should_return_dutch(string isoCode)
+        {
+            var result = IsoLanguages.Find(isoCode);
+            result.Should().NotBeNull();
+            result.Language.Should().Be(Language.Dutch);
+        }
+
+        [TestCase("ar")]
+        [TestCase("ar-SA")]
+        [TestCase("ar-EG")]
+        public void should_return_arabic(string isoCode)
+        {
+            var result = IsoLanguages.Find(isoCode);
+            result.Should().NotBeNull();
+            result.Language.Should().Be(Language.Arabic);
+        }
+
+        [TestCase("ja")]
+        [TestCase("ja-JP")]
+        public void should_return_japanese(string isoCode)
+        {
+            var result = IsoLanguages.Find(isoCode);
+            result.Should().NotBeNull();
+            result.Language.Should().Be(Language.Japanese);
+        }
+
+        [TestCase("ru")]
+        [TestCase("ru-RU")]
+        public void should_return_russian(string isoCode)
+        {
+            var result = IsoLanguages.Find(isoCode);
+            result.Should().NotBeNull();
+            result.Language.Should().Be(Language.Russian);
+        }
+
+        // Regression: non-empty country code languages with unknown region (fallback to first entry)
+        [TestCase("pt-AO")]
+        [TestCase("pt-MZ")]
+        public void should_return_portuguese_for_unknown_regions(string isoCode)
+        {
+            var result = IsoLanguages.Find(isoCode);
+            result.Should().NotBeNull();
+            result.Language.Should().Be(Language.Portuguese);
+        }
+
+        [TestCase("pt-BR")]
+        public void should_return_portuguese_brazil(string isoCode)
+        {
+            var result = IsoLanguages.Find(isoCode);
+            result.Should().NotBeNull();
+            result.Language.Should().Be(Language.PortugueseBR);
+        }
+
+        [TestCase("zh-SG")]
+        public void should_return_chinese_for_unknown_regions(string isoCode)
+        {
+            var result = IsoLanguages.Find(isoCode);
+            result.Should().NotBeNull();
+            result.Language.Should().Be(Language.Chinese);
+        }
+
+        // Ensure truly invalid codes still return null
+        [TestCase("xx")]
+        [TestCase("xx-YY")]
+        [TestCase("zz-ZZ")]
+        public void unknown_language_code_with_region_should_return_null(string isoCode)
+        {
+            var result = IsoLanguages.Find(isoCode);
+            result.Should().BeNull();
         }
     }
 }
