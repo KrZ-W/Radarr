@@ -65,7 +65,8 @@ RUN apt-get update \
         ca-certificates \
         sqlite3 \
         libsqlite3-0 \
-        mediainfo \
+        ffmpeg \
+        jq \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=backend /src/_output/net8.0/linux-x64/publish/ /app/
@@ -73,6 +74,11 @@ COPY --from=backend /src/_output/Radarr.Update/net8.0/linux-x64/publish/ /app/Ra
 COPY --from=frontend /src/_output/UI/ /app/UI/
 
 RUN rm -f /app/ServiceInstall.* /app/ServiceUninstall.* /app/Radarr.Windows.*
+
+# FFMpegCore (Radarr's media-probe wrapper) looks for ffprobe next to the binary
+# before falling back to PATH. Symlink the apt-installed one into /app so behavior
+# matches the upstream release distribution and lscr.io/linuxserver/radarr's layout.
+RUN ln -sf /usr/bin/ffprobe /app/ffprobe
 
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh /app/Radarr
