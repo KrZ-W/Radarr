@@ -40,6 +40,66 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
                     return ImportSpecDecision.Accept();
                 }
 
+                movieFile.Movie = localMovie.Movie;
+                var currentCustomFormats = _formatService.ParseCustomFormat(movieFile);
+                var currentPriorityScore = qualityProfile.CalculatePriorityFormatScore(currentCustomFormats);
+                var newPriorityScore = qualityProfile.CalculatePriorityFormatScore(localMovie.CustomFormats);
+                var currentFormatScore = qualityProfile.CalculateCustomFormatScore(currentCustomFormats);
+                var newFormatScore = localMovie.CustomFormatScore;
+                var newCustomFormats = localMovie.CustomFormats;
+
+                // Priority CFs are compared BEFORE quality, matching grab-side UpgradableSpecification.
+                // A higher priority score wins even if the new file is a quality downgrade.
+                if (newPriorityScore > currentPriorityScore)
+                {
+                    if (currentFormatScore >= qualityProfile.CutoffFormatScore)
+                    {
+                        _logger.Debug("Priority CF upgrade blocked at import: existing meets CF cutoff. Existing: [{0}] ({1}). Cutoff: {2}",
+                            currentCustomFormats.ConcatToString(),
+                            currentFormatScore,
+                            qualityProfile.CutoffFormatScore);
+                        return ImportSpecDecision.Reject(ImportRejectionReason.NotCustomFormatUpgrade,
+                            "Existing movie file meets custom format cutoff. Existing: [{0}] ({1}). Cutoff: {2}",
+                            currentCustomFormats.ConcatToString(),
+                            currentFormatScore,
+                            qualityProfile.CutoffFormatScore);
+                    }
+
+                    if (newFormatScore < currentFormatScore + qualityProfile.MinUpgradeFormatScore)
+                    {
+                        _logger.Debug("Priority CF upgrade blocked at import: score increment {0} < minimum {1}",
+                            newFormatScore - currentFormatScore,
+                            qualityProfile.MinUpgradeFormatScore);
+                        return ImportSpecDecision.Reject(ImportRejectionReason.NotCustomFormatUpgrade,
+                            "Custom format score increment {0} is below the minimum {1} required for upgrade",
+                            newFormatScore - currentFormatScore,
+                            qualityProfile.MinUpgradeFormatScore);
+                    }
+
+                    _logger.Debug("Priority CF upgrade at import: [{0}] ({1}) > [{2}] ({3}), accepting regardless of quality",
+                        newCustomFormats.ConcatToString(),
+                        newPriorityScore,
+                        currentCustomFormats.ConcatToString(),
+                        currentPriorityScore);
+                    return ImportSpecDecision.Accept();
+                }
+
+                if (newPriorityScore < currentPriorityScore)
+                {
+                    _logger.Debug("Priority CF downgrade at import: [{0}] ({1}) < [{2}] ({3}), rejecting regardless of quality",
+                        newCustomFormats.ConcatToString(),
+                        newPriorityScore,
+                        currentCustomFormats.ConcatToString(),
+                        currentPriorityScore);
+                    return ImportSpecDecision.Reject(ImportRejectionReason.NotCustomFormatUpgrade,
+                        "Priority custom format downgrade. Existing: [{0}] ({1}). New: [{2}] ({3}).",
+                        currentCustomFormats.ConcatToString(),
+                        currentPriorityScore,
+                        newCustomFormats.ConcatToString(),
+                        newPriorityScore);
+                }
+
+                // Priority scores equal — fall through to standard quality/revision/CF checks.
                 var qualityCompare = qualityComparer.Compare(localMovie.Quality.Quality, movieFile.Quality.Quality);
 
                 if (qualityCompare < 0)
@@ -57,12 +117,6 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
                     _logger.Debug("This file isn't a quality revision upgrade for movie. Skipping {0}", localMovie.Path);
                     return ImportSpecDecision.Reject(ImportRejectionReason.NotRevisionUpgrade, "Not a quality revision upgrade for existing movie file(s)");
                 }
-
-                movieFile.Movie = localMovie.Movie;
-                var currentCustomFormats = _formatService.ParseCustomFormat(movieFile);
-                var currentFormatScore = qualityProfile.CalculateCustomFormatScore(currentCustomFormats);
-                var newCustomFormats = localMovie.CustomFormats;
-                var newFormatScore = localMovie.CustomFormatScore;
 
                 if (qualityCompare == 0 && newFormatScore < currentFormatScore)
                 {
