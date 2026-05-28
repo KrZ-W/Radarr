@@ -179,6 +179,19 @@ function IndexerOptions({
           </FormGroup>
 
           <FormGroup advancedSettings={showAdvancedSettings} isAdvanced={true}>
+            <FormLabel>{translate('IndexerCooldownPeriods')}</FormLabel>
+
+            <FormInputGroup
+              type={inputTypes.TEXT}
+              name="indexerCooldownPeriods"
+              placeholder="0,1,5,15,30,60,180,360,720,1440"
+              helpText={translate('IndexerCooldownPeriodsHelpText')}
+              onChange={handleInputChange}
+              {...settings.indexerCooldownPeriods}
+            />
+          </FormGroup>
+
+          <FormGroup advancedSettings={showAdvancedSettings} isAdvanced={true}>
             <FormLabel>{translate('WhitelistedSubtitleTags')}</FormLabel>
 
             <FormInputGroup
