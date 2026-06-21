@@ -30,6 +30,7 @@ namespace NzbDrone.Core.DecisionEngine
         {
             var comparers = new List<CompareDelegate>
             {
+                ComparePriorityFormatScore,
                 CompareQuality,
                 CompareCustomFormatScore,
                 CompareProtocol,
@@ -66,6 +67,14 @@ namespace NzbDrone.Core.DecisionEngine
         private int CompareIndexerPriority(DownloadDecision x, DownloadDecision y)
         {
             return CompareByReverse(x.RemoteMovie.Release, y.RemoteMovie.Release, release => release.IndexerPriority);
+        }
+
+        private int ComparePriorityFormatScore(DownloadDecision x, DownloadDecision y)
+        {
+            // Priority custom formats (e.g. a regional language like VFQ) are ranked BEFORE quality,
+            // mirroring UpgradableSpecification so the initial grab honours priority the same way upgrades do.
+            return CompareBy(x.RemoteMovie, y.RemoteMovie, remoteMovie =>
+                remoteMovie.Movie.QualityProfile.CalculatePriorityFormatScore(remoteMovie.CustomFormats));
         }
 
         private int CompareQuality(DownloadDecision x, DownloadDecision y)

@@ -81,6 +81,11 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             return remoteMovie;
         }
 
+        private void GivenPriorityFormat(RemoteMovie remoteMovie, CustomFormat format)
+        {
+            remoteMovie.Movie.QualityProfile.FormatItems.Single(f => f.Format == format).Priority = true;
+        }
+
         private void GivenPreferredDownloadProtocol(DownloadProtocol downloadProtocol)
         {
             Mocker.GetMock<IDelayProfileService>()
@@ -445,6 +450,48 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 
             var qualifiedReports = Subject.PrioritizeDecisionsForMovies(decisions);
             qualifiedReports.First().RemoteMovie.Release.Should().Be(remoteMovie2.Release);
+        }
+
+        [Test]
+        public void should_prefer_priority_custom_format_over_higher_quality()
+        {
+            // Lower quality but carrying a priority CF (e.g. VFQ) must beat a higher quality release
+            // that lacks it, matching the upgrade-path behaviour at initial grab.
+            var remoteMovieHighQuality = GivenRemoteMovie(new QualityModel(Quality.Bluray1080p));
+
+            var remoteMoviePriority = GivenRemoteMovie(new QualityModel(Quality.SDTV));
+            remoteMoviePriority.CustomFormats.Add(_customFormat2);
+            remoteMoviePriority.CustomFormatScore = remoteMoviePriority.Movie.QualityProfile.CalculateCustomFormatScore(remoteMoviePriority.CustomFormats);
+            GivenPriorityFormat(remoteMoviePriority, _customFormat2);
+
+            var decisions = new List<DownloadDecision>();
+            decisions.Add(new DownloadDecision(remoteMovieHighQuality));
+            decisions.Add(new DownloadDecision(remoteMoviePriority));
+
+            var qualifiedReports = Subject.PrioritizeDecisionsForMovies(decisions);
+            qualifiedReports.First().RemoteMovie.Release.Should().Be(remoteMoviePriority.Release);
+        }
+
+        [Test]
+        public void should_prefer_higher_quality_when_priority_format_scores_are_equal()
+        {
+            // Both releases carry the same priority CF, so quality decides within the priority tier.
+            var remoteMovieLowQuality = GivenRemoteMovie(new QualityModel(Quality.SDTV));
+            remoteMovieLowQuality.CustomFormats.Add(_customFormat2);
+            remoteMovieLowQuality.CustomFormatScore = remoteMovieLowQuality.Movie.QualityProfile.CalculateCustomFormatScore(remoteMovieLowQuality.CustomFormats);
+            GivenPriorityFormat(remoteMovieLowQuality, _customFormat2);
+
+            var remoteMovieHighQuality = GivenRemoteMovie(new QualityModel(Quality.Bluray1080p));
+            remoteMovieHighQuality.CustomFormats.Add(_customFormat2);
+            remoteMovieHighQuality.CustomFormatScore = remoteMovieHighQuality.Movie.QualityProfile.CalculateCustomFormatScore(remoteMovieHighQuality.CustomFormats);
+            GivenPriorityFormat(remoteMovieHighQuality, _customFormat2);
+
+            var decisions = new List<DownloadDecision>();
+            decisions.Add(new DownloadDecision(remoteMovieLowQuality));
+            decisions.Add(new DownloadDecision(remoteMovieHighQuality));
+
+            var qualifiedReports = Subject.PrioritizeDecisionsForMovies(decisions);
+            qualifiedReports.First().RemoteMovie.Release.Should().Be(remoteMovieHighQuality.Release);
         }
 
         [Test]
