@@ -134,6 +134,7 @@ namespace NzbDrone.Core.CustomFormats
                 Movie = localMovie.Movie,
                 Size = localMovie.Size,
                 Languages = localMovie.Languages,
+                AudioTitles = localMovie.MediaInfo?.AudioTitles,
                 IndexerFlags = localMovie.IndexerFlags,
                 Filename = Path.GetFileName(localMovie.Path)
             };
@@ -205,6 +206,7 @@ namespace NzbDrone.Core.CustomFormats
                 Movie = movie,
                 Size = movieFile.Size,
                 Languages = movieFile.Languages,
+                AudioTitles = movieFile.MediaInfo?.AudioTitles,
                 IndexerFlags = movieFile.IndexerFlags,
                 Filename = Path.GetFileName(movieFile.RelativePath)
             };
