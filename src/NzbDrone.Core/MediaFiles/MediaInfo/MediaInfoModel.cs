@@ -57,6 +57,8 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 
         public List<string> AudioLanguages { get; set; }
 
+        public List<string> AudioTitles { get; set; }
+
         public List<string> Subtitles { get; set; }
 
         public string ScanType { get; set; }
