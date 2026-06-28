@@ -1,5 +1,11 @@
 # Radarr
 
+> **🍁 KrZ-W fork.** This is a personal fork that adds language-aware grabbing/importing
+> (VFQ / Quebec French) and a Docker/GHCR deployment. See **[FORK.md](FORK.md)** for the
+> feature list and versioning, **[docs/](docs/)** for the user guide and reference, and
+> **[CHANGELOG.md](CHANGELOG.md)** for the release history. The stock upstream README
+> follows unchanged.
+
 [![Build Status](https://dev.azure.com/Radarr/Radarr/_apis/build/status/Radarr.Radarr?branchName=develop)](https://dev.azure.com/Radarr/Radarr/_build/latest?definitionId=1&branchName=develop)
 [![Translation status](https://translate.servarr.com/widget/servarr/radarr/svg-badge.svg)](https://translate.servarr.com/engage/servarr/?utm_source=widget)
 [![Docker Pulls](https://img.shields.io/docker/pulls/linuxserver/radarr.svg)](https://wiki.servarr.com/radarr/installation/docker)
