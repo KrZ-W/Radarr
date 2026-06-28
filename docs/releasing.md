@@ -7,7 +7,7 @@ How to cut a versioned release of the KrZ-W/Radarr fork. See
 
 ```
 git tag / GitHub release :  v<upstream-version>+krzw.<N>     e.g. v6.1.1.10317+krzw.1
-docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.1.1.10317-krzw.1
+docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.2.1.10461-krzw.1
 ```
 
 - `<upstream-version>` = the Radarr version `personal/all-features-master` is rebased
@@ -47,7 +47,7 @@ docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.1.1.10317-kr
    ```
 
    This triggers `docker-release.yml`, which builds and pushes the immutable image tag
-   `ghcr.io/krz-w/radarr:6.1.1.10317-krzw.1` (it maps `+` → `-` automatically).
+   `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1` (it maps `+` → `-` automatically).
 
 5. **Create the GitHub release** from the tag, using the changelog section as the body:
 
