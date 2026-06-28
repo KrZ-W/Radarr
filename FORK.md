@@ -5,10 +5,10 @@ handful of features focused on **language-aware grabbing/importing** (Quebec Fre
 VFQ in particular) and **self-hosted Docker deployment**. It is maintained by a single
 person for a private *arr stack; it is not affiliated with the Radarr team.
 
-- **Upstream base:** Radarr `6.1.1.10317` (the commit this fork is rebased onto)
+- **Upstream base:** Radarr `6.2.1.10461` (the commit this fork is rebased onto)
 - **Primary branch:** `personal/all-features-master` (all features merged together)
 - **Container image:** `ghcr.io/krz-w/radarr`
-- **Current fork version:** `v6.1.1.10317+krzw.1`
+- **Current fork version:** `v6.2.1.10461+krzw.1`
 
 > The stock upstream `README.md` is preserved below this fork section. Everything
 > KrZ-W-specific lives in [`docs/`](docs/) and [`CHANGELOG.md`](CHANGELOG.md).
@@ -52,7 +52,7 @@ tags, so the Docker tag replaces `+` with `-`:
 
 ```
 git tag      v6.1.1.10317+krzw.1
-docker image ghcr.io/krz-w/radarr:6.1.1.10317-krzw.1
+docker image ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1
 ```
 
 See [docs/releasing.md](docs/releasing.md) for how to cut a release.
@@ -66,7 +66,7 @@ See [docs/releasing.md](docs/releasing.md) for how to cut a release.
 
 ```bash
 # Pinned to a release (recommended for stability)
-docker pull ghcr.io/krz-w/radarr:6.1.1.10317-krzw.1
+docker pull ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1
 
 # Bleeding edge — tip of personal/all-features-master
 docker pull ghcr.io/krz-w/radarr:latest

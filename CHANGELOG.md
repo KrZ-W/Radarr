@@ -12,6 +12,19 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 _Nothing yet._
 
+## [v6.2.1.10461+krzw.1] — based on Radarr 6.2.1.10461
+
+Maintenance release — rebased the fork onto upstream Radarr **6.2.1.10461** (from `6.1.1.10317`).
+All fork features carry forward unchanged; the only fork-side change was dropping the incidental `global.json` .NET SDK pin in favor of upstream's. The full feature set is unchanged
+from the previous release (below).
+
+### Changed
+
+- Rebased onto upstream Radarr **6.2.1.10461** (from 6.1.1.10317), picking up upstream's fixes
+  between those versions. No fork feature behavior changed.
+
+Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1`.
+
 ## [v6.1.1.10317+krzw.1] — based on Radarr 6.1.1.10317
 
 First documented fork release. Bundles every feature currently merged into
@@ -75,5 +88,6 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.1.1.10317+krzw.1...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.1...HEAD
+[v6.2.1.10461+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.1
 [v6.1.1.10317+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.1.1.10317%2Bkrzw.1
