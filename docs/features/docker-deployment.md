@@ -26,7 +26,7 @@ pre-built fork image instead of building locally.
 
 | Tag | Points at | Use for |
 |---|---|---|
-| `6.1.1.10317-krzw.1` | a tagged release (immutable) | **production — pin to this** |
+| `6.2.1.10461-krzw.1` | a tagged release (immutable) | **production — pin to this** |
 | `latest` | tip of `personal/all-features-master` | bleeding edge |
 | `personal-all-features-master` | same branch (ref tag) | bleeding edge |
 | `sha-<short>` | a specific commit | debugging / rollback |
@@ -45,7 +45,7 @@ docker run -d --name radarr \
   -v /path/to/config:/config \
   -v /path/to/movies:/movies \
   -v /path/to/downloads:/downloads \
-  ghcr.io/krz-w/radarr:6.1.1.10317-krzw.1
+  ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1
 ```
 
 ### docker-compose
@@ -53,7 +53,7 @@ docker run -d --name radarr \
 ```yaml
 services:
   radarr:
-    image: ghcr.io/krz-w/radarr:6.1.1.10317-krzw.1
+    image: ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1
     container_name: radarr
     environment:
       - PUID=1000

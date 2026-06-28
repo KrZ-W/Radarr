@@ -101,7 +101,7 @@ the primary/English one.
 ```yaml
 services:
   radarr:
-    image: ghcr.io/krz-w/radarr:6.1.1.10317-krzw.1   # pin to a release
+    image: ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1   # pin to a release
     container_name: radarr
     environment:
       - PUID=1000
