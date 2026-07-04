@@ -46,7 +46,7 @@ Rules:
 
 ## Source
 
-Commits: `4cb1e7633` (backend + UI), `d4c8ce363` (TS type). Key files:
+Commits: `fa44174db` (backend + UI), `668c065be` (TS type). Key files:
 `Configuration/ConfigService.cs`, `Indexers/IndexerStatusService.cs`,
 `ThingiProvider/Status/ProviderStatusServiceBase.cs`,
 `Radarr.Api.V3/Config/IndexerConfigResource.cs`,
