@@ -92,6 +92,24 @@ namespace NzbDrone.Core.IndexerSearch
             var wantedTranslations = translations.Where(a => wantedLanguages.Contains(a.Language)).ToList();
             var searchMode = _configService.RegionalTranslationSearchMode;
 
+            // When a variants list is configured, region-qualified translations (e.g. fr-CA) not in
+            // the list are dropped before the per-mode dedupe. Bare-language translations (e.g. fr)
+            // always pass, and an empty list means no restriction. Standard mode collapses to one
+            // title per language anyway, so the restriction only applies to the regional modes.
+            var allowedVariants = (_configService.RegionalTranslationVariants ?? string.Empty)
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .Select(v => v.ToLowerInvariant())
+                .ToHashSet();
+
+            if (allowedVariants.Any() && searchMode != RegionalTranslationSearchMode.Standard)
+            {
+                wantedTranslations = wantedTranslations
+                    .Where(t => t.RegionalLanguage == null ||
+                                !t.RegionalLanguage.Contains('-') ||
+                                allowedVariants.Contains(t.RegionalLanguage.ToLowerInvariant()))
+                    .ToList();
+            }
+
             var filteredTranslations = searchMode switch
             {
                 RegionalTranslationSearchMode.Standard => wantedTranslations.DistinctBy(t => t.Language),
