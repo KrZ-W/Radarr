@@ -24,7 +24,12 @@ namespace NzbDrone.Core.Housekeeping.Housekeepers
             foreach (var status in statuses)
             {
                 var updated = false;
-                var escalationDelay = EscalationBackOff.Periods[status.EscalationLevel];
+
+                // A custom cooldown schedule (IndexerCooldownPeriods) can have more levels than the
+                // default table, so a persisted EscalationLevel may exceed the last index - clamp it,
+                // matching CalculateBackOffPeriod.
+                var escalationLevel = Math.Min(status.EscalationLevel, EscalationBackOff.Periods.Length - 1);
+                var escalationDelay = EscalationBackOff.Periods[escalationLevel];
                 var disabledTill = now.AddMinutes(escalationDelay);
 
                 if (status.DisabledTill > disabledTill)
