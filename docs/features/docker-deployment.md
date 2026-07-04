@@ -95,6 +95,6 @@ no pre-built artifacts.
 
 ## Source
 
-Commits: `e0214a540` (Dockerfile + workflow + entrypoint), `3b6aca3d8` (ffprobe),
-`1e1acdcfd` (`-o` GID/UID reuse). Key files: `Dockerfile`, `docker/entrypoint.sh`,
+Commits: `61cba4a41` (Dockerfile + workflow + entrypoint), `05d52a29b` (ffprobe),
+`b820361f2` (`-o` GID/UID reuse). Key files: `Dockerfile`, `docker/entrypoint.sh`,
 `.dockerignore`, `.github/workflows/docker-image.yml`.

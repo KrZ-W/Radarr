@@ -76,8 +76,8 @@ instead of only a bare delta — so you can see *why* a release was kept or refu
 
 ## Source
 
-Commits: `e2f08729a` (per-CF flag), `ec94b5e39` (grab), `4f1627911` (import),
-`5da32999f` (rejection messages), `54659c9ef` (tests). Key files:
+Commits: `20e4ed096` (per-CF flag), `a5d70cc2d` (grab), `7c0b80c6b` (import),
+`cf420b5e7` (rejection messages), `479fd1237` (tests). Key files:
 `Profiles/ProfileFormatItem.cs`, `Profiles/Qualities/QualityProfile.cs`,
 `DecisionEngine/Specifications/UpgradableSpecification.cs`,
 `DecisionEngine/DownloadDecisionComparer.cs`,

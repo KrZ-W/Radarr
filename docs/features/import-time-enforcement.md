@@ -65,7 +65,7 @@ Language = *Any* and MinFormatScore = the default, behavior is unchanged.
 
 ## Source
 
-Commits: `71bdb635d` (language), `4ab2ba105` (MinFormatScore). Key files:
+Commits: `d6f282c24` (language), `d329fa443` (MinFormatScore). Key files:
 `MediaFiles/MovieImport/Specifications/LanguageSpecification.cs`,
 `MediaFiles/MovieImport/Specifications/MinimumCustomFormatScoreSpecification.cs`,
 `MediaFiles/MovieImport/ImportRejectionReason.cs`.

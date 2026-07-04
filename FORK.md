@@ -51,7 +51,7 @@ The `+` is valid in git tags / GitHub releases / SemVer but **not** in container
 tags, so the Docker tag replaces `+` with `-`:
 
 ```
-git tag      v6.1.1.10317+krzw.1
+git tag      v6.2.1.10461+krzw.1
 docker image ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1
 ```
 
