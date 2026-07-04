@@ -87,6 +87,20 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         }
 
         [Test]
+        public void should_not_upgrade_on_priority_format_when_profile_does_not_allow_upgrades()
+        {
+            _parseResult.Movie.QualityProfile.UpgradeAllowed = false;
+
+            Mocker.GetMock<ICustomFormatCalculationService>()
+                .Setup(x => x.ParseCustomFormat(It.IsAny<MovieFile>()))
+                .Returns(new List<CustomFormat>());
+
+            _parseResult.CustomFormats = new List<CustomFormat> { _priorityFormat };
+
+            _upgradeDisk.IsSatisfiedBy(_parseResult, null).Accepted.Should().BeFalse();
+        }
+
+        [Test]
         public void should_not_upgrade_when_priority_format_score_is_equal()
         {
             // Existing file HAS the priority format
