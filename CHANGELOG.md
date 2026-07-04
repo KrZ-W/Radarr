@@ -12,6 +12,11 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ### Fixed
 
+- **Regional translations:** the **Regional Translation Variants** list now actually
+  restricts which region-qualified titles are searched in `OnePerRegion`/`AllTitles`
+  modes — it was previously accepted but never read. Bare-language titles always pass,
+  an empty list means no restriction, and `Standard` mode is unaffected.
+  See [docs](docs/features/regional-language-and-translations.md).
 - **CI:** a manual `docker-release.yml` dispatch now checks out the requested tag —
   previously it built the default branch HEAD but published it under the release tag,
   silently mislabeling an immutable release image. The image's `revision` label now

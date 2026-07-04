@@ -1592,7 +1592,7 @@
   "RegionalTranslationSearchModeOnePerRegion": "One Per Region",
   "RegionalTranslationSearchModeAllTitles": "All Titles",
   "RegionalTranslationVariants": "Regional Translation Variants",
-  "RegionalTranslationVariantsHelpText": "Comma-separated list of regional variants to include (e.g. fr-CA,en-CA,es-MX,pt-BR)",
+  "RegionalTranslationVariantsHelpText": "Comma-separated list of regional variants to include in searches, e.g. fr-CA,es-MX. Applies to One Per Region and All Titles modes; empty means all variants. Bare-language titles always pass.",
   "RejectionCount": "Rejection Count",
   "Rejections": "Rejections",
   "RelativePath": "Relative Path",
