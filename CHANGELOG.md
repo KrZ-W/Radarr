@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.2.1.10461+krzw.3] — based on Radarr 6.2.1.10461
+
 ### Fixed
 
 - **Priority CF upgrades respect Upgrades Allowed:** a profile with upgrades disabled
@@ -24,6 +28,8 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   row order. Translations are now ordered: configured **Regional Translation Variants**
   first (in list order), then the bare-language row, then remaining variants
   alphabetically — a profile configured for `fr-CA` consistently gets the Quebec title.
+
+Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.3`.
 
 ## [v6.2.1.10461+krzw.2] — based on Radarr 6.2.1.10461
 
@@ -125,7 +131,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.2...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.3...HEAD
+[v6.2.1.10461+krzw.3]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.3
 [v6.2.1.10461+krzw.2]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.2
 [v6.2.1.10461+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.1
 [v6.1.1.10317+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.1.1.10317%2Bkrzw.1
