@@ -10,7 +10,20 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed
+
+- **CI:** a manual `docker-release.yml` dispatch now checks out the requested tag —
+  previously it built the default branch HEAD but published it under the release tag,
+  silently mislabeling an immutable release image. The image's `revision` label now
+  records the actually-built commit.
+
+### Docs
+
+- The VFQ audio-title guide now prescribes a **separate** `VFQ (Audio)` custom format
+  with a negated title condition — combining Audio Title and Release Title conditions
+  in one format matches nothing at grab time (conditions AND by type group).
+- Refreshed post-rebase `Source` hashes, fixed stale tag/image version examples, and
+  added a mandatory image boot-test step to the release procedure.
 
 ## [v6.2.1.10461+krzw.1] — based on Radarr 6.2.1.10461
 
