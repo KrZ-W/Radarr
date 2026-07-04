@@ -10,7 +10,20 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed
+
+- **Priority CF upgrades respect Upgrades Allowed:** a profile with upgrades disabled
+  no longer auto-replaces files when a release carries a higher priority CF score.
+  (Import stays permissive, matching upstream: the flag is a grab-side gate.)
+- **Housekeeping no longer crashes with a long cooldown schedule:** with more than 10
+  `IndexerCooldownPeriods` entries, a persisted escalation level past the default
+  backoff table made `FixFutureProviderStatusTimes` throw on every run; the level is
+  now clamped like `CalculateBackOffPeriod`.
+- **Deterministic FR vs QC titles in renaming/NFOs:** with multiple translation rows
+  per language (`fr` + `fr-CA`), `FileNameBuilder` and Kodi/Emby metadata picked by DB
+  row order. Translations are now ordered: configured **Regional Translation Variants**
+  first (in list order), then the bare-language row, then remaining variants
+  alphabetically — a profile configured for `fr-CA` consistently gets the Quebec title.
 
 ## [v6.2.1.10461+krzw.2] — based on Radarr 6.2.1.10461
 
