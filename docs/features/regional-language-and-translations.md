@@ -28,7 +28,7 @@ one and `RegionalLanguage` was always empty.
 
 | Setting | What it does |
 |---|---|
-| **Regional Translation Variants** | CSV of regional language codes you care about (e.g. `fr-CA`). May be left empty. |
+| **Regional Translation Variants** | CSV of regional language codes to include in searches (e.g. `fr-CA`). In `OnePerRegion`/`AllTitles` modes, region-qualified titles **not** in the list are dropped; bare-language titles (e.g. `fr`) always pass. Empty = include all variants. Has no effect in `Standard` mode. |
 | **Regional Translation Search Mode** | How regional titles are used when searching — see below. |
 
 ### Search modes
@@ -60,7 +60,11 @@ one and `RegionalLanguage` was always empty.
 
 ## Behavior & edge cases
 
-- Leaving **Regional Translation Variants** empty is allowed and keeps stock behavior.
+- Leaving **Regional Translation Variants** empty is allowed — all regional variants of
+  your profile's acceptable languages are then searched (one per region / all titles,
+  per the mode).
+- Historical note: before `v6.2.1.10461+krzw.2` the variants list was accepted but never
+  read — the search modes worked, but the list did not restrict anything.
 - `AllTitles` casts the widest net but can surface more false positives — pair it with
   good custom formats / quality profiles.
 - The `IsoLanguages` fallback is general (French, German, Chinese, Portuguese, …), not
