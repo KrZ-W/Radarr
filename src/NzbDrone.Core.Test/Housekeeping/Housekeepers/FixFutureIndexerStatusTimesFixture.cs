@@ -85,6 +85,32 @@ namespace NzbDrone.Core.Test.Housekeeping.Housekeepers
         }
 
         [Test]
+        public void should_clamp_escalation_level_beyond_default_backoff_table()
+        {
+            // A custom IndexerCooldownPeriods schedule with more than 10 entries can persist an
+            // EscalationLevel past the end of the default table; Clean() must not throw.
+            var maxDelay = EscalationBackOff.Periods[EscalationBackOff.Periods.Length - 1];
+            var indexerStatuses = Builder<IndexerStatus>.CreateListOfSize(5)
+                                                        .All()
+                                                        .With(t => t.DisabledTill = DateTime.UtcNow.AddDays(5))
+                                                        .With(t => t.InitialFailure = DateTime.UtcNow.AddDays(-5))
+                                                        .With(t => t.MostRecentFailure = DateTime.UtcNow.AddDays(-5))
+                                                        .With(t => t.EscalationLevel = EscalationBackOff.Periods.Length + 5)
+                                                        .BuildListOfNew();
+
+            Mocker.GetMock<IIndexerStatusRepository>()
+                  .Setup(s => s.All())
+                  .Returns(indexerStatuses);
+
+            Subject.Clean();
+
+            Mocker.GetMock<IIndexerStatusRepository>()
+                  .Verify(v => v.UpdateMany(
+                          It.Is<List<IndexerStatus>>(i => i.All(
+                              s => s.DisabledTill.Value <= DateTime.UtcNow.AddMinutes(maxDelay)))));
+        }
+
+        [Test]
         public void should_not_change_statuses_when_times_are_in_the_past()
         {
             var indexerStatuses = Builder<IndexerStatus>.CreateListOfSize(5)
