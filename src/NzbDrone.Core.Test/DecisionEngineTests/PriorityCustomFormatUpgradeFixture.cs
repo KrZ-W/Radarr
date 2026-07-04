@@ -1,22 +1,23 @@
-using System;
-using System.Collections.Generic;
-using FizzWare.NBuilder;
-using FluentAssertions;
-using Moq;
-using NUnit.Framework;
-using NzbDrone.Core.CustomFormats;
-using NzbDrone.Core.DecisionEngine.Specifications;
-using NzbDrone.Core.MediaFiles;
-using NzbDrone.Core.Movies;
-using NzbDrone.Core.Parser;
-using NzbDrone.Core.Parser.Model;
-using NzbDrone.Core.Profiles;
-using NzbDrone.Core.Profiles.Qualities;
-using NzbDrone.Core.Qualities;
-using NzbDrone.Core.Test.Framework;
-
 namespace NzbDrone.Core.Test.DecisionEngineTests
 {
+    using System;
+    using System.Collections.Generic;
+    using FizzWare.NBuilder;
+    using FluentAssertions;
+    using Moq;
+    using NUnit.Framework;
+    using NzbDrone.Core.Configuration;
+    using NzbDrone.Core.CustomFormats;
+    using NzbDrone.Core.DecisionEngine.Specifications;
+    using NzbDrone.Core.MediaFiles;
+    using NzbDrone.Core.Movies;
+    using NzbDrone.Core.Parser;
+    using NzbDrone.Core.Parser.Model;
+    using NzbDrone.Core.Profiles;
+    using NzbDrone.Core.Profiles.Qualities;
+    using NzbDrone.Core.Qualities;
+    using NzbDrone.Core.Test.Framework;
+
     [TestFixture]
     public class PriorityCustomFormatUpgradeFixture : CoreTest<UpgradeDiskSpecification>
     {
@@ -60,7 +61,6 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             _parseResult = new RemoteMovie
             {
                 Movie = fakeMovie,
-
                 // New release also below cutoff but same quality level
                 ParsedMovieInfo = new ParsedMovieInfo { Quality = new QualityModel(Quality.SDTV, new Revision(version: 1)) },
                 CustomFormats = new List<CustomFormat>()
@@ -84,6 +84,20 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 
             // Same quality, but new release should be considered an upgrade due to Priority CF
             _upgradeDisk.IsSatisfiedBy(_parseResult, null).Accepted.Should().BeTrue();
+        }
+
+        [Test]
+        public void should_not_upgrade_on_priority_format_when_profile_does_not_allow_upgrades()
+        {
+            _parseResult.Movie.QualityProfile.UpgradeAllowed = false;
+
+            Mocker.GetMock<ICustomFormatCalculationService>()
+                .Setup(x => x.ParseCustomFormat(It.IsAny<MovieFile>()))
+                .Returns(new List<CustomFormat>());
+
+            _parseResult.CustomFormats = new List<CustomFormat> { _priorityFormat };
+
+            _upgradeDisk.IsSatisfiedBy(_parseResult, null).Accepted.Should().BeFalse();
         }
 
         [Test]
@@ -128,7 +142,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         {
             // Create second priority format with higher score
             var higherPriorityFormat = new CustomFormat("Higher Priority", new ResolutionSpecification { Value = (int)Resolution.R2160p }) { Id = 3 };
-
+            
             _parseResult.Movie.QualityProfile.FormatItems = new List<ProfileFormatItem>
             {
                 new ProfileFormatItem { Format = _priorityFormat, Score = 50, Priority = true },
