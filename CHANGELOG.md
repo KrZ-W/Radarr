@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.2.1.10461+krzw.2] — based on Radarr 6.2.1.10461
+
 ### Fixed
 
 - **Regional translations:** the **Regional Translation Variants** list now actually
@@ -29,6 +33,8 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   in one format matches nothing at grab time (conditions AND by type group).
 - Refreshed post-rebase `Source` hashes, fixed stale tag/image version examples, and
   added a mandatory image boot-test step to the release procedure.
+
+Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.2`.
 
 ## [v6.2.1.10461+krzw.1] — based on Radarr 6.2.1.10461
 
@@ -106,6 +112,7 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.1...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.2...HEAD
+[v6.2.1.10461+krzw.2]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.2
 [v6.2.1.10461+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.1
 [v6.1.1.10317+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.1.1.10317%2Bkrzw.1
