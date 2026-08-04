@@ -31,6 +31,8 @@ docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.2.1.10461-kr
      `## [v<ver>+krzw.<N>] — based on Radarr <upstream-version>` section.
    - Reset `[Unreleased]` to `_Nothing yet._`.
    - Update the two link-reference lines at the bottom of the file.
+   - Update **`FORK.md`**'s `Current fork version` line to the new tag (it is easy to
+     miss and silently goes stale across releases).
 
 3. **Commit** the changelog (and any doc updates):
 

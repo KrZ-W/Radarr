@@ -12,6 +12,36 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 _Nothing yet._
 
+## [v6.2.1.10461+krzw.6] — based on Radarr 6.2.1.10461
+
+### Fixed
+
+- **User title imports no longer risk misidentifying releases.** The alt-titles
+  importer's cross-movie guard only queried the AlternativeTitles table, so a
+  curated title that already belonged to another movie's *translation* slipped
+  through — and since `MovieService.FindByTitle` checks alternative titles before
+  translations, that movie's releases would have resolved to the wrong movie. Both
+  importers now share one guard covering movie titles, alternative titles, and
+  translations. Titles rejected by it are counted as skipped instead of vanishing
+  from the summary.
+- **Language codes are canonicalised before building the translation tag.**
+  `language: "fra"` resolved to French but stored `RegionalLanguage "fra-ca"` — a
+  value no consumer recognises, so the Regional Translation Variants filter dropped
+  it from search and `OnePerRegion` counted it as a separate region. The tag now
+  uses the resolved two-letter code, and a region carried in the language field
+  (`fr-CA`) is honoured when no explicit region is given.
+
+### Docs
+
+- The user-guide recipe now covers the translations importer alongside the
+  alt-titles one, and spells out the region rule: `CA` for Quebec, **omit `region`
+  for France** (`FR` stores `fr-fr`, which the variants filter drops).
+- `FORK.md`'s feature row now mentions the searchable regional translations, its
+  `Current fork version` line is current again, and `docs/releasing.md` gained a
+  step so that line stops going stale each release.
+
+Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.6`.
+
 ## [v6.2.1.10461+krzw.5] — based on Radarr 6.2.1.10461
 
 ### Added
@@ -167,7 +197,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.5...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.6...HEAD
+[v6.2.1.10461+krzw.6]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.6
 [v6.2.1.10461+krzw.5]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.5
 [v6.2.1.10461+krzw.4]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.4
 [v6.2.1.10461+krzw.3]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.3
