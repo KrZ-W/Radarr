@@ -114,5 +114,108 @@ namespace NzbDrone.Core.Test.MovieTests.AlternativeTitleServiceTests
 
             Mocker.GetMock<IAlternativeTitleRepository>().Verify(r => r.UpdateMany(It.Is<IList<AlternativeTitle>>(l => l.Count == 0)), Times.Once());
         }
+
+        [Test]
+        public void should_preserve_non_tmdb_titles_on_update()
+        {
+            _title1.SourceType = SourceType.Tmdb;
+
+            var userTitle = Builder<AlternativeTitle>.CreateNew()
+                .With(t => t.MovieMetadataId = _movie.Id)
+                .With(t => t.SourceType = SourceType.User)
+                .With(t => t.CleanTitle = "usertitle")
+                .Build();
+
+            GivenExistingTitles(_title1, userTitle);
+
+            var result = Subject.UpdateTitles(new List<AlternativeTitle>(), _movie);
+
+            Mocker.GetMock<IAlternativeTitleRepository>().Verify(r => r.DeleteMany(new List<AlternativeTitle> { _title1 }), Times.Once());
+            result.Should().Contain(userTitle);
+        }
+
+        [Test]
+        public void should_not_insert_tmdb_title_matching_user_title()
+        {
+            _title1.SourceType = SourceType.Tmdb;
+
+            var userTitle = Builder<AlternativeTitle>.CreateNew()
+                .With(t => t.MovieMetadataId = _movie.Id)
+                .With(t => t.SourceType = SourceType.User)
+                .With(t => t.CleanTitle = _title1.CleanTitle)
+                .Build();
+
+            GivenExistingTitles(userTitle);
+
+            var result = Subject.UpdateTitles(new List<AlternativeTitle> { _title1 }, _movie);
+
+            Mocker.GetMock<IAlternativeTitleRepository>().Verify(r => r.InsertMany(new List<AlternativeTitle>()), Times.Once());
+            Mocker.GetMock<IAlternativeTitleRepository>().Verify(r => r.DeleteMany(new List<AlternativeTitle>()), Times.Once());
+            result.Should().Contain(userTitle);
+        }
+
+        [Test]
+        public void should_upsert_user_titles_and_set_source_type()
+        {
+            GivenExistingTitles();
+
+            var title = new AlternativeTitle("Le Titre Français");
+
+            var result = Subject.UpsertUserTitles(new List<AlternativeTitle> { title }, _movie);
+
+            result.Should().HaveCount(1);
+            title.SourceType.Should().Be(SourceType.User);
+            title.MovieMetadataId.Should().Be(_movie.Id);
+
+            Mocker.GetMock<IAlternativeTitleRepository>().Verify(r => r.InsertMany(new List<AlternativeTitle> { title }), Times.Once());
+        }
+
+        [Test]
+        public void should_not_upsert_title_that_already_exists_for_movie()
+        {
+            var title = new AlternativeTitle("Le Titre Français");
+
+            var existing = new AlternativeTitle("Le Titre Français") { MovieMetadataId = _movie.Id };
+
+            GivenExistingTitles(existing);
+
+            var result = Subject.UpsertUserTitles(new List<AlternativeTitle> { title }, _movie);
+
+            result.Should().BeEmpty();
+            Mocker.GetMock<IAlternativeTitleRepository>().Verify(r => r.InsertMany(new List<AlternativeTitle>()), Times.Once());
+        }
+
+        [Test]
+        public void should_not_upsert_main_title()
+        {
+            GivenExistingTitles();
+
+            var title = new AlternativeTitle("My Other Title");
+            title.CleanTitle.Should().Be(_movie.CleanTitle);
+
+            var result = Subject.UpsertUserTitles(new List<AlternativeTitle> { title }, _movie);
+
+            result.Should().BeEmpty();
+            Mocker.GetMock<IAlternativeTitleRepository>().Verify(r => r.InsertMany(new List<AlternativeTitle>()), Times.Once());
+        }
+
+        [Test]
+        public void should_not_upsert_title_belonging_to_other_movie()
+        {
+            GivenExistingTitles();
+
+            var title = new AlternativeTitle("Le Titre Français");
+
+            var otherMovieTitle = new AlternativeTitle("Le Titre Français") { MovieMetadataId = _movie.Id + 1 };
+
+            Mocker.GetMock<IAlternativeTitleRepository>()
+                .Setup(x => x.FindByCleanTitles(It.IsAny<List<string>>()))
+                .Returns(new List<AlternativeTitle> { otherMovieTitle });
+
+            var result = Subject.UpsertUserTitles(new List<AlternativeTitle> { title }, _movie);
+
+            result.Should().BeEmpty();
+            Mocker.GetMock<IAlternativeTitleRepository>().Verify(r => r.InsertMany(new List<AlternativeTitle>()), Times.Once());
+        }
     }
 }

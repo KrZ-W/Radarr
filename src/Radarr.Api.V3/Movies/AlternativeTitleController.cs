@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Movies.AlternativeTitles;
 using Radarr.Http;
@@ -39,6 +41,41 @@ namespace Radarr.Api.V3.Movies
             }
 
             return _altTitleService.GetAllTitles().ToResource();
+        }
+
+        [HttpPost("user/import")]
+        public UserAlternativeTitleImportSummaryResource ImportUserTitles([FromBody] List<UserAlternativeTitleImportResource> resources)
+        {
+            var summary = new UserAlternativeTitleImportSummaryResource();
+
+            foreach (var resource in resources)
+            {
+                var movie = _movieService.FindByTmdbId(resource.TmdbId);
+
+                if (movie == null && resource.ImdbId.IsNotNullOrWhiteSpace())
+                {
+                    movie = _movieService.FindByImdbId(resource.ImdbId);
+                }
+
+                if (movie == null)
+                {
+                    summary.MoviesNotFound.Add($"{resource.MovieTitle} ({resource.Year}) [tmdb:{resource.TmdbId}]");
+                    continue;
+                }
+
+                var titles = (resource.MissingFrenchTitles ?? new List<UserAlternativeTitleImportEntryResource>())
+                    .Where(t => t.Title.IsNotNullOrWhiteSpace())
+                    .Select(t => new AlternativeTitle(t.Title, SourceType.User))
+                    .ToList();
+
+                var added = _altTitleService.UpsertUserTitles(titles, movie.MovieMetadata.Value);
+
+                summary.MoviesProcessed++;
+                summary.TitlesAdded += added.Count;
+                summary.TitlesSkipped += titles.Count - added.Count;
+            }
+
+            return summary;
         }
     }
 }
