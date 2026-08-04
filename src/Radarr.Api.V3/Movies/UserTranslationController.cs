@@ -47,7 +47,7 @@ namespace Radarr.Api.V3.Movies
                     .ToList();
 
                 var translations = candidates
-                    .Where(t => TitleIsNotAnotherMovies(t.Title, movie))
+                    .Where(t => UserTitleImportGuard.IsSafeForMovie(_movieService, t.Title, movie))
                     .Select(UserTranslationMapper.Map)
                     .Where(t => t != null)
                     .ToList();
@@ -61,16 +61,6 @@ namespace Radarr.Api.V3.Movies
 
             return summary;
         }
-
-        // The parser maps releases to movies by clean title globally across movie titles,
-        // alternative titles, and translations; a title owned by any other movie is skipped.
-        // FindByTitleCandidates sweeps all three tables (plus roman-numeral variants).
-        private bool TitleIsNotAnotherMovies(string title, Movie movie)
-        {
-            var candidates = _movieService.FindByTitleCandidates(new List<string> { title }, out _);
-
-            return candidates.All(c => c.TmdbId == movie.TmdbId);
-        }
     }
 
     public static class UserTranslationMapper
@@ -82,22 +72,37 @@ namespace Radarr.Api.V3.Movies
         // Returns null for an unknown language code.
         public static MovieTranslation Map(UserAlternativeTitleImportEntryResource entry)
         {
-            var languageCode = (entry.Language.IsNotNullOrWhiteSpace() ? entry.Language : "fr").Trim().ToLowerInvariant();
-            var language = IsoLanguages.Find(languageCode)?.Language;
+            var languageInput = (entry.Language.IsNotNullOrWhiteSpace() ? entry.Language : "fr").Trim().ToLowerInvariant();
+            var iso = IsoLanguages.Find(languageInput);
 
-            if (language == null)
+            if (iso == null)
             {
                 return null;
             }
 
+            // Canonical two-letter code, not the caller's spelling: IsoLanguages also resolves
+            // ISO 639-2 ("fra") and full tags ("fr-CA"), but the stored value must match the
+            // two-letter lowercase shape SkyHook writes for TMDB rows. Otherwise the Regional
+            // Translation Variants filter (configured as "fr-CA") drops the row from search and
+            // OnePerRegion counts it as a separate region.
+            var languageCode = iso.TwoLetterCode;
+
             var region = entry.Region?.Trim().ToLowerInvariant();
+
+            // Honour a region carried in the language field when none is given explicitly.
+            if (region.IsNullOrWhiteSpace())
+            {
+                var parts = languageInput.Split('-');
+                region = parts.Length > 1 ? parts[1] : null;
+            }
+
             var tag = region.IsNotNullOrWhiteSpace() ? $"{languageCode}-{region}" : languageCode;
 
             return new MovieTranslation
             {
                 Title = entry.Title,
                 CleanTitle = entry.Title.CleanMovieTitle(),
-                Language = language,
+                Language = iso.Language,
                 RegionalLanguage = tag
             };
         }

@@ -109,9 +109,11 @@ search-code changes.
 - `POST /api/v3/translation/user/import` — same envelope and summary response as
   the alt-titles importer; title entries use **standard identifiers**:
   `{title, language?, region?}` with `language` an ISO 639-1 code (defaults to `fr`
-  for the curated dataset) and `region` an ISO 3166-1 alpha-2 code. The stored
+  for the curated dataset) and `region` an ISO 3166-1 alpha-2 code. ISO 639-2 codes
+  (`fra`) and full tags (`fr-CA`) are accepted and canonicalised. The stored
   `RegionalLanguage` tag is built uniformly — `{language}` or
-  `{language}-{region}`, lowercase, the same shape SkyHook stores for TMDB rows —
+  `{language}-{region}`, lowercase two-letter language, the same shape SkyHook
+  stores for TMDB rows —
   so any language's titles can be imported (`{language: "de", region: "AT"}` →
   German, `de-at`). Unknown language codes are skipped and counted. One row per
   title.

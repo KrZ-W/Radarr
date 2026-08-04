@@ -63,8 +63,12 @@ namespace Radarr.Api.V3.Movies
                     continue;
                 }
 
-                var titles = (resource.MissingFrenchTitles ?? new List<UserAlternativeTitleImportEntryResource>())
+                var candidates = (resource.MissingFrenchTitles ?? new List<UserAlternativeTitleImportEntryResource>())
                     .Where(t => t.Title.IsNotNullOrWhiteSpace())
+                    .ToList();
+
+                var titles = candidates
+                    .Where(t => UserTitleImportGuard.IsSafeForMovie(_movieService, t.Title, movie))
                     .Select(t => new AlternativeTitle(t.Title, SourceType.User))
                     .ToList();
 
@@ -72,7 +76,7 @@ namespace Radarr.Api.V3.Movies
 
                 summary.MoviesProcessed++;
                 summary.TitlesAdded += added.Count;
-                summary.TitlesSkipped += titles.Count - added.Count;
+                summary.TitlesSkipped += candidates.Count - added.Count;
             }
 
             return summary;
