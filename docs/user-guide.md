@@ -119,6 +119,23 @@ Imported titles show `"sourceType": "user"` in `GET /api/v3/alttitle?movieId=<id
 survive metadata refreshes, and are safe to re-import after adding movies (already
 present titles are skipped).
 
+**To make those titles searchable too**, post the same file to the translations
+importer — alternative titles cover parse/import matching, translations are what
+the `OnePerRegion` search mode queries:
+
+```bash
+curl -X POST "http://<host>:7878/api/v3/translation/user/import" \
+  -H "X-Api-Key: <api-key>" -H "Content-Type: application/json" \
+  -d @curated.json
+```
+
+> **Region field:** use `"region": "CA"` for Quebec titles (stored as `fr-ca`, which
+> matches an `fr-CA` entry in *Regional Translation Variants*). **Omit `region`
+> entirely for France titles** — `"region": "FR"` stores `fr-fr`, which the variants
+> filter drops from search unless you also add `fr-FR` to that list. Titles in other
+> languages take `"language": "de"` etc. (ISO 639-1; ISO 639-2 and full tags like
+> `fr-CA` are accepted and canonicalised).
+
 > Full reference: [User Alternative Titles](features/user-alternative-titles.md).
 
 ---

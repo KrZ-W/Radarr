@@ -155,6 +155,11 @@ Commit: `09477768b`. Key files:
 `UpsertUserTitles`), `Radarr.Api.V3/Movies/AlternativeTitleController.cs` (endpoint),
 `Radarr.Api.V3/Movies/UserAlternativeTitleImportResource.cs` (DTOs).
 
-Phase 1b: `Movies/Translations/MovieTranslationService.cs` (preservation +
-`UpsertUserTranslations`), `Radarr.Api.V3/Movies/UserTranslationController.cs`,
+Phase 1b commits: `01d42c840`, `07064c7b8`. Key files:
+`Movies/Translations/MovieTranslationService.cs` (preservation +
+`UpsertUserTranslations`), `Radarr.Api.V3/Movies/UserTranslationController.cs`
+(endpoint + `UserTranslationMapper`),
 `Datastore/Migration/244_add_source_type_to_movie_translations.cs`.
+
+Review fixes: `3537c8b7f` (shared `UserTitleImportGuard` across both importers),
+`b5cd77084` (canonical language code in the stored tag).
