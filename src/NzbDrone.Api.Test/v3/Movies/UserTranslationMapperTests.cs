@@ -14,6 +14,10 @@ public class UserTranslationMapperTests
     [TestCase("fr", "BE", "fr-be")]
     [TestCase("de", "AT", "de-at")]
     [TestCase("es", null, "es")]
+    [TestCase("fra", "CA", "fr-ca")]
+    [TestCase("deu", null, "de")]
+    [TestCase("fr-CA", null, "fr-ca")]
+    [TestCase("fr-CA", "CA", "fr-ca")]
     public void Map_builds_lowercase_tag_from_language_and_region(string language, string region, string expectedTag)
     {
         var result = UserTranslationMapper.Map(new UserAlternativeTitleImportEntryResource
