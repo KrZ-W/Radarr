@@ -22,6 +22,16 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   titles participate in search, release parsing, and import identification like any
   other alternative title. See
   [features/user-alternative-titles.md](docs/features/user-alternative-titles.md).
+- **User regional translations (Phase 1b):** curated regional titles can now be
+  imported as first-class `MovieTranslations` rows so the production search modes
+  (`OnePerRegion` + Regional Translation Variants) emit them as queries with no
+  search-code changes. Adds `MovieTranslations.SourceType` (migration 244); the
+  translations refresh preserves non-TMDB rows with the same user-wins-over-TMDB
+  duplicate rule as alt titles. New `POST /api/v3/translation/user/import` accepts
+  the same curated format (region `CA` → `fr-CA`, others → `fr`); idempotent
+  against existing translations, global cross-movie clean-title guard across all
+  title tables. The alt-titles endpoint remains for parse/import matching. See
+  [features/user-alternative-titles.md](docs/features/user-alternative-titles.md).
 
 ## [v6.2.1.10461+krzw.3] — based on Radarr 6.2.1.10461
 
