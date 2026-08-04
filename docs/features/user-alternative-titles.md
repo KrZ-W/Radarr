@@ -91,9 +91,68 @@ Verify per movie with `GET /api/v3/alttitle?movieId=<id>` — user rows report
 - The endpoint does not update or delete existing user rows; to correct a bad title,
   remove the row and re-import.
 
+## Phase 1b: regional titles as user translations
+
+Alt titles make releases *parse and import*, but production search
+(`RegionalTranslationSearchMode=OnePerRegion`) builds queries from
+**MovieTranslations** only — `AllTitles` mode (which folds in alt titles) is
+unusable against rate-limited indexers. Phase 1b makes curated regional titles
+first-class translations so the existing search machinery emits them with zero
+search-code changes.
+
+### What it adds
+
+- `MovieTranslations.SourceType` column (migration 244; `0=Tmdb`, same enum as alt
+  titles). The translations refresh now reconciles only TMDB-sourced rows: user rows
+  survive refreshes, and an incoming TMDB title duplicating a preserved row is
+  dropped (the user row wins) — identical semantics to the alt-titles preservation.
+- `POST /api/v3/translation/user/import` — same envelope and summary response as
+  the alt-titles importer; title entries use **standard identifiers**:
+  `{title, language?, region?}` with `language` an ISO 639-1 code (defaults to `fr`
+  for the curated dataset) and `region` an ISO 3166-1 alpha-2 code. The stored
+  `RegionalLanguage` tag is built uniformly — `{language}` or
+  `{language}-{region}`, lowercase, the same shape SkyHook stores for TMDB rows —
+  so any language's titles can be imported (`{language: "de", region: "AT"}` →
+  German, `de-at`). Unknown language codes are skipped and counted. One row per
+  title.
+
+  **Dataset note:** entries should carry `region` only when the region matters for
+  search. `region: "CA"` → `fr-ca` (matches a `fr-CA` variants entry); an entry
+  with **no region** → bare `fr` (always searched). A France entry written as
+  `region: "FR"` produces `fr-fr`, which the variants filter drops unless `fr-FR`
+  is in Regional Translation Variants — for the curated file, strip the region
+  from France rows (or add `fr-FR` to the variants list).
+- Guards: tmdbId→imdbId resolution, library movies only, idempotent (skips titles
+  already in the movie's translations, any source), main-title skip, and the global
+  cross-movie clean-title guard via `FindByTitleCandidates` (sweeps movie titles,
+  alt titles, and translations — the parser maps releases across all three).
+
+### Interplay with the alt-titles importer
+
+Both endpoints stay. Import the same dataset into both: alt titles cover
+parse/import matching for regionless strings; translations make the regional
+titles searchable. A title already present as the movie's *alt title* is **not**
+skipped by the translation importer — that overlap is intended, since prod
+already carries the dataset as alt titles.
+
+### Known edges
+
+- If TMDB later ships its own `fr-CA` translation with a *different* title for a
+  movie, `OnePerRegion` picks by DB row order (the TMDB row, inserted first, wins
+  the region slot). The curated set targets titles TMDB lacks, so this stays
+  theoretical; revisit if it bites.
+- User translations participate in the deterministic translation pick for renaming
+  and NFO metadata: with `fr-CA` in Regional Translation Variants, a user QC title
+  can become `{Movie TranslatedTitle}`. That is first-class-translation semantics,
+  not a bug.
+
 ## Source
 
 Commit: `09477768b`. Key files:
 `Movies/AlternativeTitles/AlternativeTitleService.cs` (refresh preservation +
 `UpsertUserTitles`), `Radarr.Api.V3/Movies/AlternativeTitleController.cs` (endpoint),
 `Radarr.Api.V3/Movies/UserAlternativeTitleImportResource.cs` (DTOs).
+
+Phase 1b: `Movies/Translations/MovieTranslationService.cs` (preservation +
+`UpsertUserTranslations`), `Radarr.Api.V3/Movies/UserTranslationController.cs`,
+`Datastore/Migration/244_add_source_type_to_movie_translations.cs`.

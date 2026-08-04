@@ -1,4 +1,5 @@
 using NzbDrone.Core.Languages;
+using NzbDrone.Core.Movies.AlternativeTitles;
 
 namespace NzbDrone.Core.Movies.Translations
 {
@@ -10,5 +11,6 @@ namespace NzbDrone.Core.Movies.Translations
         public string Overview { get; set; }
         public Language Language { get; set; }
         public string RegionalLanguage { get; set; }
+        public SourceType SourceType { get; set; }
     }
 }

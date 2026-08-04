@@ -26,6 +26,19 @@ _Nothing yet._
   titles participate in search, release parsing, and import identification like any
   other alternative title. See
   [features/user-alternative-titles.md](docs/features/user-alternative-titles.md).
+- **User regional translations (Phase 1b):** curated regional titles can now be
+  imported as first-class `MovieTranslations` rows so the production search modes
+  (`OnePerRegion` + Regional Translation Variants) emit them as queries with no
+  search-code changes. Adds `MovieTranslations.SourceType` (migration 244); the
+  translations refresh preserves non-TMDB rows with the same user-wins-over-TMDB
+  duplicate rule as alt titles. New `POST /api/v3/translation/user/import` accepts
+  the curated envelope with standard identifiers per title —
+  `{title, language?, region?}` (ISO 639-1 + ISO 3166-1; language defaults to `fr`)
+  — building lowercase `lang`/`lang-region` tags that match TMDB rows, so titles in
+  any language are importable; idempotent
+  against existing translations, global cross-movie clean-title guard across all
+  title tables. The alt-titles endpoint remains for parse/import matching. See
+  [features/user-alternative-titles.md](docs/features/user-alternative-titles.md).
 
 Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.4`.
 
