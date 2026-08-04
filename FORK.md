@@ -8,7 +8,7 @@ person for a private *arr stack; it is not affiliated with the Radarr team.
 - **Upstream base:** Radarr `6.2.1.10461` (the commit this fork is rebased onto)
 - **Primary branch:** `personal/all-features-master` (all features merged together)
 - **Container image:** `ghcr.io/krz-w/radarr`
-- **Current fork version:** `v6.2.1.10461+krzw.6`
+- **Current fork version:** `v6.2.1.10461+krzw.7`
 
 > The stock upstream `README.md` is preserved below this fork section. Everything
 > KrZ-W-specific lives in [`docs/`](docs/) and [`CHANGELOG.md`](CHANGELOG.md).
