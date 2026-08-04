@@ -12,6 +12,7 @@ using NzbDrone.Core.IndexerSearch;
 using NzbDrone.Core.IndexerSearch.Definitions;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.Movies;
+using NzbDrone.Core.Movies.AlternativeTitles;
 using NzbDrone.Core.Movies.Translations;
 using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Test.Framework;
@@ -199,6 +200,38 @@ namespace NzbDrone.Core.Test.IndexerSearchTests
             criteria[0].SceneTitles.Should().Contain("Titre France");
             criteria[0].SceneTitles.Should().Contain("Titre Quebec");
             criteria[0].SceneTitles.Should().NotContain("Titre Belgique");
+        }
+
+        [Test]
+        public async Task RegionalVariants_user_translation_row_is_searched_under_OnePerRegion()
+        {
+            Mocker.GetMock<IConfigService>()
+                .SetupGet(s => s.RegionalTranslationSearchMode)
+                .Returns(RegionalTranslationSearchMode.OnePerRegion);
+
+            Mocker.GetMock<IConfigService>()
+                .SetupGet(s => s.RegionalTranslationVariants)
+                .Returns("fr-CA");
+
+            Mocker.GetMock<IQualityProfileService>()
+                .Setup(s => s.GetAcceptableLanguages(It.IsAny<int>()))
+                .Returns(new List<Language> { Language.French });
+
+            Mocker.GetMock<IMovieTranslationService>()
+                .Setup(s => s.GetAllTranslationsForMovieMetadata(It.IsAny<int>()))
+                .Returns(new List<MovieTranslation>
+                {
+                    new MovieTranslation { Title = "Le Titre Québécois", CleanTitle = "letitrequebecois", Language = Language.French, RegionalLanguage = "fr-ca", SourceType = SourceType.User }
+                });
+
+            var allCriteria = WatchForSearchCriteria();
+
+            await Subject.MovieSearch(_movie, true, false);
+
+            var criteria = allCriteria.OfType<MovieSearchCriteria>().ToList();
+
+            criteria.Count.Should().Be(1);
+            criteria[0].SceneTitles.Should().Contain("Le Titre Québécois");
         }
 
         [Test]
