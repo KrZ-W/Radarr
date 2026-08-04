@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Common.Extensions;
-using NzbDrone.Core.Languages;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Movies.Translations;
 using NzbDrone.Core.Parser;
@@ -43,44 +42,24 @@ namespace Radarr.Api.V3.Movies
                     continue;
                 }
 
-                var translations = (resource.MissingFrenchTitles ?? new List<UserAlternativeTitleImportEntryResource>())
+                var candidates = (resource.MissingFrenchTitles ?? new List<UserAlternativeTitleImportEntryResource>())
                     .Where(t => t.Title.IsNotNullOrWhiteSpace())
+                    .ToList();
+
+                var translations = candidates
                     .Where(t => TitleIsNotAnotherMovies(t.Title, movie))
-                    .Select(t => new MovieTranslation
-                    {
-                        Title = t.Title,
-                        CleanTitle = t.Title.CleanMovieTitle(),
-                        Language = Language.French,
-                        RegionalLanguage = MapRegion(t.Region)
-                    })
+                    .Select(UserTranslationMapper.Map)
+                    .Where(t => t != null)
                     .ToList();
 
                 var added = _movieTranslationService.UpsertUserTranslations(translations, movie.MovieMetadata.Value);
 
                 summary.MoviesProcessed++;
                 summary.TitlesAdded += added.Count;
-                summary.TitlesSkipped += translations.Count - added.Count;
+                summary.TitlesSkipped += candidates.Count - added.Count;
             }
 
             return summary;
-        }
-
-        // Stored values are lowercase language tags ("fr", "fr-ca") matching what SkyHook
-        // stores for TMDB rows, so the OnePerRegion dedupe treats user and TMDB rows as the
-        // same region. Input accepts an explicit tag ("fr-CA", "fr-BE") verbatim, or a bare
-        // region marker: CA/QC mean Quebec French; FR, BE and anything else search under the
-        // bare language (a region-qualified tag outside Regional Translation Variants would
-        // be dropped from search entirely).
-        private static string MapRegion(string region)
-        {
-            var normalized = region?.Trim().ToLowerInvariant() ?? string.Empty;
-
-            if (normalized.Contains('-'))
-            {
-                return normalized;
-            }
-
-            return normalized is "ca" or "qc" ? "fr-ca" : "fr";
         }
 
         // The parser maps releases to movies by clean title globally across movie titles,
@@ -91,6 +70,36 @@ namespace Radarr.Api.V3.Movies
             var candidates = _movieService.FindByTitleCandidates(new List<string> { title }, out _);
 
             return candidates.All(c => c.TmdbId == movie.TmdbId);
+        }
+    }
+
+    public static class UserTranslationMapper
+    {
+        // Builds a translation from standard identifiers: ISO 639-1 language (defaulting to
+        // "fr" for the curated dataset) plus optional ISO 3166-1 region. The stored tag is
+        // "{language}" or "{language}-{region}", lowercase — the same shape SkyHook stores
+        // for TMDB rows, so search-side region dedupe treats user and TMDB rows alike.
+        // Returns null for an unknown language code.
+        public static MovieTranslation Map(UserAlternativeTitleImportEntryResource entry)
+        {
+            var languageCode = (entry.Language.IsNotNullOrWhiteSpace() ? entry.Language : "fr").Trim().ToLowerInvariant();
+            var language = IsoLanguages.Find(languageCode)?.Language;
+
+            if (language == null)
+            {
+                return null;
+            }
+
+            var region = entry.Region?.Trim().ToLowerInvariant();
+            var tag = region.IsNotNullOrWhiteSpace() ? $"{languageCode}-{region}" : languageCode;
+
+            return new MovieTranslation
+            {
+                Title = entry.Title,
+                CleanTitle = entry.Title.CleanMovieTitle(),
+                Language = language,
+                RegionalLanguage = tag
+            };
         }
     }
 }
