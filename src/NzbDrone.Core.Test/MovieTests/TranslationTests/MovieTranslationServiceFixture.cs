@@ -24,6 +24,10 @@ namespace NzbDrone.Core.Test.MovieTests.TranslationTests
                 .With(m => m.CleanTitle = "myothertitle")
                 .With(m => m.Id = 1)
                 .Build();
+
+            Mocker.GetMock<IMovieTranslationRepository>()
+                .Setup(r => r.FindByCleanTitles(It.IsAny<List<string>>()))
+                .Returns(new List<MovieTranslation>());
         }
 
         private void GivenExistingTranslations(params MovieTranslation[] translations)
@@ -127,6 +131,32 @@ namespace NzbDrone.Core.Test.MovieTests.TranslationTests
             tmdbRow.MovieMetadataId = _movie.Id;
 
             GivenExistingTranslations(tmdbRow);
+
+            var translation = new MovieTranslation { Title = "Titre Quebec", CleanTitle = "titrequebec", Language = Language.French, RegionalLanguage = "fr-CA" };
+
+            var result = Subject.UpsertUserTranslations(new List<MovieTranslation> { translation }, _movie);
+
+            result.Should().BeEmpty();
+            Mocker.GetMock<IMovieTranslationRepository>().Verify(r => r.InsertMany(new List<MovieTranslation>()), Times.Once());
+        }
+
+        [Test]
+        public void should_not_upsert_title_owned_by_another_movie()
+        {
+            GivenExistingTranslations();
+
+            var otherMovieTranslation = new MovieTranslation
+            {
+                Title = "Titre Quebec",
+                CleanTitle = "titrequebec",
+                MovieMetadataId = 999,
+                Language = Language.French,
+                RegionalLanguage = "fr-ca"
+            };
+
+            Mocker.GetMock<IMovieTranslationRepository>()
+                .Setup(r => r.FindByCleanTitles(It.IsAny<List<string>>()))
+                .Returns(new List<MovieTranslation> { otherMovieTranslation });
 
             var translation = new MovieTranslation { Title = "Titre Quebec", CleanTitle = "titrequebec", Language = Language.French, RegionalLanguage = "fr-CA" };
 

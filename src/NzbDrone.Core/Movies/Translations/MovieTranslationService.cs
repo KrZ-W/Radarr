@@ -119,6 +119,9 @@ namespace NzbDrone.Core.Movies.Translations
             translations = translations.Where(t => t.CleanTitle != movieMetadata.CleanTitle).ToList();
             translations = translations.DistinctBy(t => t.CleanTitle).ToList();
 
+            var allTranslationsByCleanTitles = _translationRepo.FindByCleanTitles(translations.Select(t => t.CleanTitle).ToList());
+            translations = translations.Where(t => !allTranslationsByCleanTitles.Any(e => e.CleanTitle == t.CleanTitle && e.MovieMetadataId != t.MovieMetadataId)).ToList();
+
             var existingTranslations = _translationRepo.FindByMovieMetadataId(movieMetadataId);
             var addList = translations.Where(t => !existingTranslations.Any(e => e.CleanTitle == t.CleanTitle)).ToList();
 
