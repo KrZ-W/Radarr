@@ -3,6 +3,7 @@ using System.Linq;
 using NLog;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.Movies.AlternativeTitles;
 using NzbDrone.Core.Movies.Events;
 
 namespace NzbDrone.Core.Movies.Translations
@@ -12,6 +13,7 @@ namespace NzbDrone.Core.Movies.Translations
         List<MovieTranslation> GetAllTranslationsForMovieMetadata(int movieMetadataId);
         List<MovieTranslation> GetAllTranslationsForLanguage(Language language);
         List<MovieTranslation> UpdateTranslations(List<MovieTranslation> titles, MovieMetadata movie);
+        List<MovieTranslation> UpsertUserTranslations(List<MovieTranslation> translations, MovieMetadata movie);
     }
 
     public class MovieTranslationService : IMovieTranslationService, IHandleAsync<MoviesDeletedEvent>
@@ -58,6 +60,14 @@ namespace NzbDrone.Core.Movies.Translations
             // Now find translations to delete, update and insert
             var existingTranslations = _translationRepo.FindByMovieMetadataId(movieMetadataId);
 
+            // Rows not sourced from TMDB (user imports) are managed outside the metadata
+            // refresh and must survive it; the refresh only reconciles TMDB-sourced rows.
+            var preservedTranslations = existingTranslations.Where(t => t.SourceType != SourceType.Tmdb).ToList();
+            existingTranslations = existingTranslations.Where(t => t.SourceType == SourceType.Tmdb).ToList();
+
+            // An incoming TMDB title duplicating a preserved row is dropped: the user row wins.
+            translations = translations.Where(t => !preservedTranslations.Any(p => p.CleanTitle == t.CleanTitle)).ToList();
+
             var updateList = new List<MovieTranslation>();
             var addList = new List<MovieTranslation>();
             var upToDateCount = 0;
@@ -91,9 +101,32 @@ namespace NzbDrone.Core.Movies.Translations
             _translationRepo.UpdateMany(updateList);
             _translationRepo.InsertMany(addList);
 
-            _logger.Debug("[{0}] {1} translations up to date; Updating {2}, Adding {3}, Deleting {4} entries.", movieMetadata.Title, upToDateCount, updateList.Count, addList.Count, existingTranslations.Count);
+            _logger.Debug("[{0}] {1} translations up to date; Updating {2}, Adding {3}, Deleting {4}, Preserving {5} non-TMDB entries.", movieMetadata.Title, upToDateCount, updateList.Count, addList.Count, existingTranslations.Count, preservedTranslations.Count);
 
-            return translations;
+            return translations.Concat(preservedTranslations).ToList();
+        }
+
+        public List<MovieTranslation> UpsertUserTranslations(List<MovieTranslation> translations, MovieMetadata movieMetadata)
+        {
+            var movieMetadataId = movieMetadata.Id;
+
+            translations.ForEach(t =>
+            {
+                t.MovieMetadataId = movieMetadataId;
+                t.SourceType = SourceType.User;
+            });
+
+            translations = translations.Where(t => t.CleanTitle != movieMetadata.CleanTitle).ToList();
+            translations = translations.DistinctBy(t => t.CleanTitle).ToList();
+
+            var existingTranslations = _translationRepo.FindByMovieMetadataId(movieMetadataId);
+            var addList = translations.Where(t => !existingTranslations.Any(e => e.CleanTitle == t.CleanTitle)).ToList();
+
+            _translationRepo.InsertMany(addList);
+
+            _logger.Debug("[{0}] Upserted user translations; Adding {1}, Skipping {2} already present.", movieMetadata.Title, addList.Count, translations.Count - addList.Count);
+
+            return addList;
         }
 
         public void HandleAsync(MoviesDeletedEvent message)
