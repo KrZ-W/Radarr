@@ -27,6 +27,11 @@ namespace Radarr.Api.V3.Movies
         {
             var summary = new UserAlternativeTitleImportSummaryResource();
 
+            if (resources == null)
+            {
+                return summary;
+            }
+
             foreach (var resource in resources)
             {
                 var movie = _movieService.FindByTmdbId(resource.TmdbId);
