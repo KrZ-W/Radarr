@@ -28,9 +28,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   search-code changes. Adds `MovieTranslations.SourceType` (migration 244); the
   translations refresh preserves non-TMDB rows with the same user-wins-over-TMDB
   duplicate rule as alt titles. New `POST /api/v3/translation/user/import` accepts
-  the same curated format (region `CA`/`QC` → `fr-ca`, other bare markers → `fr`,
-  explicit tags like `fr-BE` pass through; stored lowercase to match TMDB rows);
-  idempotent
+  the curated envelope with standard identifiers per title —
+  `{title, language?, region?}` (ISO 639-1 + ISO 3166-1; language defaults to `fr`)
+  — building lowercase `lang`/`lang-region` tags that match TMDB rows, so titles in
+  any language are importable; idempotent
   against existing translations, global cross-movie clean-title guard across all
   title tables. The alt-titles endpoint remains for parse/import matching. See
   [features/user-alternative-titles.md](docs/features/user-alternative-titles.md).

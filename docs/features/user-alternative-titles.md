@@ -106,14 +106,22 @@ search-code changes.
   titles). The translations refresh now reconciles only TMDB-sourced rows: user rows
   survive refreshes, and an incoming TMDB title duplicating a preserved row is
   dropped (the user row wins) — identical semantics to the alt-titles preservation.
-- `POST /api/v3/translation/user/import` — accepts the **same curated.json format**
-  as the alt-titles importer, same summary response. The `region` field takes either
-  a bare marker — `CA`/`QC` → French + `RegionalLanguage "fr-ca"`; `FR`, `BE`, and
-  anything else → French + `"fr"` — or an explicit language tag (`fr-CA`, `fr-BE`)
-  stored verbatim. Values are stored lowercase to match TMDB rows, so the
-  `OnePerRegion` dedupe sees user and TMDB rows as the same region. One row per
-  title. (An explicit tag outside your Regional Translation Variants is stored but
-  dropped from search by the variants filter — that's the caller's choice.)
+- `POST /api/v3/translation/user/import` — same envelope and summary response as
+  the alt-titles importer; title entries use **standard identifiers**:
+  `{title, language?, region?}` with `language` an ISO 639-1 code (defaults to `fr`
+  for the curated dataset) and `region` an ISO 3166-1 alpha-2 code. The stored
+  `RegionalLanguage` tag is built uniformly — `{language}` or
+  `{language}-{region}`, lowercase, the same shape SkyHook stores for TMDB rows —
+  so any language's titles can be imported (`{language: "de", region: "AT"}` →
+  German, `de-at`). Unknown language codes are skipped and counted. One row per
+  title.
+
+  **Dataset note:** entries should carry `region` only when the region matters for
+  search. `region: "CA"` → `fr-ca` (matches a `fr-CA` variants entry); an entry
+  with **no region** → bare `fr` (always searched). A France entry written as
+  `region: "FR"` produces `fr-fr`, which the variants filter drops unless `fr-FR`
+  is in Regional Translation Variants — for the curated file, strip the region
+  from France rows (or add `fr-FR` to the variants list).
 - Guards: tmdbId→imdbId resolution, library movies only, idempotent (skips titles
   already in the movie's translations, any source), main-title skip, and the global
   cross-movie clean-title guard via `FindByTitleCandidates` (sweeps movie titles,
