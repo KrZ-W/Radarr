@@ -14,6 +14,7 @@ namespace NzbDrone.Core.Movies.AlternativeTitles
         AlternativeTitle GetById(int id);
         List<AlternativeTitle> GetAllTitles();
         List<AlternativeTitle> UpdateTitles(List<AlternativeTitle> titles, MovieMetadata movie);
+        List<AlternativeTitle> UpsertUserTitles(List<AlternativeTitle> titles, MovieMetadata movie);
     }
 
     public class AlternativeTitleService : IAlternativeTitleService, IHandleAsync<MoviesDeletedEvent>
@@ -79,6 +80,13 @@ namespace NzbDrone.Core.Movies.AlternativeTitles
 
             var existingTitles = _titleRepo.FindByMovieMetadataId(movieMetadataId);
 
+            // Titles not sourced from TMDB (User, Mappings, Indexer) are managed outside the metadata
+            // refresh and must survive it; a refresh only reconciles the TMDB-sourced rows.
+            var preservedTitles = existingTitles.Where(t => t.SourceType != SourceType.Tmdb).ToList();
+            existingTitles = existingTitles.Where(t => t.SourceType == SourceType.Tmdb).ToList();
+
+            titles = titles.Where(t => !preservedTitles.Any(p => p.CleanTitle == t.CleanTitle)).ToList();
+
             var updateList = new List<AlternativeTitle>();
             var addList = new List<AlternativeTitle>();
             var upToDateCount = 0;
@@ -112,9 +120,36 @@ namespace NzbDrone.Core.Movies.AlternativeTitles
             _titleRepo.UpdateMany(updateList);
             _titleRepo.InsertMany(addList);
 
-            _logger.Debug("[{0}] {1} alternative titles up to date; Updating {2}, Adding {3}, Deleting {4} entries.", movieMetadata.Title, upToDateCount, updateList.Count, addList.Count, existingTitles.Count);
+            _logger.Debug("[{0}] {1} alternative titles up to date; Updating {2}, Adding {3}, Deleting {4}, Preserving {5} non-TMDB entries.", movieMetadata.Title, upToDateCount, updateList.Count, addList.Count, existingTitles.Count, preservedTitles.Count);
 
-            return titles;
+            return titles.Concat(preservedTitles).ToList();
+        }
+
+        public List<AlternativeTitle> UpsertUserTitles(List<AlternativeTitle> titles, MovieMetadata movieMetadata)
+        {
+            var movieMetadataId = movieMetadata.Id;
+
+            titles.ForEach(t =>
+            {
+                t.MovieMetadataId = movieMetadataId;
+                t.SourceType = SourceType.User;
+            });
+
+            titles = titles.Where(t => t.CleanTitle != movieMetadata.CleanTitle).ToList();
+            titles = titles.DistinctBy(t => t.CleanTitle).ToList();
+
+            // Same guard as UpdateTitles: don't add titles that already exist for other movies.
+            var allTitlesByCleanTitles = _titleRepo.FindByCleanTitles(titles.Select(t => t.CleanTitle).ToList());
+            titles = titles.Where(t => !allTitlesByCleanTitles.Any(e => e.CleanTitle == t.CleanTitle && e.MovieMetadataId != t.MovieMetadataId)).ToList();
+
+            var existingTitles = _titleRepo.FindByMovieMetadataId(movieMetadataId);
+            var addList = titles.Where(t => !existingTitles.Any(e => e.CleanTitle == t.CleanTitle)).ToList();
+
+            _titleRepo.InsertMany(addList);
+
+            _logger.Debug("[{0}] Upserted user alternative titles; Adding {1}, Skipping {2} already present.", movieMetadata.Title, addList.Count, titles.Count - addList.Count);
+
+            return addList;
         }
 
         public void HandleAsync(MoviesDeletedEvent message)
