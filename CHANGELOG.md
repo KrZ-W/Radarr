@@ -12,6 +12,26 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 _Nothing yet._
 
+## [v6.2.1.10461+krzw.5] — based on Radarr 6.2.1.10461
+
+### Added
+
+- **User regional translations (Phase 1b):** curated regional titles can now be
+  imported as first-class `MovieTranslations` rows so the production search modes
+  (`OnePerRegion` + Regional Translation Variants) emit them as queries with no
+  search-code changes. Adds `MovieTranslations.SourceType` (migration 244); the
+  translations refresh preserves non-TMDB rows with the same user-wins-over-TMDB
+  duplicate rule as alt titles. New `POST /api/v3/translation/user/import` accepts
+  the curated envelope with standard identifiers per title —
+  `{title, language?, region?}` (ISO 639-1 + ISO 3166-1; language defaults to `fr`)
+  — building lowercase `lang`/`lang-region` tags that match TMDB rows, so titles in
+  any language are importable; idempotent against existing translations, global
+  cross-movie clean-title guard across all title tables. The alt-titles endpoint
+  remains for parse/import matching. See
+  [features/user-alternative-titles.md](docs/features/user-alternative-titles.md).
+
+Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.5`.
+
 ## [v6.2.1.10461+krzw.4] — based on Radarr 6.2.1.10461
 
 ### Added
@@ -26,20 +46,6 @@ _Nothing yet._
   titles participate in search, release parsing, and import identification like any
   other alternative title. See
   [features/user-alternative-titles.md](docs/features/user-alternative-titles.md).
-- **User regional translations (Phase 1b):** curated regional titles can now be
-  imported as first-class `MovieTranslations` rows so the production search modes
-  (`OnePerRegion` + Regional Translation Variants) emit them as queries with no
-  search-code changes. Adds `MovieTranslations.SourceType` (migration 244); the
-  translations refresh preserves non-TMDB rows with the same user-wins-over-TMDB
-  duplicate rule as alt titles. New `POST /api/v3/translation/user/import` accepts
-  the curated envelope with standard identifiers per title —
-  `{title, language?, region?}` (ISO 639-1 + ISO 3166-1; language defaults to `fr`)
-  — building lowercase `lang`/`lang-region` tags that match TMDB rows, so titles in
-  any language are importable; idempotent
-  against existing translations, global cross-movie clean-title guard across all
-  title tables. The alt-titles endpoint remains for parse/import matching. See
-  [features/user-alternative-titles.md](docs/features/user-alternative-titles.md).
-
 Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.4`.
 
 ## [v6.2.1.10461+krzw.3] — based on Radarr 6.2.1.10461
@@ -161,7 +167,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.4...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.5...HEAD
+[v6.2.1.10461+krzw.5]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.5
 [v6.2.1.10461+krzw.4]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.4
 [v6.2.1.10461+krzw.3]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.3
 [v6.2.1.10461+krzw.2]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.2
