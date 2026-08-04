@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.2.1.10461+krzw.4] — based on Radarr 6.2.1.10461
+
 ### Added
 
 - **User alternative titles:** alternative titles with `SourceType != Tmdb` now
@@ -22,6 +26,8 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   titles participate in search, release parsing, and import identification like any
   other alternative title. See
   [features/user-alternative-titles.md](docs/features/user-alternative-titles.md).
+
+Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.4`.
 
 ## [v6.2.1.10461+krzw.3] — based on Radarr 6.2.1.10461
 
@@ -142,7 +148,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.3...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.4...HEAD
+[v6.2.1.10461+krzw.4]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.4
 [v6.2.1.10461+krzw.3]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.3
 [v6.2.1.10461+krzw.2]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.2
 [v6.2.1.10461+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.1
