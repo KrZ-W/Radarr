@@ -44,9 +44,15 @@ namespace Radarr.Api.V3.Movies
         }
 
         [HttpPost("user/import")]
+        [Consumes("application/json")]
         public UserAlternativeTitleImportSummaryResource ImportUserTitles([FromBody] List<UserAlternativeTitleImportResource> resources)
         {
             var summary = new UserAlternativeTitleImportSummaryResource();
+
+            if (resources == null)
+            {
+                return summary;
+            }
 
             foreach (var resource in resources)
             {
