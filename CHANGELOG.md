@@ -12,6 +12,24 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 _Nothing yet._
 
+## [v6.2.1.10461+krzw.7] — based on Radarr 6.2.1.10461
+
+### Fixed
+
+- **Cross-movie guard in `UpsertUserTranslations`:** the translation service
+  relied entirely on the controller calling `UserTitleImportGuard.IsSafeForMovie`
+  to prevent cross-movie collisions. Added `FindByCleanTitles` to the translation
+  repository and an inline guard matching what `UpsertUserTitles` already had, so
+  the service rejects collisions regardless of caller.
+- **Null body handling on both import endpoints:** a null or malformed JSON body
+  on `POST /api/v3/alttitle/user/import` or `POST /api/v3/translation/user/import`
+  caused an unhandled `NullReferenceException` (500). Both now return an empty
+  summary.
+- **Missing `[Consumes("application/json")]`** on the alt-title import endpoint,
+  matching the translation endpoint.
+
+Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.7`.
+
 ## [v6.2.1.10461+krzw.6] — based on Radarr 6.2.1.10461
 
 ### Fixed
@@ -197,7 +215,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.6...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.7...HEAD
+[v6.2.1.10461+krzw.7]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.7
 [v6.2.1.10461+krzw.6]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.6
 [v6.2.1.10461+krzw.5]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.5
 [v6.2.1.10461+krzw.4]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.4
