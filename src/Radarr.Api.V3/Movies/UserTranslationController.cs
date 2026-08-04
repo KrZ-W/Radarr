@@ -47,7 +47,7 @@ namespace Radarr.Api.V3.Movies
                     .ToList();
 
                 var translations = candidates
-                    .Where(t => TitleIsNotAnotherMovies(t.Title, movie))
+                    .Where(t => UserTitleImportGuard.IsSafeForMovie(_movieService, t.Title, movie))
                     .Select(UserTranslationMapper.Map)
                     .Where(t => t != null)
                     .ToList();
@@ -60,16 +60,6 @@ namespace Radarr.Api.V3.Movies
             }
 
             return summary;
-        }
-
-        // The parser maps releases to movies by clean title globally across movie titles,
-        // alternative titles, and translations; a title owned by any other movie is skipped.
-        // FindByTitleCandidates sweeps all three tables (plus roman-numeral variants).
-        private bool TitleIsNotAnotherMovies(string title, Movie movie)
-        {
-            var candidates = _movieService.FindByTitleCandidates(new List<string> { title }, out _);
-
-            return candidates.All(c => c.TmdbId == movie.TmdbId);
         }
     }
 
