@@ -10,7 +10,18 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **User alternative titles:** alternative titles with `SourceType != Tmdb` now
+  survive metadata refreshes — `UpdateTitles` only reconciles TMDB-sourced rows, and
+  an incoming TMDB duplicate of a preserved title is skipped instead of converting
+  it. New `POST /api/v3/alttitle/user/import` endpoint bulk-upserts titles as
+  `SourceType=User` from the curated FR/QC dataset format
+  (`[{tmdbId, imdbId, movieTitle, year, missingFrenchTitles:[{title, region}]}]`);
+  idempotent, library movies only, returns an added/skipped/not-found summary. User
+  titles participate in search, release parsing, and import identification like any
+  other alternative title. See
+  [features/user-alternative-titles.md](docs/features/user-alternative-titles.md).
 
 ## [v6.2.1.10461+krzw.3] — based on Radarr 6.2.1.10461
 

@@ -91,6 +91,38 @@ the primary/English one.
 
 ---
 
+## Recipe: Add missing French/Quebec titles TMDB doesn't have
+
+**Goal:** make releases named after a French/QC title match their movie when TMDB
+lacks that title — and keep those titles across refreshes.
+
+1. Prepare a JSON file in the curated-dataset format:
+
+   ```json
+   [
+     { "tmdbId": 194, "imdbId": "tt0211915", "movieTitle": "Amélie", "year": 2001,
+       "missingFrenchTitles": [ { "title": "Amélie de Montmartre", "region": "QC" } ] }
+   ]
+   ```
+
+2. Import it:
+
+   ```bash
+   curl -X POST "http://<host>:7878/api/v3/alttitle/user/import" \
+     -H "X-Api-Key: <api-key>" -H "Content-Type: application/json" \
+     -d @curated.json
+   ```
+
+3. Check the summary response; entries under `moviesNotFound` aren't in your library.
+
+Imported titles show `"sourceType": "user"` in `GET /api/v3/alttitle?movieId=<id>`,
+survive metadata refreshes, and are safe to re-import after adding movies (already
+present titles are skipped).
+
+> Full reference: [User Alternative Titles](features/user-alternative-titles.md).
+
+---
+
 ## Recipe: Tune indexer cooldown
 
 **Goal:** change how long a failing indexer is backed off.
