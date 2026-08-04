@@ -65,11 +65,22 @@ namespace Radarr.Api.V3.Movies
             return summary;
         }
 
-        // "CA" is the curated dataset's marker for Quebec titles; every other region with a
-        // French title (FR, BE, ...) searches under the bare language.
+        // Stored values are lowercase language tags ("fr", "fr-ca") matching what SkyHook
+        // stores for TMDB rows, so the OnePerRegion dedupe treats user and TMDB rows as the
+        // same region. Input accepts an explicit tag ("fr-CA", "fr-BE") verbatim, or a bare
+        // region marker: CA/QC mean Quebec French; FR, BE and anything else search under the
+        // bare language (a region-qualified tag outside Regional Translation Variants would
+        // be dropped from search entirely).
         private static string MapRegion(string region)
         {
-            return region?.Trim().ToUpperInvariant() == "CA" ? "fr-CA" : "fr";
+            var normalized = region?.Trim().ToLowerInvariant() ?? string.Empty;
+
+            if (normalized.Contains('-'))
+            {
+                return normalized;
+            }
+
+            return normalized is "ca" or "qc" ? "fr-ca" : "fr";
         }
 
         // The parser maps releases to movies by clean title globally across movie titles,

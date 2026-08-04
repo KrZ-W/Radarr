@@ -107,9 +107,13 @@ search-code changes.
   survive refreshes, and an incoming TMDB title duplicating a preserved row is
   dropped (the user row wins) — identical semantics to the alt-titles preservation.
 - `POST /api/v3/translation/user/import` — accepts the **same curated.json format**
-  as the alt-titles importer, same summary response. Region mapping:
-  `CA` → Language French + `RegionalLanguage "fr-CA"`; `FR` and any other region
-  with a French title → French + `"fr"`. One row per title.
+  as the alt-titles importer, same summary response. The `region` field takes either
+  a bare marker — `CA`/`QC` → French + `RegionalLanguage "fr-ca"`; `FR`, `BE`, and
+  anything else → French + `"fr"` — or an explicit language tag (`fr-CA`, `fr-BE`)
+  stored verbatim. Values are stored lowercase to match TMDB rows, so the
+  `OnePerRegion` dedupe sees user and TMDB rows as the same region. One row per
+  title. (An explicit tag outside your Regional Translation Variants is stored but
+  dropped from search by the variants filter — that's the caller's choice.)
 - Guards: tmdbId→imdbId resolution, library movies only, idempotent (skips titles
   already in the movie's translations, any source), main-title skip, and the global
   cross-movie clean-title guard via `FindByTitleCandidates` (sweeps movie titles,
