@@ -16,6 +16,12 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
 
         public ImportSpecDecision IsSatisfiedBy(LocalMovie localMovie, DownloadClientItem downloadClientItem)
         {
+            if (localMovie.ExistingFile)
+            {
+                _logger.Debug("Existing file, skipping minimum custom format score check");
+                return ImportSpecDecision.Accept();
+            }
+
             var minScore = localMovie.Movie.QualityProfile.MinFormatScore;
             var score = localMovie.CustomFormatScore;
 
