@@ -55,6 +55,14 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
         }
 
         [Test]
+        public void should_accept_existing_file_regardless_of_score()
+        {
+            _localMovie.ExistingFile = true;
+            _localMovie.CustomFormatScore = -10000;
+            Subject.IsSatisfiedBy(_localMovie, null).Accepted.Should().BeTrue();
+        }
+
+        [Test]
         public void should_accept_when_minimum_is_negative_and_score_above_it()
         {
             _movie.QualityProfile.MinFormatScore = -5000;
