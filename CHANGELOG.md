@@ -12,6 +12,21 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 _Nothing yet._
 
+## [v6.2.1.10461+krzw.8] — based on Radarr 6.2.1.10461
+
+### Fixed
+
+- **Library rescans no longer reject existing files below the minimum CF score.**
+  The fork's import-time `MinFormatScore` enforcement also ran on unmapped files
+  already inside a movie folder during a disk rescan; a file scoring below the
+  profile minimum was rejected on every rescan and never mapped into the database
+  (present on disk, invisible to Radarr, movie still treated as missing).
+  Existing files now skip the check, matching the convention of the other
+  import-gatekeeping specs. Enforcement on the download/import path is unchanged.
+  Mirrors the same fix in the Sonarr fork (`v4.0.19.2979+krzw.8`).
+
+Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.8`.
+
 ## [v6.2.1.10461+krzw.7] — based on Radarr 6.2.1.10461
 
 ### Fixed
@@ -215,7 +230,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.7...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.8...HEAD
+[v6.2.1.10461+krzw.8]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.8
 [v6.2.1.10461+krzw.7]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.7
 [v6.2.1.10461+krzw.6]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.6
 [v6.2.1.10461+krzw.5]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.5
