@@ -148,6 +148,38 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport
         }
 
         [Test]
+        public void should_finalize_upgrade_after_committing_new_download()
+        {
+            Subject.Import(new List<ImportDecision> { _approvedDecisions.First() }, true);
+
+            Mocker.GetMock<IUpgradeMediaFiles>()
+                  .Verify(v => v.FinalizeUpgrade(It.IsAny<MovieFileMoveResult>()), Times.Once());
+
+            Mocker.GetMock<IUpgradeMediaFiles>()
+                  .Verify(v => v.RollbackUpgrade(It.IsAny<MovieFileMoveResult>()), Times.Never());
+        }
+
+        [Test]
+        public void should_rollback_upgrade_and_not_finalize_when_adding_new_file_fails()
+        {
+            Mocker.GetMock<IMediaFileService>()
+                  .Setup(s => s.Add(It.IsAny<MovieFile>()))
+                  .Throws(new IOException("Simulated database write failure"));
+
+            var result = Subject.Import(new List<ImportDecision> { _approvedDecisions.First() }, true);
+
+            result.Where(i => i.Result == ImportResultType.Imported).Should().BeEmpty();
+
+            Mocker.GetMock<IUpgradeMediaFiles>()
+                  .Verify(v => v.RollbackUpgrade(It.IsAny<MovieFileMoveResult>()), Times.Once());
+
+            Mocker.GetMock<IUpgradeMediaFiles>()
+                  .Verify(v => v.FinalizeUpgrade(It.IsAny<MovieFileMoveResult>()), Times.Never());
+
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
         public void should_not_move_existing_files()
         {
             GivenExistingFileOnDisk();
