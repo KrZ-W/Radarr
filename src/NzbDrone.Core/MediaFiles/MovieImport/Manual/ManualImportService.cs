@@ -394,7 +394,19 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
             item.Quality = movieFile.Quality;
             item.Languages = movieFile.Languages;
             item.IndexerFlags = (int)movieFile.IndexerFlags;
-            item.Size = _diskProvider.GetFileSize(item.Path);
+
+            // A DB-referenced existing file may be missing from disk (e.g. a stale row). Degrade
+            // gracefully to the last-known size instead of throwing, which would 500 the whole listing.
+            if (_diskProvider.FileExists(item.Path))
+            {
+                item.Size = _diskProvider.GetFileSize(item.Path);
+            }
+            else
+            {
+                _logger.Warn("Existing movie file is referenced in the database but missing from disk: {0}", item.Path);
+                item.Size = movieFile.Size;
+            }
+
             item.Rejections = Enumerable.Empty<ImportRejection>();
             item.MovieFileId = movieFile.Id;
             item.CustomFormats = _formatCalculator.ParseCustomFormat(movieFile, movie);
