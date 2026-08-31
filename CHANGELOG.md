@@ -10,7 +10,23 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed
+
+- **Phantom empty slots on failed upgrade imports (data loss):** an upgrade import
+  deleted the existing file and its DB row *before* moving the replacement into the
+  library, so any failure after that point (destination error, crash, DB write failure)
+  destroyed the old file while importing nothing — with no recycle bin configured, the
+  loss was permanent. Seen in production as chronic *grabbed → movieFileDeleted/Upgrade
+  → no import → missing → re-grab* loops that only manual repair broke. The ordering is
+  inherited from upstream; the fork's priority-CF upgrades made it fire far more often.
+  Upgrades are now **atomic**: the existing file is parked aside (renamed), the
+  replacement is imported and committed, and only then is the original recycled — any
+  failure restores the original and returns a moved replacement to the download folder.
+  See [docs](docs/features/atomic-upgrade-imports.md).
+- **Manual Import no longer 500s on stale file rows:** a database-referenced movie file
+  missing from disk made the Manual Import listing throw a fatal
+  `FileNotFoundException`; it now logs a warning and lists the item with its last-known
+  size.
 
 ## [v6.2.1.10461+krzw.8] — based on Radarr 6.2.1.10461
 
