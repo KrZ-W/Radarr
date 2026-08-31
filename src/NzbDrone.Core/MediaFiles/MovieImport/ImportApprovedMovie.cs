@@ -74,6 +74,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
             {
                 var localMovie = importDecision.LocalMovie;
                 var oldFiles = new List<DeletedMovieFile>();
+                MovieFileMoveResult moveResult = null;
 
                 try
                 {
@@ -133,7 +134,11 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                         movieFile.SceneName = localMovie.SceneName;
                         movieFile.OriginalFilePath = GetOriginalFilePath(downloadClientItem, localMovie);
 
-                        oldFiles = _movieFileUpgrader.UpgradeMovieFile(movieFile, localMovie, copyOnly).OldFiles;
+                        // Parks (does not delete) the existing file and moves the replacement into place.
+                        // The existing file is only removed once the import is committed (FinalizeUpgrade
+                        // below); a failure here restores the original and rethrows.
+                        moveResult = _movieFileUpgrader.UpgradeMovieFile(movieFile, localMovie, copyOnly);
+                        oldFiles = moveResult.OldFiles;
                     }
                     else
                     {
@@ -148,7 +153,29 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                         }
                     }
 
-                    movieFile = _mediaFileService.Add(movieFile);
+                    try
+                    {
+                        movieFile = _mediaFileService.Add(movieFile);
+                    }
+                    catch
+                    {
+                        // Writing the replacement's DB row failed. Undo the move and restore the parked
+                        // original so the upgrade never leaves the slot empty.
+                        if (moveResult != null)
+                        {
+                            _movieFileUpgrader.RollbackUpgrade(moveResult);
+                        }
+
+                        throw;
+                    }
+
+                    // Replacement is now on disk and in the database: the upgrade is committed. Only now
+                    // remove the parked original(s) (recycle bin + movieFileDeleted/Upgrade event).
+                    if (moveResult != null)
+                    {
+                        _movieFileUpgrader.FinalizeUpgrade(moveResult);
+                    }
+
                     importResults.Add(new ImportResult(importDecision));
 
                     localMovie.Movie.MovieFile = movieFile;
