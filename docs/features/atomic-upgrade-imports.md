@@ -1,6 +1,6 @@
 # Atomic Upgrade Imports
 
-> **Status:** stable · **Since:** `v6.2.1.10461+krzw.4` · **Surface:** automatic (no settings)
+> **Status:** stable · **Since:** `v6.2.1.10461+krzw.9` · **Surface:** automatic (no settings)
 
 ## What it does
 
@@ -85,3 +85,11 @@ permanently deleted before the transfer even started).
 frequent (language-first swaps of files that are otherwise fine) — which is exactly what
 turned upstream's latent ordering flaw into recurring loss. Those features decide
 *whether* to upgrade; this one guarantees the swap itself can't destroy anything.
+
+## Source
+
+Commit: `a179188ad`. Key files:
+`MediaFiles/UpgradeMediaFileService.cs` (park / finalize / rollback),
+`MediaFiles/PendingUpgradeFile.cs`, `MediaFiles/MovieFileMoveResult.cs`,
+`MediaFiles/MovieImport/ImportApprovedMovie.cs` (commit orchestration),
+`MediaFiles/MovieImport/Manual/ManualImportService.cs` (missing-file hardening).
