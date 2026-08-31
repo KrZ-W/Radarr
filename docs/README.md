@@ -20,6 +20,7 @@ exact behavior.
 | [Custom Format Priority Mode](features/custom-format-priority-mode.md) | Per-CF "Priority" flag: language beats quality, with downgrade protection |
 | [VFQ Audio-Title Detection](features/vfq-audio-title-detection.md) | "Audio Title" CF condition reads audio-track titles for content-based VFQ grading |
 | [Import-time Enforcement](features/import-time-enforcement.md) | MinFormatScore + quality-profile Language enforced at import, not just grab |
+| [Atomic Upgrade Imports](features/atomic-upgrade-imports.md) | Existing file survives unless the replacement import fully commits; failed upgrades restore everything |
 | [Regional Language & Translations](features/regional-language-and-translations.md) | Regional title variants in search + regional ISO-code fallback |
 | [Configurable Indexer Cooldown](features/configurable-indexer-cooldown.md) | Editable indexer back-off/escalation schedule |
 | [Docker / GHCR Deployment](features/docker-deployment.md) | LinuxServer.io-style image published to GHCR |
