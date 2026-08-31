@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.2.1.10461+krzw.9] — based on Radarr 6.2.1.10461
+
 ### Fixed
 
 - **Phantom empty slots on failed upgrade imports (data loss):** an upgrade import
@@ -27,6 +31,8 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   missing from disk made the Manual Import listing throw a fatal
   `FileNotFoundException`; it now logs a warning and lists the item with its last-known
   size.
+
+Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.9`.
 
 ## [v6.2.1.10461+krzw.8] — based on Radarr 6.2.1.10461
 
@@ -246,7 +252,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.8...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.9...HEAD
+[v6.2.1.10461+krzw.9]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.9
 [v6.2.1.10461+krzw.8]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.8
 [v6.2.1.10461+krzw.7]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.7
 [v6.2.1.10461+krzw.6]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.6
