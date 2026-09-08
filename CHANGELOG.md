@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.3.0.10514+krzw.2] — based on Radarr 6.3.0.10514
+
 ### Changed
 
 - **User title import pipeline moved into Core** (`Movies/UserTitles/`). The two import
@@ -26,6 +30,8 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   `missingFrenchTitles`. `RegionalLanguageTag` is now the single definition of the
   `RegionalLanguage` storage shape, used by both SkyHook (TMDB rows) and the importer.
   See [docs](docs/features/user-alternative-titles.md#architecture).
+
+Container image: `ghcr.io/krz-w/radarr:6.3.0.10514-krzw.2`.
 
 ## [v6.3.0.10514+krzw.1] — based on Radarr 6.3.0.10514
 
@@ -339,7 +345,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.1...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.2...HEAD
+[v6.3.0.10514+krzw.2]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.2
 [v6.3.0.10514+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.1
 [v6.2.1.10461+krzw.11]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.11
 [v6.2.1.10461+krzw.10]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.10
