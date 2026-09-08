@@ -15,11 +15,20 @@ namespace NzbDrone.Core.Housekeeping.Housekeepers
             _repo = repo;
         }
 
+        // krzw(indexer-cooldown): the schedule the bound is computed from. Indexers override this with
+        // the configured IndexerCooldownPeriods so a longer custom cooldown is not clipped back to the
+        // default table by the daily housekeeping run.
+        protected virtual int[] GetEscalationPeriods()
+        {
+            return EscalationBackOff.Periods;
+        }
+
         public void Clean()
         {
             var now = DateTime.UtcNow;
             var statuses = _repo.All().ToList();
             var toUpdate = new List<TModel>();
+            var periods = GetEscalationPeriods();  // krzw(indexer-cooldown)
 
             foreach (var status in statuses)
             {
@@ -28,8 +37,8 @@ namespace NzbDrone.Core.Housekeeping.Housekeepers
                 // A custom cooldown schedule (IndexerCooldownPeriods) can have more levels than the
                 // default table, so a persisted EscalationLevel may exceed the last index - clamp it,
                 // matching CalculateBackOffPeriod.
-                var escalationLevel = Math.Min(status.EscalationLevel, EscalationBackOff.Periods.Length - 1);
-                var escalationDelay = EscalationBackOff.Periods[escalationLevel];
+                var escalationLevel = Math.Min(status.EscalationLevel, periods.Length - 1);
+                var escalationDelay = periods[escalationLevel];
                 var disabledTill = now.AddMinutes(escalationDelay);
 
                 if (status.DisabledTill > disabledTill)
