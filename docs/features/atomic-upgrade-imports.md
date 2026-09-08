@@ -56,6 +56,16 @@ Details worth knowing:
   deferred delete event then finds no movie still pointing at the old file and detaches
   nothing. This also closes two small upstream races (movie briefly file-less
   mid-import; empty-folder cleanup firing between delete and move).
+- **Extras survive same-name upgrades.** The old file's subtitles/NFO are recycled by an
+  *asynchronous* handler of the delete event, which in the fork fires moments before the
+  replacement's extras are imported under the same names. The handler now skips any path
+  that already belongs to another file of the movie, so a freshly imported `Movie.en.srt`
+  is never recycled by the outgoing file's cleanup (this was a latent upstream race too,
+  on same-filesystem moves).
+- **Import scripts still see the outgoing file.** `Radarr_DeletedRelativePaths`,
+  `Radarr_DeletedPaths` and `Radarr_DeletedDateAdded` are populated at park time, so a
+  script-import hook run during the transfer gets them exactly as before. At that moment
+  the file is still on disk under its parked name; it is recycled only at finalize.
 - **Stale DB rows can't break manual import anymore.** The Manual Import listing used
   to throw a fatal `FileNotFoundException` (HTTP 500) if a database-referenced file was
   missing on disk; it now logs a warning and lists the item with its last-known size.
@@ -68,6 +78,9 @@ the original's bytes are intact under the parked name:
 
 - The next library rescan reconciles the DB row (file "missing from disk") and the
   movie is re-grabbed as usual — self-healing, at the cost of a re-download.
+- If a later upgrade of the same slot finds a stale `*.krzw-upgrade-bak` in its way, it
+  sends it to the recycle bin (permanent delete only if recycling fails) before parking
+  the current file — nothing is silently destroyed.
 - To recover the file instead, just strip the suffix before rescanning:
 
 ```sh
