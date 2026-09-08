@@ -11,9 +11,9 @@ namespace NzbDrone.Core.Parser
         private static readonly HashSet<IsoLanguage> All = new HashSet<IsoLanguage>
                                                            {
                                                                new IsoLanguage("en", "", "eng", "English", Language.English),
-                                                               new IsoLanguage("en", "ca", "eng", "English (Canada)", Language.English),
+                                                               new IsoLanguage("en", "ca", "eng", "English (Canada)", Language.English),  // krzw(regional-translations)
                                                                new IsoLanguage("fr", "fr", "fra", "French", Language.French),
-                                                               new IsoLanguage("fr", "ca", "fra", "French (Canada)", Language.French),
+                                                               new IsoLanguage("fr", "ca", "fra", "French (Canada)", Language.French),  // krzw(regional-translations)
                                                                new IsoLanguage("es", "", "spa", "Spanish", Language.Spanish),
                                                                new IsoLanguage("de", "de", "deu", "German", Language.German),
                                                                new IsoLanguage("it", "", "ita", "Italian", Language.Italian),
@@ -92,6 +92,7 @@ namespace NzbDrone.Core.Parser
 
                 if (isoArray.Length > 1)
                 {
+                    // krzw(regional-translations): regional code falls back to the base language instead of null
                     var countryCode = isoArray[1].ToLower();
                     var exactMatch = isoLanguages.Where(l => l.CountryCode == countryCode).ToList();
 

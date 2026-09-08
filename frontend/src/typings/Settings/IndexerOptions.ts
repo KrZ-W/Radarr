@@ -7,5 +7,5 @@ export default interface IndexerOptions {
   availabilityDelay: number;
   whitelistedHardcodedSubs: string[];
   allowHardcodedSubs: boolean;
-  indexerCooldownPeriods: string;
+  indexerCooldownPeriods: string; // krzw(indexer-cooldown)
 }

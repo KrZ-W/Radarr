@@ -10,7 +10,7 @@ using NLog;
 using NzbDrone.Common;
 using NzbDrone.Common.Disk;
 using NzbDrone.Common.Extensions;
-using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Configuration;  // krzw(regional-translations)
 using NzbDrone.Core.Extras.Metadata.Files;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaCover;
@@ -32,7 +32,7 @@ namespace NzbDrone.Core.Extras.Metadata.Consumers.Xbmc
         private readonly ICreditService _creditService;
         private readonly ITagRepository _tagRepository;
         private readonly IMovieTranslationService _movieTranslationsService;
-        private readonly IConfigService _configService;
+        private readonly IConfigService _configService;  // krzw(regional-translations)
 
         public XbmcMetadata(IDetectXbmcNfo detectNfo,
                             IDiskProvider diskProvider,
@@ -40,7 +40,7 @@ namespace NzbDrone.Core.Extras.Metadata.Consumers.Xbmc
                             ICreditService creditService,
                             ITagRepository tagRepository,
                             IMovieTranslationService movieTranslationsService,
-                            IConfigService configService,
+                            IConfigService configService,  // krzw(regional-translations)
                             Logger logger)
         {
             _logger = logger;
@@ -50,7 +50,7 @@ namespace NzbDrone.Core.Extras.Metadata.Consumers.Xbmc
             _creditService = creditService;
             _tagRepository = tagRepository;
             _movieTranslationsService = movieTranslationsService;
-            _configService = configService;
+            _configService = configService;  // krzw(regional-translations)
         }
 
         private static readonly Regex MovieImagesRegex = new Regex(@"^(?<type>poster|banner|fanart|clearart|discart|keyart|landscape|logo|backdrop|clearlogo)\.(?:png|jpe?g)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -133,6 +133,8 @@ namespace NzbDrone.Core.Extras.Metadata.Consumers.Xbmc
 
                 var movieTranslations = _movieTranslationsService.GetAllTranslationsForMovieMetadata(movie.MovieMetadataId);
                 var selectedSettingsLanguage = Language.FindById(movieMetadataLanguage);
+
+                // krzw(regional-translations): deterministic regional pick for NFO title
                 var movieTranslation = movieTranslations.Where(mt => mt.Language == selectedSettingsLanguage).OrderByRegionalPreference(_configService.RegionalTranslationVariants).FirstOrDefault();
 
                 var credits = _creditService.GetAllCreditsForMovieMetadata(movie.MovieMetadataId);

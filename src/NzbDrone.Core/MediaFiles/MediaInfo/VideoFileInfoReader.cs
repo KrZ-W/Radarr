@@ -21,7 +21,7 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
         private readonly Logger _logger;
         private readonly List<FFProbePixelFormat> _pixelFormats;
 
-        // Bumped 14 -> 15 to capture per-audio-track titles (AudioTitles).
+        // krzw(audio-title): bumped 14 -> 15 to capture per-audio-track titles (AudioTitles).
         // MINIMUM raised to match so existing files re-probe (and gain AudioTitles) on the next library scan.
         public const int MINIMUM_MEDIA_INFO_SCHEMA_REVISION = 15;
         public const int CURRENT_MEDIA_INFO_SCHEMA_REVISION = 15;
@@ -102,6 +102,8 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
                 mediaInfoModel.AudioLanguages = analysis.AudioStreams?.Select(x => x.Language)
                     .Where(l => l.IsNotNullOrWhiteSpace())
                     .ToList();
+
+                // krzw(audio-title)
                 mediaInfoModel.AudioTitles = analysis.AudioStreams?.Select(GetStreamTitle)
                     .Where(t => t.IsNotNullOrWhiteSpace())
                     .ToList();
@@ -182,6 +184,7 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
             return 0;
         }
 
+        // krzw(audio-title)
         private static string GetStreamTitle(MediaStream mediaStream)
         {
             if (mediaStream?.Tags == null)

@@ -395,6 +395,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
             item.Languages = movieFile.Languages;
             item.IndexerFlags = (int)movieFile.IndexerFlags;
 
+            // krzw(atomic-upgrade): missing-file hardening
             // A DB-referenced existing file may be missing from disk (e.g. a stale row). Degrade
             // gracefully to the last-known size instead of throwing, which would 500 the whole listing.
             if (_diskProvider.FileExists(item.Path))

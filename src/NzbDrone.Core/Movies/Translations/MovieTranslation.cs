@@ -1,5 +1,5 @@
 using NzbDrone.Core.Languages;
-using NzbDrone.Core.Movies.AlternativeTitles;
+using NzbDrone.Core.Movies.AlternativeTitles;  // krzw(user-titles)
 
 namespace NzbDrone.Core.Movies.Translations
 {
@@ -10,7 +10,7 @@ namespace NzbDrone.Core.Movies.Translations
         public string CleanTitle { get; set; }
         public string Overview { get; set; }
         public Language Language { get; set; }
-        public string RegionalLanguage { get; set; }
-        public SourceType SourceType { get; set; }
+        public string RegionalLanguage { get; set; }  // krzw(regional-translations): migration 243
+        public SourceType SourceType { get; set; }  // krzw(user-titles): migration 244
     }
 }

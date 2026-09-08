@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+using Newtonsoft.Json;  // krzw(regional-translations)
 
 namespace NzbDrone.Core.MetadataSource.SkyHook.Resource
 {
@@ -8,6 +8,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook.Resource
         public string Overview { get; set; }
         public string Language { get; set; }
 
+        // krzw(regional-translations): extra TMDB fields (currently unreferenced)
         [JsonProperty("iso_639_1")]
         public string Iso6391 { get; set; }
 
@@ -18,6 +19,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook.Resource
         public TranslationDataResource Data { get; set; }
     }
 
+    // krzw(regional-translations)
     public class TranslationDataResource
     {
         [JsonProperty("title")]

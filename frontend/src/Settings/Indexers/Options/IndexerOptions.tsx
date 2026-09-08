@@ -178,6 +178,7 @@ function IndexerOptions({
             />
           </FormGroup>
 
+          {/* krzw(indexer-cooldown) */}
           <FormGroup advancedSettings={showAdvancedSettings} isAdvanced={true}>
             <FormLabel>{translate('IndexerCooldownPeriods')}</FormLabel>
 

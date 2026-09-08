@@ -25,7 +25,7 @@ namespace NzbDrone.Core.Housekeeping.Housekeepers
             {
                 var updated = false;
 
-                // A custom cooldown schedule (IndexerCooldownPeriods) can have more levels than the
+                // krzw(indexer-cooldown): a custom cooldown schedule (IndexerCooldownPeriods) can have more levels than the
                 // default table, so a persisted EscalationLevel may exceed the last index - clamp it,
                 // matching CalculateBackOffPeriod.
                 var escalationLevel = Math.Min(status.EscalationLevel, EscalationBackOff.Periods.Length - 1);

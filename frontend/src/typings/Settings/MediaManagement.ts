@@ -18,6 +18,6 @@ export default interface MediaManagement {
   importExtraFiles: boolean;
   extraFileExtensions: string;
   enableMediaInfo: boolean;
-  regionalTranslationVariants: string;
-  regionalTranslationSearchMode: string;
+  regionalTranslationVariants: string; // krzw(regional-translations)
+  regionalTranslationSearchMode: string; // krzw(regional-translations)
 }

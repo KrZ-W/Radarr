@@ -31,6 +31,7 @@ namespace Radarr.Api.V3.Config
         public string ExtraFileExtensions { get; set; }
         public bool EnableMediaInfo { get; set; }
 
+        // krzw(regional-translations)
         public string RegionalTranslationVariants { get; set; }
         public RegionalTranslationSearchMode RegionalTranslationSearchMode { get; set; }
     }
@@ -64,6 +65,7 @@ namespace Radarr.Api.V3.Config
                 ExtraFileExtensions = model.ExtraFileExtensions,
                 EnableMediaInfo = model.EnableMediaInfo,
 
+                // krzw(regional-translations)
                 RegionalTranslationVariants = model.RegionalTranslationVariants,
                 RegionalTranslationSearchMode = model.RegionalTranslationSearchMode
             };

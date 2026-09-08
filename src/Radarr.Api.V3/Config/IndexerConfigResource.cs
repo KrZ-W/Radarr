@@ -13,7 +13,7 @@ namespace Radarr.Api.V3.Config
         public int AvailabilityDelay { get; set; }
         public bool AllowHardcodedSubs { get; set; }
         public string WhitelistedHardcodedSubs { get; set; }
-        public string IndexerCooldownPeriods { get; set; }
+        public string IndexerCooldownPeriods { get; set; }  // krzw(indexer-cooldown)
     }
 
     public static class IndexerConfigResourceMapper
@@ -30,7 +30,7 @@ namespace Radarr.Api.V3.Config
                 AvailabilityDelay = model.AvailabilityDelay,
                 AllowHardcodedSubs = model.AllowHardcodedSubs,
                 WhitelistedHardcodedSubs = model.WhitelistedHardcodedSubs,
-                IndexerCooldownPeriods = model.IndexerCooldownPeriods,
+                IndexerCooldownPeriods = model.IndexerCooldownPeriods,  // krzw(indexer-cooldown)
             };
         }
     }

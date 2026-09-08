@@ -14,7 +14,7 @@ namespace NzbDrone.Core.Movies.AlternativeTitles
         AlternativeTitle GetById(int id);
         List<AlternativeTitle> GetAllTitles();
         List<AlternativeTitle> UpdateTitles(List<AlternativeTitle> titles, MovieMetadata movie);
-        List<AlternativeTitle> UpsertUserTitles(List<AlternativeTitle> titles, MovieMetadata movie);
+        List<AlternativeTitle> UpsertUserTitles(List<AlternativeTitle> titles, MovieMetadata movie);  // krzw(user-titles)
     }
 
     public class AlternativeTitleService : IAlternativeTitleService, IHandleAsync<MoviesDeletedEvent>
@@ -80,6 +80,7 @@ namespace NzbDrone.Core.Movies.AlternativeTitles
 
             var existingTitles = _titleRepo.FindByMovieMetadataId(movieMetadataId);
 
+            // krzw(user-titles): refresh preservation
             // Titles not sourced from TMDB (User, Mappings, Indexer) are managed outside the metadata
             // refresh and must survive it; a refresh only reconciles the TMDB-sourced rows.
             var preservedTitles = existingTitles.Where(t => t.SourceType != SourceType.Tmdb).ToList();
@@ -120,11 +121,13 @@ namespace NzbDrone.Core.Movies.AlternativeTitles
             _titleRepo.UpdateMany(updateList);
             _titleRepo.InsertMany(addList);
 
+            // krzw(user-titles): preserved rows are returned with the TMDB set
             _logger.Debug("[{0}] {1} alternative titles up to date; Updating {2}, Adding {3}, Deleting {4}, Preserving {5} non-TMDB entries.", movieMetadata.Title, upToDateCount, updateList.Count, addList.Count, existingTitles.Count, preservedTitles.Count);
 
             return titles.Concat(preservedTitles).ToList();
         }
 
+        // krzw(user-titles): POST /api/v3/alttitle/user/import
         public List<AlternativeTitle> UpsertUserTitles(List<AlternativeTitle> titles, MovieMetadata movieMetadata)
         {
             var movieMetadataId = movieMetadata.Id;

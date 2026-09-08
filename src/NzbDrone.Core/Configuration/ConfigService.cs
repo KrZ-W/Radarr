@@ -135,6 +135,7 @@ namespace NzbDrone.Core.Configuration
             set { SetValue("CertificationCountry", value); }
         }
 
+        // krzw(regional-translations): settings
         public string RegionalTranslationVariants
         {
             get
@@ -174,6 +175,7 @@ namespace NzbDrone.Core.Configuration
             set { SetValue("MinimumAge", value); }
         }
 
+        // krzw(indexer-cooldown): setting
         public string IndexerCooldownPeriods
         {
             get { return GetValue("IndexerCooldownPeriods", string.Empty); }
