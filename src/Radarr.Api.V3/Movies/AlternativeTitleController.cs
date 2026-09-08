@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using System.Linq;
+using System.Linq;  // krzw(user-titles)
 using Microsoft.AspNetCore.Mvc;
-using NzbDrone.Common.Extensions;
+using NzbDrone.Common.Extensions;  // krzw(user-titles)
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Movies.AlternativeTitles;
 using Radarr.Http;
@@ -43,6 +43,7 @@ namespace Radarr.Api.V3.Movies
             return _altTitleService.GetAllTitles().ToResource();
         }
 
+        // krzw(user-titles): bulk import of curated alt titles
         [HttpPost("user/import")]
         [Consumes("application/json")]
         public UserAlternativeTitleImportSummaryResource ImportUserTitles([FromBody] List<UserAlternativeTitleImportResource> resources)

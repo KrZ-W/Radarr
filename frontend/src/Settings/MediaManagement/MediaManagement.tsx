@@ -461,6 +461,7 @@ function MediaManagement() {
               </FormGroup>
             </FieldSet>
 
+            {/* krzw(regional-translations) */}
             {showAdvancedSettings ? (
               <FieldSet legend={translate('RegionalTranslations')}>
                 <FormGroup

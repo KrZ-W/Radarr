@@ -74,7 +74,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
             {
                 var localMovie = importDecision.LocalMovie;
                 var oldFiles = new List<DeletedMovieFile>();
-                MovieFileMoveResult moveResult = null;
+                MovieFileMoveResult moveResult = null;  // krzw(atomic-upgrade)
 
                 try
                 {
@@ -134,6 +134,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                         movieFile.SceneName = localMovie.SceneName;
                         movieFile.OriginalFilePath = GetOriginalFilePath(downloadClientItem, localMovie);
 
+                        // krzw(atomic-upgrade)
                         // Parks (does not delete) the existing file and moves the replacement into place.
                         // The existing file is only removed once the import is committed (FinalizeUpgrade
                         // below); a failure here restores the original and rethrows.
@@ -153,6 +154,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                         }
                     }
 
+                    // krzw(atomic-upgrade): commit point: rollback on DB failure, finalize after
                     try
                     {
                         movieFile = _mediaFileService.Add(movieFile);

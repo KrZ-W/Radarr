@@ -95,6 +95,7 @@ namespace NzbDrone.Core.Profiles.Qualities
             return FormatItems.Where(x => formats.Contains(x.Format)).Sum(x => x.Score);
         }
 
+        // krzw(cf-priority)
         public int CalculatePriorityFormatScore(List<CustomFormat> formats)
         {
             return FormatItems.Where(x => formats.Contains(x.Format) && x.Priority).Sum(x => x.Score);

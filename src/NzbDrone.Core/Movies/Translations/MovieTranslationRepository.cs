@@ -9,7 +9,7 @@ namespace NzbDrone.Core.Movies.Translations
     {
         List<MovieTranslation> FindByMovieMetadataId(int movieMetadataId);
         List<MovieTranslation> FindByLanguage(Language language);
-        List<MovieTranslation> FindByCleanTitles(List<string> cleanTitles);
+        List<MovieTranslation> FindByCleanTitles(List<string> cleanTitles);  // krzw(user-titles)
         void DeleteForMovies(List<int> movieIds);
     }
 
@@ -30,6 +30,7 @@ namespace NzbDrone.Core.Movies.Translations
             return Query(x => x.Language == language);
         }
 
+        // krzw(user-titles): cross-movie guard lookup
         public List<MovieTranslation> FindByCleanTitles(List<string> cleanTitles)
         {
             return Query(x => cleanTitles.Contains(x.CleanTitle));

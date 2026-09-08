@@ -57,7 +57,7 @@ namespace NzbDrone.Core.MediaFiles.MediaInfo
 
         public List<string> AudioLanguages { get; set; }
 
-        public List<string> AudioTitles { get; set; }
+        public List<string> AudioTitles { get; set; }  // krzw(audio-title): schema revision 15
 
         public List<string> Subtitles { get; set; }
 

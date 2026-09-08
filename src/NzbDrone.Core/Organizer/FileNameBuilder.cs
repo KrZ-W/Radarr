@@ -9,7 +9,7 @@ using Diacritical;
 using NLog;
 using NzbDrone.Common.EnsureThat;
 using NzbDrone.Common.Extensions;
-using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Configuration;  // krzw(regional-translations)
 using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.MediaInfo;
@@ -37,7 +37,7 @@ namespace NzbDrone.Core.Organizer
         private readonly IUpdateMediaInfo _mediaInfoUpdater;
         private readonly IMovieTranslationService _movieTranslationService;
         private readonly ICustomFormatCalculationService _formatCalculator;
-        private readonly IConfigService _configService;
+        private readonly IConfigService _configService;  // krzw(regional-translations)
         private readonly Logger _logger;
 
         private static readonly Regex TitleRegex = new Regex(@"(?<tag>\{(?<prefix>[-{ ._\[(]*)(?:imdb(?:id)?-|edition-))?\{(?<prefix>[-{ ._\[(]*)(?<token>(?:[a-z0-9]+)(?:(?<separator>[- ._]+)(?:[a-z0-9]+))?)(?::(?<customFormat>[ ,a-z0-9|+-]+(?<![- ])))?(?<suffix>[-} ._)\]]*)\}",
@@ -94,7 +94,7 @@ namespace NzbDrone.Core.Organizer
                                IUpdateMediaInfo mediaInfoUpdater,
                                IMovieTranslationService movieTranslationService,
                                ICustomFormatCalculationService formatCalculator,
-                               IConfigService configService,
+                               IConfigService configService,  // krzw(regional-translations)
                                Logger logger)
         {
             _namingConfigService = namingConfigService;
@@ -102,7 +102,7 @@ namespace NzbDrone.Core.Organizer
             _mediaInfoUpdater = mediaInfoUpdater;
             _movieTranslationService = movieTranslationService;
             _formatCalculator = formatCalculator;
-            _configService = configService;
+            _configService = configService;  // krzw(regional-translations)
             _logger = logger;
         }
 
@@ -306,6 +306,7 @@ namespace NzbDrone.Core.Organizer
                         titles = _movieTranslationService.GetAllTranslationsForMovieMetadata(movie.MovieMetadataId).Where(t => t.Language == language).ToList();
                     }
 
+                    // krzw(regional-translations): deterministic regional pick for {Movie TitleThe:XX}
                     return titles.OrderByRegionalPreference(_configService.RegionalTranslationVariants).FirstOrDefault()?.Title ?? movie.Title;
                 }
             }

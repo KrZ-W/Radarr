@@ -7,12 +7,13 @@ namespace NzbDrone.Core.MediaFiles
         public MovieFileMoveResult()
         {
             OldFiles = new List<DeletedMovieFile>();
-            PendingUpgrades = new List<PendingUpgradeFile>();
+            PendingUpgrades = new List<PendingUpgradeFile>();  // krzw(atomic-upgrade)
         }
 
         public MovieFile MovieFile { get; set; }
         public List<DeletedMovieFile> OldFiles { get; set; }
 
+        // krzw(atomic-upgrade): park/finalize/rollback bookkeeping
         // Existing files parked aside for this import, pending FinalizeUpgrade (commit) or RollbackUpgrade.
         public List<PendingUpgradeFile> PendingUpgrades { get; set; }
 

@@ -3,7 +3,7 @@ using System.Linq;
 using NLog;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.Messaging.Events;
-using NzbDrone.Core.Movies.AlternativeTitles;
+using NzbDrone.Core.Movies.AlternativeTitles;  // krzw(user-titles)
 using NzbDrone.Core.Movies.Events;
 
 namespace NzbDrone.Core.Movies.Translations
@@ -13,7 +13,7 @@ namespace NzbDrone.Core.Movies.Translations
         List<MovieTranslation> GetAllTranslationsForMovieMetadata(int movieMetadataId);
         List<MovieTranslation> GetAllTranslationsForLanguage(Language language);
         List<MovieTranslation> UpdateTranslations(List<MovieTranslation> titles, MovieMetadata movie);
-        List<MovieTranslation> UpsertUserTranslations(List<MovieTranslation> translations, MovieMetadata movie);
+        List<MovieTranslation> UpsertUserTranslations(List<MovieTranslation> translations, MovieMetadata movie);  // krzw(user-titles)
     }
 
     public class MovieTranslationService : IMovieTranslationService, IHandleAsync<MoviesDeletedEvent>
@@ -53,6 +53,7 @@ namespace NzbDrone.Core.Movies.Translations
             // Then throw out any we don't have languages for
             translations = translations.Where(t => t.Language != null).ToList();
 
+            // krzw(regional-translations): distinct key includes region
             // Make sure translations are distinct by (Language, RegionalLanguage)
             // This allows multiple translations for the same language if they have different regions
             translations = translations.DistinctBy(t => new { t.Language, t.RegionalLanguage }).ToList();
@@ -60,6 +61,7 @@ namespace NzbDrone.Core.Movies.Translations
             // Now find translations to delete, update and insert
             var existingTranslations = _translationRepo.FindByMovieMetadataId(movieMetadataId);
 
+            // krzw(user-titles): refresh preservation
             // Rows not sourced from TMDB (user imports) are managed outside the metadata
             // refresh and must survive it; the refresh only reconciles TMDB-sourced rows.
             var preservedTranslations = existingTranslations.Where(t => t.SourceType != SourceType.Tmdb).ToList();
@@ -74,6 +76,7 @@ namespace NzbDrone.Core.Movies.Translations
 
             foreach (var translation in translations)
             {
+                // krzw(regional-translations): match key includes region
                 var existingTranslation = existingTranslations.FirstOrDefault(x => x.Language == translation.Language && x.RegionalLanguage == translation.RegionalLanguage);
 
                 if (existingTranslation != null)
@@ -101,11 +104,13 @@ namespace NzbDrone.Core.Movies.Translations
             _translationRepo.UpdateMany(updateList);
             _translationRepo.InsertMany(addList);
 
+            // krzw(user-titles): preserved rows are returned with the TMDB set
             _logger.Debug("[{0}] {1} translations up to date; Updating {2}, Adding {3}, Deleting {4}, Preserving {5} non-TMDB entries.", movieMetadata.Title, upToDateCount, updateList.Count, addList.Count, existingTranslations.Count, preservedTranslations.Count);
 
             return translations.Concat(preservedTranslations).ToList();
         }
 
+        // krzw(user-titles): POST /api/v3/translation/user/import
         public List<MovieTranslation> UpsertUserTranslations(List<MovieTranslation> translations, MovieMetadata movieMetadata)
         {
             var movieMetadataId = movieMetadata.Id;

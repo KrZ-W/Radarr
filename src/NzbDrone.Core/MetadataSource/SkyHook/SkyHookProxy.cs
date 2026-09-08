@@ -622,6 +622,7 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
 
         private static MovieTranslation MapTranslation(TranslationResource arg)
         {
+            // krzw(regional-translations): keep the full xx-yy code as RegionalLanguage
             var languageCode = arg.Language?.ToLower();
 
             var newAlternativeTitle = new MovieTranslation

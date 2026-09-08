@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Instrumentation.Extensions;
-using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Configuration;  // krzw(regional-translations)
 using NzbDrone.Core.DecisionEngine;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.IndexerSearch.Definitions;
@@ -29,7 +29,7 @@ namespace NzbDrone.Core.IndexerSearch
         private readonly IMovieService _movieService;
         private readonly IMovieTranslationService _movieTranslationService;
         private readonly IQualityProfileService _qualityProfileService;
-        private readonly IConfigService _configService;
+        private readonly IConfigService _configService;  // krzw(regional-translations)
         private readonly Logger _logger;
 
         public ReleaseSearchService(IIndexerFactory indexerFactory,
@@ -37,7 +37,7 @@ namespace NzbDrone.Core.IndexerSearch
                                 IMovieService movieService,
                                 IMovieTranslationService movieTranslationService,
                                 IQualityProfileService qualityProfileService,
-                                IConfigService configService,
+                                IConfigService configService,  // krzw(regional-translations)
                                 Logger logger)
         {
             _indexerFactory = indexerFactory;
@@ -45,7 +45,7 @@ namespace NzbDrone.Core.IndexerSearch
             _movieService = movieService;
             _movieTranslationService = movieTranslationService;
             _qualityProfileService = qualityProfileService;
-            _configService = configService;
+            _configService = configService;  // krzw(regional-translations)
             _logger = logger;
         }
 
@@ -88,6 +88,7 @@ namespace NzbDrone.Core.IndexerSearch
                 movie.MovieMetadata.Value.OriginalTitle
             };
 
+            // krzw(regional-translations): search-title filtering by mode + variants list (replaces upstream one-per-language loop)
             // Filter translations based on RegionalTranslationSearchMode
             var wantedTranslations = translations.Where(a => wantedLanguages.Contains(a.Language)).ToList();
             var searchMode = _configService.RegionalTranslationSearchMode;
@@ -123,6 +124,7 @@ namespace NzbDrone.Core.IndexerSearch
                 queryTranslations.Add(translation.Title);
             }
 
+            // krzw(regional-translations)
             // In AllTitles mode, also include alternative titles (from TMDB, user-added, etc.)
             if (searchMode == RegionalTranslationSearchMode.AllTitles)
             {

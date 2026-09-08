@@ -1,4 +1,4 @@
-using System;
+using System;  // krzw(atomic-upgrade)
 using System.IO;
 using NLog;
 using NzbDrone.Common.Disk;
@@ -11,12 +11,13 @@ namespace NzbDrone.Core.MediaFiles
     public interface IUpgradeMediaFiles
     {
         MovieFileMoveResult UpgradeMovieFile(MovieFile movieFile, LocalMovie localMovie, bool copyOnly = false);
-        void FinalizeUpgrade(MovieFileMoveResult moveResult);
-        void RollbackUpgrade(MovieFileMoveResult moveResult);
+        void FinalizeUpgrade(MovieFileMoveResult moveResult);  // krzw(atomic-upgrade)
+        void RollbackUpgrade(MovieFileMoveResult moveResult);  // krzw(atomic-upgrade)
     }
 
     public class UpgradeMediaFileService : IUpgradeMediaFiles
     {
+        // krzw(atomic-upgrade)
         // Suffix appended when parking an existing file aside. Not a recognised video extension, so a
         // library scan will never pick a parked file up as an importable media file.
         private const string ParkedFileSuffix = ".krzw-upgrade-bak";
@@ -45,7 +46,7 @@ namespace NzbDrone.Core.MediaFiles
             _logger.Trace("Upgrading movie file.");
 
             var moveFileResult = new MovieFileMoveResult();
-            moveFileResult.SourcePath = localMovie.Path;
+            moveFileResult.SourcePath = localMovie.Path;  // krzw(atomic-upgrade)
 
             var existingFile = localMovie.Movie.MovieFileId > 0 ? localMovie.Movie.MovieFile : null;
 
@@ -57,6 +58,7 @@ namespace NzbDrone.Core.MediaFiles
                 throw new RootFolderNotFoundException($"Root folder '{rootFolder}' was not found.");
             }
 
+            // krzw(atomic-upgrade): replaces upstream delete-before-move
             // Park the existing file aside (rename, do NOT delete). This frees the destination slot for
             // the incoming file while keeping the original fully recoverable. The actual deletion is
             // deferred to FinalizeUpgrade, which the caller invokes only after the replacement's DB row
@@ -98,6 +100,7 @@ namespace NzbDrone.Core.MediaFiles
 
             localMovie.OldFiles = moveFileResult.OldFiles;
 
+            // krzw(atomic-upgrade): restore parked original if the transfer fails
             try
             {
                 if (copyOnly)
@@ -118,11 +121,13 @@ namespace NzbDrone.Core.MediaFiles
                 throw;
             }
 
+            // krzw(atomic-upgrade)
             moveFileResult.NewFilePath = Path.Combine(localMovie.Movie.Path, moveFileResult.MovieFile.RelativePath);
 
             return moveFileResult;
         }
 
+        // krzw(atomic-upgrade)
         public void FinalizeUpgrade(MovieFileMoveResult moveResult)
         {
             // The replacement is on disk and in the database. Now remove the parked original(s): send them
@@ -177,6 +182,7 @@ namespace NzbDrone.Core.MediaFiles
             }
         }
 
+        // krzw(atomic-upgrade)
         public void RollbackUpgrade(MovieFileMoveResult moveResult)
         {
             // The import failed after the replacement was placed but before it was committed to the DB.
@@ -197,6 +203,7 @@ namespace NzbDrone.Core.MediaFiles
             RestoreParkedFiles(moveResult);
         }
 
+        // krzw(atomic-upgrade)
         private void RestoreParkedFiles(MovieFileMoveResult moveResult)
         {
             foreach (var pending in moveResult.PendingUpgrades)
@@ -230,6 +237,7 @@ namespace NzbDrone.Core.MediaFiles
             }
         }
 
+        // krzw(atomic-upgrade)
         private void RemoveOrReturnToSource(string path, string sourcePath)
         {
             // A missing source means the replacement was moved out of the download location; return it
