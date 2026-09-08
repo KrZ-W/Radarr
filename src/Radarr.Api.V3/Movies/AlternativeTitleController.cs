@@ -1,9 +1,8 @@
 using System.Collections.Generic;
-using System.Linq;  // krzw(user-titles)
 using Microsoft.AspNetCore.Mvc;
-using NzbDrone.Common.Extensions;  // krzw(user-titles)
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Movies.AlternativeTitles;
+using NzbDrone.Core.Movies.UserTitles;  // krzw(user-titles)
 using Radarr.Http;
 using Radarr.Http.REST;
 
@@ -14,11 +13,13 @@ namespace Radarr.Api.V3.Movies
     {
         private readonly IAlternativeTitleService _altTitleService;
         private readonly IMovieService _movieService;
+        private readonly IUserTitleImportService _userTitleImportService;  // krzw(user-titles)
 
-        public AlternativeTitleController(IAlternativeTitleService altTitleService, IMovieService movieService)
+        public AlternativeTitleController(IAlternativeTitleService altTitleService, IMovieService movieService, IUserTitleImportService userTitleImportService)
         {
             _altTitleService = altTitleService;
             _movieService = movieService;
+            _userTitleImportService = userTitleImportService;
         }
 
         protected override AlternativeTitleResource GetResourceById(int id)
@@ -44,49 +45,12 @@ namespace Radarr.Api.V3.Movies
         }
 
         // krzw(user-titles): bulk import of curated alt titles
+        // krzw(user-titles): bulk import of curated alt titles; all logic lives in IUserTitleImportService
         [HttpPost("user/import")]
         [Consumes("application/json")]
         public UserAlternativeTitleImportSummaryResource ImportUserTitles([FromBody] List<UserAlternativeTitleImportResource> resources)
         {
-            var summary = new UserAlternativeTitleImportSummaryResource();
-
-            if (resources == null)
-            {
-                return summary;
-            }
-
-            foreach (var resource in resources)
-            {
-                var movie = _movieService.FindByTmdbId(resource.TmdbId);
-
-                if (movie == null && resource.ImdbId.IsNotNullOrWhiteSpace())
-                {
-                    movie = _movieService.FindByImdbId(resource.ImdbId);
-                }
-
-                if (movie == null)
-                {
-                    summary.MoviesNotFound.Add($"{resource.MovieTitle} ({resource.Year}) [tmdb:{resource.TmdbId}]");
-                    continue;
-                }
-
-                var candidates = (resource.MissingFrenchTitles ?? new List<UserAlternativeTitleImportEntryResource>())
-                    .Where(t => t.Title.IsNotNullOrWhiteSpace())
-                    .ToList();
-
-                var titles = candidates
-                    .Where(t => UserTitleImportGuard.IsSafeForMovie(_movieService, t.Title, movie))
-                    .Select(t => new AlternativeTitle(t.Title, SourceType.User))
-                    .ToList();
-
-                var added = _altTitleService.UpsertUserTitles(titles, movie.MovieMetadata.Value);
-
-                summary.MoviesProcessed++;
-                summary.TitlesAdded += added.Count;
-                summary.TitlesSkipped += candidates.Count - added.Count;
-            }
-
-            return summary;
+            return _userTitleImportService.ImportAlternativeTitles(resources.ToImportRequests(defaultLanguage: null)).ToResource();
         }
     }
 }
