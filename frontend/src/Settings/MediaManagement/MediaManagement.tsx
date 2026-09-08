@@ -467,29 +467,39 @@ function MediaManagement() {
                   advancedSettings={showAdvancedSettings}
                   isAdvanced={true}
                 >
-                  <FormLabel>{translate('RegionalTranslationSearchMode')}</FormLabel>
+                  <FormLabel>
+                    {translate('RegionalTranslationSearchMode')}
+                  </FormLabel>
 
                   <FormInputGroup
                     type={inputTypes.SELECT}
                     name="regionalTranslationSearchMode"
-                    helpText={translate('RegionalTranslationSearchModeHelpText')}
+                    helpText={translate(
+                      'RegionalTranslationSearchModeHelpText'
+                    )}
                     values={[
                       {
                         key: 'standard',
                         get value() {
-                          return translate('RegionalTranslationSearchModeStandard');
+                          return translate(
+                            'RegionalTranslationSearchModeStandard'
+                          );
                         },
                       },
                       {
                         key: 'onePerRegion',
                         get value() {
-                          return translate('RegionalTranslationSearchModeOnePerRegion');
+                          return translate(
+                            'RegionalTranslationSearchModeOnePerRegion'
+                          );
                         },
                       },
                       {
                         key: 'allTitles',
                         get value() {
-                          return translate('RegionalTranslationSearchModeAllTitles');
+                          return translate(
+                            'RegionalTranslationSearchModeAllTitles'
+                          );
                         },
                       },
                     ]}
@@ -502,7 +512,9 @@ function MediaManagement() {
                   advancedSettings={showAdvancedSettings}
                   isAdvanced={true}
                 >
-                  <FormLabel>{translate('RegionalTranslationVariants')}</FormLabel>
+                  <FormLabel>
+                    {translate('RegionalTranslationVariants')}
+                  </FormLabel>
 
                   <FormInputGroup
                     type={inputTypes.TEXT}
