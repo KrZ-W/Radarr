@@ -141,7 +141,8 @@ namespace Radarr.Api.V3.Movies
                 var translations = _movieTranslationService
                     .GetAllTranslationsForLanguage(translationLanguage);
 
-                var tdict = translations.ToDictionaryIgnoreDuplicates(x => x.MovieMetadataId);
+                // krzw(regional-translations): several rows per language; keep the preferred variant
+                var tdict = translations.OrderByRegionalPreference(_configService.RegionalTranslationVariants).ToDictionaryIgnoreDuplicates(x => x.MovieMetadataId);
                 var sdict = movieStats.ToDictionary(x => x.MovieId);
 
                 var movies = movieTask.GetAwaiter().GetResult();
@@ -211,7 +212,10 @@ namespace Radarr.Api.V3.Movies
                 };
             }
 
-            return translations.FirstOrDefault(t => t.Language == configLanguage && t.MovieMetadataId == movie.Id);
+            // krzw(regional-translations): several rows per language; keep the preferred variant
+            return translations.Where(t => t.Language == configLanguage && t.MovieMetadataId == movie.Id)
+                               .OrderByRegionalPreference(_configService.RegionalTranslationVariants)
+                               .FirstOrDefault();
         }
 
         private MovieTranslation GetTranslationFromDict(Dictionary<int, MovieTranslation> translations, MovieMetadata movie, Language configLanguage)

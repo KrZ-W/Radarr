@@ -270,6 +270,42 @@ namespace NzbDrone.Core.Test.IndexerSearchTests
         }
 
         [Test]
+        public async Task RegionalVariants_standard_mode_keeps_the_preferred_variant()
+        {
+            // TMDB rows are all region-qualified (fr-FR, fr-CA, ...). Standard mode keeps one French title;
+            // with fr-CA configured that must be the Quebec row even though the France row comes first.
+            Mocker.GetMock<IConfigService>()
+                .SetupGet(s => s.RegionalTranslationSearchMode)
+                .Returns(RegionalTranslationSearchMode.Standard);
+
+            Mocker.GetMock<IConfigService>()
+                .SetupGet(s => s.RegionalTranslationVariants)
+                .Returns("fr-CA");
+
+            Mocker.GetMock<IQualityProfileService>()
+                .Setup(s => s.GetAcceptableLanguages(It.IsAny<int>()))
+                .Returns(new List<Language> { Language.French });
+
+            Mocker.GetMock<IMovieTranslationService>()
+                .Setup(s => s.GetAllTranslationsForMovieMetadata(It.IsAny<int>()))
+                .Returns(new List<MovieTranslation>
+                {
+                    new MovieTranslation { Title = "Titre France", CleanTitle = "titrefrance", Language = Language.French, RegionalLanguage = "fr-fr" },
+                    new MovieTranslation { Title = "Titre Quebec", CleanTitle = "titrequebec", Language = Language.French, RegionalLanguage = "fr-ca" }
+                });
+
+            var allCriteria = WatchForSearchCriteria();
+
+            await Subject.MovieSearch(_movie, true, false);
+
+            var criteria = allCriteria.OfType<MovieSearchCriteria>().ToList();
+
+            criteria.Count.Should().Be(1);
+            criteria[0].SceneTitles.Should().Contain("Titre Quebec");
+            criteria[0].SceneTitles.Should().NotContain("Titre France");
+        }
+
+        [Test]
         public async Task RegionalVariants_allTitles_restricts_regional_titles_but_keeps_bare_language()
         {
             GivenFrenchRegionalTranslations(RegionalTranslationSearchMode.AllTitles, "fr-CA");
