@@ -1,6 +1,6 @@
 # User Alternative Titles
 
-> **Status:** stable · **Since:** unreleased (next release on `6.2.1.10461` base) · **Surface:** API (`POST /api/v3/alttitle/user/import`)
+> **Status:** stable · **Since:** `v6.2.1.10461+krzw.4` (alt titles), `krzw.5` (translations) · **Surface:** API (`POST /api/v3/alttitle/user/import`, `POST /api/v3/translation/user/import`)
 
 ## What it does
 
@@ -40,7 +40,7 @@ adds the same title (the incoming TMDB duplicate is skipped; the user row wins).
     "movieTitle": "Amélie",
     "year": 2001,
     "missingFrenchTitles": [
-      { "title": "Amélie de Montmartre", "region": "QC" }
+      { "title": "Amélie de Montmartre", "region": "CA" }
     ]
   }
 ]

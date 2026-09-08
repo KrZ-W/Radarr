@@ -14,9 +14,13 @@ docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.2.1.10461-kr
   onto. Confirm it with:
 
   ```bash
-  git describe --tags --abbrev=0 --match 'v*' \
-    "$(git merge-base upstream/develop personal/all-features-master)"
+  git describe --tags --abbrev=0 --match 'v*' --exclude '*krzw*' personal/all-features-master
   ```
+
+  (This clone has a single remote, `origin` = the fork. Upstream release tags are
+  reachable from the aggregate because each rebase starts from one; `--exclude`
+  skips the fork's own tags. Do **not** merge-base against `origin/master` or
+  `origin/develop` — those are stale upstream mirrors, not the base.)
 
 - `<N>` starts at `1` for each new upstream base and increments for subsequent fork
   releases on that **same** base. After a rebase onto a newer upstream, reset to `1`.
@@ -31,6 +35,9 @@ docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.2.1.10461-kr
      `## [v<ver>+krzw.<N>] — based on Radarr <upstream-version>` section.
    - Reset `[Unreleased]` to `_Nothing yet._`.
    - Update the two link-reference lines at the bottom of the file.
+   - Bump the pinned-image examples (`ghcr.io/krz-w/radarr:<ver>-krzw.<N>`) in
+     `FORK.md`, `docs/user-guide.md` and `docs/features/docker-deployment.md` — a
+     reader who follows "pin to a release" should land on the newest image.
    - Update **`FORK.md`**'s `Current fork version` line to the new tag (it is easy to
      miss and silently goes stale across releases).
 
@@ -38,14 +45,14 @@ docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.2.1.10461-kr
 
    ```bash
    git commit -am "docs: release v6.2.1.10461+krzw.1"
-   git push myfork personal/all-features-master
+   git push origin personal/all-features-master
    ```
 
 4. **Tag and push the tag.** The `+` is fine in a git tag:
 
    ```bash
    git tag -a 'v6.2.1.10461+krzw.1' -m 'Fork release based on Radarr 6.2.1.10461'
-   git push myfork 'v6.2.1.10461+krzw.1'
+   git push origin 'v6.2.1.10461+krzw.1'
    ```
 
    This triggers `docker-release.yml`, which builds and pushes the immutable image tag
@@ -79,8 +86,10 @@ docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.2.1.10461-kr
 
 ## After rebasing onto a newer upstream
 
-1. Rebase each `feature/*` / `fix/*` branch onto the new `upstream/develop`, re-merge
-   into `personal/all-features-master`, resolve conflicts.
+1. Fetch the new upstream release tag without adding a remote
+   (`git fetch https://github.com/Radarr/Radarr.git tag v6.3.0.10514`), rebase each
+   `feature/*` / `fix/*` branch onto it, re-merge into `personal/all-features-master`,
+   resolve conflicts.
 2. Re-confirm the new `<upstream-version>` with the `git describe` command above.
 3. Refresh the `## Source` commit hashes in `docs/features/*.md` — a rebase rewrites
    every fork commit, so the cited hashes go stale. Find the new ones with

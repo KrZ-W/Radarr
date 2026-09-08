@@ -12,6 +12,35 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 _Nothing yet._
 
+## [v6.2.1.10461+krzw.11] — based on Radarr 6.2.1.10461
+
+### Fixed
+
+- **Stuck "Import Pending" self-heal now actually reaches `ImportPending` items.**
+  krzw.10 placed the revert inside `CompletedDownloadService.Check`, but the download
+  monitor only calls `Check` for `Downloading`/`ImportBlocked` items; `ImportPending`
+  items are routed to `Import` on every run instead, so only the `ImportBlocked` half
+  of the fix was live. The same guard now sits at the top of `Import`: a client item
+  no longer reported `Completed` reverts to `Downloading` with its stale warnings
+  cleared, before any import is attempted.
+- **Library rescans no longer reject existing files on language.** The import-time
+  language check (`LanguageSpecification`) ran on files already inside the library
+  during disk rescans and DB rebuilds, refusing to map any file whose audio language
+  did not contain the profile language — including the atomic-upgrade crash-recovery
+  path. Existing files now skip the check, matching the minimum-CF-score spec.
+
+### Changed
+
+- Frontend lint (prettier) clean on `MediaManagement.tsx`; no functional change.
+- Docs: added the User Alternative Titles row to `docs/README.md`; corrected its
+  `Since:` line; fixed the sample dataset (`"region": "CA"`, not `"QC"`); the
+  setting is named **Translation Search Mode** as in the UI; user-guide table of
+  contents lists all recipes; image-pin examples point at the current release;
+  `docs/releasing.md` no longer references non-existent `upstream`/`myfork` remotes
+  and its base-version check works on this clone.
+
+Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.11`.
+
 ## [v6.2.1.10461+krzw.10] — based on Radarr 6.2.1.10461
 
 ### Fixed
@@ -151,6 +180,7 @@ Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.5`.
   titles participate in search, release parsing, and import identification like any
   other alternative title. See
   [features/user-alternative-titles.md](docs/features/user-alternative-titles.md).
+
 Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.4`.
 
 ## [v6.2.1.10461+krzw.3] — based on Radarr 6.2.1.10461
@@ -272,7 +302,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.10...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.11...HEAD
+[v6.2.1.10461+krzw.11]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.11
 [v6.2.1.10461+krzw.10]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.10
 [v6.2.1.10461+krzw.9]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.9
 [v6.2.1.10461+krzw.8]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.8

@@ -10,6 +10,7 @@ reference, follow the links into [features/](features/).
 - [Recipe: Detect VFQ from audio tracks](#recipe-detect-vfq-from-audio-tracks)
 - [Recipe: Stop wrong-language files from importing](#recipe-stop-wrong-language-files-from-importing)
 - [Recipe: Find releases under regional (Quebec) titles](#recipe-find-releases-under-regional-quebec-titles)
+- [Recipe: Add missing French/Quebec titles TMDB doesn't have](#recipe-add-missing-frenchquebec-titles-tmdb-doesnt-have)
 - [Recipe: Tune indexer cooldown](#recipe-tune-indexer-cooldown)
 - [Recipe: Run the fork in Docker](#recipe-run-the-fork-in-docker)
 
@@ -82,7 +83,7 @@ A file that fails will be rejected at import with reason `WantedLanguage` or
 the primary/English one.
 
 1. **Settings → Media Management → Regional Translation Variants** — add `fr-CA`.
-2. **Regional Translation Search Mode** — choose:
+2. **Translation Search Mode** — choose:
    - `OnePerRegion` for a focused extra title per region, or
    - `AllTitles` for all regional translations **plus** TMDB alternative titles.
 3. Save and trigger a search.
@@ -101,7 +102,7 @@ lacks that title — and keep those titles across refreshes.
    ```json
    [
      { "tmdbId": 194, "imdbId": "tt0211915", "movieTitle": "Amélie", "year": 2001,
-       "missingFrenchTitles": [ { "title": "Amélie de Montmartre", "region": "QC" } ] }
+       "missingFrenchTitles": [ { "title": "Amélie de Montmartre", "region": "CA" } ] }
    ]
    ```
 
@@ -160,7 +161,7 @@ curl -X POST "http://<host>:7878/api/v3/translation/user/import" \
 ```yaml
 services:
   radarr:
-    image: ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1   # pin to a release
+    image: ghcr.io/krz-w/radarr:6.2.1.10461-krzw.11   # pin to a release
     container_name: radarr
     environment:
       - PUID=1000
