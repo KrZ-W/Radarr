@@ -51,6 +51,15 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
         }
 
         [Test]
+        public void should_accept_existing_file_regardless_of_language()
+        {
+            _localMovie.ExistingFile = true;
+            _localMovie.Languages = new List<Language> { Language.English };
+
+            Subject.IsSatisfiedBy(_localMovie, null).Accepted.Should().BeTrue();
+        }
+
+        [Test]
         public void should_reject_when_file_languages_do_not_contain_profile_language()
         {
             _localMovie.Languages = new List<Language> { Language.English };
