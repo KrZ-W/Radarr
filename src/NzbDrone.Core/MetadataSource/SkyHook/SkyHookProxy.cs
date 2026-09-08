@@ -19,6 +19,7 @@ using NzbDrone.Core.Movies.AlternativeTitles;
 using NzbDrone.Core.Movies.Collections;
 using NzbDrone.Core.Movies.Credits;
 using NzbDrone.Core.Movies.Translations;
+using NzbDrone.Core.Movies.UserTitles;  // krzw(regional-translations)
 using NzbDrone.Core.Parser;
 
 namespace NzbDrone.Core.MetadataSource.SkyHook
@@ -627,7 +628,8 @@ namespace NzbDrone.Core.MetadataSource.SkyHook
 
         private static MovieTranslation MapTranslation(TranslationResource arg)
         {
-            var languageCode = arg.Language?.ToLower();
+            // krzw(regional-translations): keep the full xx-yy code as RegionalLanguage (canonical shape in RegionalLanguageTag)
+            var languageCode = RegionalLanguageTag.Normalize(arg.Language);
 
             var newAlternativeTitle = new MovieTranslation
             {
