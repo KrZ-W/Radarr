@@ -8,6 +8,7 @@ using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaCover;
 using NzbDrone.Core.MetadataSource;
 using NzbDrone.Core.Movies;
+using NzbDrone.Core.Movies.Translations;  // krzw(regional-translations)
 using NzbDrone.Core.Organizer;
 using Radarr.Http;
 using Radarr.Http.REST;
@@ -59,7 +60,7 @@ namespace Radarr.Api.V3.Movies
         {
             var availDelay = _configService.AvailabilityDelay;
             var result = new Movie { MovieMetadata = _movieInfo.GetMovieInfo(tmdbId).Item1 };
-            var translation = result.MovieMetadata.Value.Translations.FirstOrDefault(t => t.Language == (Language)_configService.MovieInfoLanguage);
+            var translation = PickTranslation(result.MovieMetadata.Value.Translations, (Language)_configService.MovieInfoLanguage);  // krzw(regional-translations)
             return result.ToResource(availDelay, translation);
         }
 
@@ -70,7 +71,7 @@ namespace Radarr.Api.V3.Movies
             var result = new Movie { MovieMetadata = _movieInfo.GetMovieByImdbId(imdbId) };
 
             var availDelay = _configService.AvailabilityDelay;
-            var translation = result.MovieMetadata.Value.Translations.FirstOrDefault(t => t.Language == (Language)_configService.MovieInfoLanguage);
+            var translation = PickTranslation(result.MovieMetadata.Value.Translations, (Language)_configService.MovieInfoLanguage);  // krzw(regional-translations)
             return result.ToResource(availDelay, translation);
         }
 
@@ -93,7 +94,7 @@ namespace Radarr.Api.V3.Movies
 
             foreach (var currentMovie in movies)
             {
-                var translation = currentMovie.MovieMetadata.Value.Translations.FirstOrDefault(t => t.Language == movieInfoLanguage);
+                var translation = PickTranslation(currentMovie.MovieMetadata.Value.Translations, movieInfoLanguage);  // krzw(regional-translations)
                 var resource = currentMovie.ToResource(availDelay, translation);
 
                 _coverMapper.ConvertToLocalUrls(resource.Id, resource.Images);
@@ -110,6 +111,14 @@ namespace Radarr.Api.V3.Movies
 
                 yield return resource;
             }
+        }
+
+        // krzw(regional-translations): several rows per language; keep the preferred variant
+        private MovieTranslation PickTranslation(IEnumerable<MovieTranslation> translations, Language language)
+        {
+            return translations.Where(t => t.Language == language)
+                               .OrderByRegionalPreference(_configService.RegionalTranslationVariants)
+                               .FirstOrDefault();
         }
     }
 }

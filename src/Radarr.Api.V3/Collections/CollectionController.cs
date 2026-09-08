@@ -165,7 +165,9 @@ namespace Radarr.Api.V3.Collections
                 .ToDictionary(x => x.Key, x => (IEnumerable<MovieMetadata>)x);
 
             var translations = _movieTranslationService.GetAllTranslationsForLanguage(configLanguage);
-            var tdict = translations.ToDictionaryIgnoreDuplicates(x => x.MovieMetadataId);
+
+            // krzw(regional-translations): several rows per language; keep the preferred variant
+            var tdict = translations.OrderByRegionalPreference(_configService.RegionalTranslationVariants).ToDictionaryIgnoreDuplicates(x => x.MovieMetadataId);
 
             foreach (var collection in collections)
             {
@@ -247,7 +249,10 @@ namespace Radarr.Api.V3.Collections
                 };
             }
 
-            var translation = translations.FirstOrDefault(t => t.Language == configLanguage && t.MovieMetadataId == movieMetadata.Id);
+            // krzw(regional-translations): several rows per language; keep the preferred variant
+            var translation = translations.Where(t => t.Language == configLanguage && t.MovieMetadataId == movieMetadata.Id)
+                                          .OrderByRegionalPreference(_configService.RegionalTranslationVariants)
+                                          .FirstOrDefault();
 
             if (translation == null)
             {

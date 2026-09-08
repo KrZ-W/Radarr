@@ -110,6 +110,11 @@ namespace NzbDrone.Core.IndexerSearch
                     .ToList();
             }
 
+            // Several rows can share a dedupe key (fr-FR and fr-CA both collapse to "French" in Standard
+            // mode; a TMDB and a user row can share a region). Order by the variants list first so the
+            // title kept is the preferred one instead of whichever row the database returned first.
+            wantedTranslations = wantedTranslations.OrderByRegionalPreference(_configService.RegionalTranslationVariants).ToList();
+
             var filteredTranslations = searchMode switch
             {
                 RegionalTranslationSearchMode.Standard => wantedTranslations.DistinctBy(t => t.Language),

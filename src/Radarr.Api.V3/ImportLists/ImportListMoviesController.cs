@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
+using NzbDrone.Common.Extensions;  // krzw(regional-translations)
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.ImportLists;
 using NzbDrone.Core.ImportLists.ImportExclusions;
@@ -138,7 +139,11 @@ namespace Radarr.Api.V3.ImportLists
                     resource.RemotePoster = poster.RemoteUrl;
                 }
 
-                var translation = currentMovie.MovieMetadata.Value.Translations.FirstOrDefault(t => t.Language == language);
+                // krzw(regional-translations): several rows per language; keep the preferred variant
+                var translation = currentMovie.MovieMetadata.Value.Translations
+                    .Where(t => t.Language == language)
+                    .OrderByRegionalPreference(_configService.RegionalTranslationVariants)
+                    .FirstOrDefault();
 
                 resource.Title = translation?.Title ?? resource.Title;
                 resource.Overview = translation?.Overview ?? resource.Overview;
@@ -156,9 +161,12 @@ namespace Radarr.Api.V3.ImportLists
             // Avoid calling for naming spec on every movie in filenamebuilder
             var namingConfig = _namingService.GetConfig();
 
+            // krzw(regional-translations): a movie has one row per region for a language, so a strict
+            // ToDictionary threw on the duplicate key; keep the preferred variant instead.
             var translations = _movieTranslationService
                 .GetAllTranslationsForLanguage(language)
-                .ToDictionary(x => x.MovieMetadataId);
+                .OrderByRegionalPreference(_configService.RegionalTranslationVariants)
+                .ToDictionaryIgnoreDuplicates(x => x.MovieMetadataId);
 
             foreach (var currentMovie in movies)
             {
