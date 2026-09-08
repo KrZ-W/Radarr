@@ -12,6 +12,26 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 _Nothing yet._
 
+## [v6.2.1.10461+krzw.10] — based on Radarr 6.2.1.10461
+
+### Fixed
+
+- **Downloads permanently stranded in "Import Pending" (mark-failed mid-download):** a
+  transient completed-state misread from the download client (seen during external
+  recheck/relocate operations) moved a still-downloading item to `ImportPending` /
+  `ImportBlocked` with a stale import warning attached. Once there, the item never
+  recovered — the completed-download check returns early for any item the client no
+  longer reports as `Completed`, so the state and its warning persisted while the
+  download was still running, and external queue cleaners read that warning as a failed
+  import and marked the grab failed mid-download. Such items now self-heal on the next
+  refresh: the state reverts to `Downloading` and the stale warnings are cleared until
+  the client actually reports the download complete. Settled states (`Imported`,
+  `Failed`, `Ignored`) are left untouched. Ported from the Sonarr fork, where the same
+  defect was found; the code path is identical in both. See
+  [docs](docs/features/completed-download-handling.md#stuck-import-pending-self-heal).
+
+Container image: `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.10`.
+
 ## [v6.2.1.10461+krzw.9] — based on Radarr 6.2.1.10461
 
 ### Fixed
@@ -252,7 +272,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.9...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.10...HEAD
+[v6.2.1.10461+krzw.10]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.10
 [v6.2.1.10461+krzw.9]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.9
 [v6.2.1.10461+krzw.8]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.8
 [v6.2.1.10461+krzw.7]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.7
