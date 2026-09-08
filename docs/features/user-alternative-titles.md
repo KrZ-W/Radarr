@@ -53,9 +53,22 @@ and returns a summary:
   "moviesProcessed": 1,
   "titlesAdded": 1,
   "titlesSkipped": 0,
-  "moviesNotFound": []
+  "titlesGuarded": 0,
+  "titlesUnknownLanguage": 0,
+  "titlesAlreadyPresent": 0,
+  "moviesNotFound": [],
+  "moviesFailed": []
 }
 ```
+
+`titlesSkipped` is the sum of the three breakdown counters: `titlesGuarded` (the title
+already resolves to a *different* movie), `titlesUnknownLanguage` (translations only),
+and `titlesAlreadyPresent` (already stored for this movie, equal to its own title, or
+dropped by the upsert's table-local guard). `moviesFailed` lists rows whose import threw
+(`"<title> (<year>) [tmdb:<id>]: <error>"`); the rest of the request still completes.
+The request is validated before any work starts: at most 5000 movies per request, 100
+titles per movie and 500 characters per title, otherwise HTTP 400. `titles` is accepted
+as a neutral alias of `missingFrenchTitles`.
 
 Rules:
 
@@ -148,6 +161,24 @@ already carries the dataset as alt titles.
   can become `{Movie TranslatedTitle}`. That is first-class-translation semantics,
   not a bug.
 
+## Architecture
+
+Both endpoints are thin: they validate the request shape, map the resource onto a
+neutral `UserTitleImportRequest`, call `IUserTitleImportService` and map the result back.
+Everything that decides *what happens* lives in Core, under `Movies/UserTitles/`:
+
+| Piece | Responsibility |
+|---|---|
+| `UserTitleImportService` | per-row pipeline: resolve movie (tmdb → imdb), drop blank titles, guard, map, upsert, count; a row that throws lands in `moviesFailed` and the next row still runs |
+| `UserTitleGuard` | the cross-movie invariant, batched: one `FindByTitleCandidates` sweep per movie, falling back to per-title attribution only when another movie owns something in the batch |
+| `UserTranslationFactory` | standard identifiers → `MovieTranslation` (null for an unknown language) |
+| `RegionalLanguageTag` | the single definition of the `RegionalLanguage` storage shape (`xx` / `xx-yy`, lowercase); `SkyHookProxy` uses it for TMDB rows, so user and TMDB rows can never drift apart |
+| `AlternativeTitleService.UpsertUserTitles`, `MovieTranslationService.UpsertUserTranslations` | persistence and refresh preservation (unchanged) |
+
+The `"fr"` language default and the `missingFrenchTitles` field name are properties of
+the curated dataset, so they exist only in the API layer (`UserTitleImportResourceMapper`
+and `UserTranslationController`); Core is language-neutral.
+
 ## Source
 
 Commit: `86aa71646`. Key files:
@@ -163,3 +194,11 @@ Phase 1b commits: `4f2c02074`, `76dc748a5`. Key files:
 
 Review fixes: `f2ec81c7e` (shared `UserTitleImportGuard` across both importers),
 `57350200f` (canonical language code in the stored tag).
+
+Refactor: `4fd07d52d` moved the pipeline into Core. Key files:
+`Movies/UserTitles/UserTitleImportService.cs`, `Movies/UserTitles/UserTitleGuard.cs`,
+`Movies/UserTitles/UserTranslationFactory.cs`, `Movies/UserTitles/RegionalLanguageTag.cs`,
+`Movies/UserTitles/UserTitleImportRequest.cs`, `Movies/UserTitles/UserTitleImportResult.cs`,
+`Radarr.Api.V3/Movies/UserTitleImportResourceMapper.cs` (validation + mapping). Tests:
+`NzbDrone.Core.Test/MovieTests/UserTitleTests/*`,
+`NzbDrone.Api.Test/v3/Movies/UserTitleImportResourceMapperTests.cs`.
