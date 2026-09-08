@@ -10,7 +10,46 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed
+
+- **Atomic upgrade imports: same-name upgrades no longer lose the new subtitles/NFO.**
+  The old file's extras are recycled by an *asynchronous* handler of the delete event,
+  which the fork fires moments before the replacement's extras are imported under the same
+  names; when the import won the race the fresh `Movie.en.srt` was recycled and its DB row
+  left stale. The handler now skips any path already owned by another file of the movie.
+  Also: import scripts get `Radarr_DeletedPaths` & co. again (the list was only filled after
+  the script had run), and a stale `*.krzw-upgrade-bak` from an interrupted run is sent to
+  the recycle bin instead of being deleted permanently.
+- **Indexer cooldown: custom schedules survive housekeeping and bad input is rejected.**
+  The daily "fix future status times" housekeeper bounded `DisabledTill` with the default
+  table, clipping any custom period above 60× the default at that level (e.g. `0,120`
+  fell back to 60 minutes on restart). It now uses the configured schedule. The setting is
+  validated on save (whole non-negative minutes) instead of silently falling back to the
+  default on negatives, decimals or text; parsing lives in one `IndexerCooldownPeriods`
+  class shared by the status service, the housekeeper and the validator.
+- **Regional translations: deterministic titles everywhere, and Discover no longer 500s.**
+  Every TMDB translation is region-tagged (`fr-FR`, `fr-CA`, `en-US`, …), so a movie has
+  several rows per language. The movie, collection, lookup and import-list API endpoints
+  still took the first row in DB order for the UI title; they now apply the same
+  variants-list preference as renaming and NFO metadata, and so does the per-language
+  title kept for `Standard`-mode searches. The import-list (Discover) endpoint built a
+  strict dictionary keyed by movie and threw on the duplicate key whenever any library
+  movie had two rows in the configured language.
+- **Audio Title: MediaInfo schema revision no longer collides with upstream.** The fork
+  had bumped the revision 14 → 15 for `AudioTitles`; upstream's own next bump would have
+  reused 15 and fork-probed files would never re-probe for it. The revision is back at
+  upstream's 14 and files probed before audio titles were captured are detected by the
+  missing `AudioTitles` list instead. Files already stamped 15 are unaffected.
+- **User title import: `region` must be a two-letter ISO 3166-1 code** (HTTP 400
+  otherwise). A longer value produced a tag such as `fr-canada` that could never match a
+  Regional Translation Variants entry.
+
+### Changed
+
+- Custom Format Priority: removed the unused "regular score" calculation left over from
+  an earlier design (no behaviour change).
+- Docs: the regional-translations page now says plainly that Regional Translation
+  Variants is **not** empty by default and what that drops from `OnePerRegion` searches.
 
 ## [v6.3.0.10514+krzw.2] — based on Radarr 6.3.0.10514
 
