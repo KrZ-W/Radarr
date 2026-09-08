@@ -78,10 +78,12 @@ namespace NzbDrone.Core.MediaFiles
                 {
                     var backupPath = movieFilePath + ParkedFileSuffix;
 
-                    // Clear a stale parked file left by a previously interrupted run.
+                    // Clear a stale parked file left by a previously interrupted run. It is the only
+                    // copy of that run's original, so it goes through the recycle bin like any other
+                    // removal; permanent deletion is the fallback when recycling fails.
                     if (_diskProvider.FileExists(backupPath))
                     {
-                        _diskProvider.DeleteFile(backupPath);
+                        RecycleStaleParkedFile(backupPath, subfolder);
                     }
 
                     _logger.Debug("Parking existing movie file before upgrade: {0} -> {1}", movieFilePath, backupPath);
@@ -93,6 +95,11 @@ namespace NzbDrone.Core.MediaFiles
                     _logger.Warn("Existing movie file missing from disk, nothing to park: {0}", movieFilePath);
                 }
 
+                // Expose the outgoing file in OldFiles now: the import script runs during the transfer
+                // (before FinalizeUpgrade) and reads Radarr_DeletedPaths from it. The recycle-bin path
+                // is filled in at finalize; on any failure OldFiles is never published.
+                pending.Deleted = new DeletedMovieFile(existingFile, null);
+                moveFileResult.OldFiles.Add(pending.Deleted);
                 moveFileResult.PendingUpgrades.Add(pending);
             }
 
@@ -173,7 +180,22 @@ namespace NzbDrone.Core.MediaFiles
                 }
 
                 _mediaFileService.Delete(pending.MovieFile, DeleteMediaFileReason.Upgrade);
-                moveResult.OldFiles.Add(new DeletedMovieFile(pending.MovieFile, recycleBinPath));
+                pending.Deleted.RecycleBinPath = recycleBinPath;
+            }
+        }
+
+        // krzw(atomic-upgrade)
+        private void RecycleStaleParkedFile(string backupPath, string subfolder)
+        {
+            try
+            {
+                _logger.Warn("Recycling stale parked file left by an interrupted upgrade: {0}", backupPath);
+                _recycleBinProvider.DeleteFile(backupPath, subfolder);
+            }
+            catch (Exception e)
+            {
+                _logger.Warn(e, "Unable to recycle stale parked file '{0}'; deleting it permanently", backupPath);
+                _diskProvider.DeleteFile(backupPath);
             }
         }
 
