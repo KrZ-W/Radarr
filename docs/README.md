@@ -23,6 +23,7 @@ exact behavior.
 | [Atomic Upgrade Imports](features/atomic-upgrade-imports.md) | Existing file survives unless the replacement import fully commits; failed upgrades restore everything |
 | [Regional Language & Translations](features/regional-language-and-translations.md) | Regional title variants in search + regional ISO-code fallback |
 | [Configurable Indexer Cooldown](features/configurable-indexer-cooldown.md) | Editable indexer back-off/escalation schedule |
+| [Completed Download Handling](features/completed-download-handling.md) | Stuck `ImportPending`/`ImportBlocked` items self-heal instead of stalling until a cleaner marks them failed |
 | [Docker / GHCR Deployment](features/docker-deployment.md) | LinuxServer.io-style image published to GHCR |
 
 ## Maintainer

@@ -8,7 +8,7 @@ person for a private *arr stack; it is not affiliated with the Radarr team.
 - **Upstream base:** Radarr `6.2.1.10461` (the commit this fork is rebased onto)
 - **Primary branch:** `personal/all-features-master` (all features merged together)
 - **Container image:** `ghcr.io/krz-w/radarr`
-- **Current fork version:** `v6.2.1.10461+krzw.9`
+- **Current fork version:** `v6.2.1.10461+krzw.10`
 
 > The stock upstream `README.md` is preserved below this fork section. Everything
 > KrZ-W-specific lives in [`docs/`](docs/) and [`CHANGELOG.md`](CHANGELOG.md).
@@ -24,6 +24,7 @@ person for a private *arr stack; it is not affiliated with the Radarr team.
 | **Regional Language & Translations** | Regional title variants (e.g. `fr-CA`) in search, plus a fallback for regional ISO codes | [features/regional-language-and-translations.md](docs/features/regional-language-and-translations.md) |
 | **Configurable Indexer Cooldown** | Make the indexer back-off/escalation schedule editable | [features/configurable-indexer-cooldown.md](docs/features/configurable-indexer-cooldown.md) |
 | **User Alternative Titles & Translations** | Bulk-import curated titles that TMDB lacks: alt titles (`SourceType=User`) for parse/import matching, plus regional translations (e.g. `fr-CA`) that the `OnePerRegion` search mode queries. Both survive TMDB refreshes | [features/user-alternative-titles.md](docs/features/user-alternative-titles.md) |
+| **Completed Download Handling** | Stuck `ImportPending`/`ImportBlocked` queue items self-heal back to `Downloading` when the client stops reporting the download complete | [features/completed-download-handling.md](docs/features/completed-download-handling.md) |
 | **Docker / GHCR Deployment** | LinuxServer.io-style image (PUID/PGID/TZ/UMASK, `/config`, ffprobe bundled) published to GHCR | [features/docker-deployment.md](docs/features/docker-deployment.md) |
 
 New here? Start with the **[User Guide](docs/user-guide.md)** for task-oriented walkthroughs
