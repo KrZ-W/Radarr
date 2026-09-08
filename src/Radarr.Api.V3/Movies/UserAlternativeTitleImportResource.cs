@@ -9,6 +9,13 @@ namespace Radarr.Api.V3.Movies
         public string MovieTitle { get; set; }
         public int Year { get; set; }
         public List<UserAlternativeTitleImportEntryResource> MissingFrenchTitles { get; set; }
+
+        // Neutral alias for MissingFrenchTitles (the curated dataset's field name); either may be sent.
+        public List<UserAlternativeTitleImportEntryResource> Titles
+        {
+            get => MissingFrenchTitles;
+            set => MissingFrenchTitles = value;
+        }
     }
 
     public class UserAlternativeTitleImportEntryResource
@@ -29,6 +36,15 @@ namespace Radarr.Api.V3.Movies
         public int MoviesProcessed { get; set; }
         public int TitlesAdded { get; set; }
         public int TitlesSkipped { get; set; }
+
+        // Breakdown of TitlesSkipped.
+        public int TitlesGuarded { get; set; }
+        public int TitlesUnknownLanguage { get; set; }
+        public int TitlesAlreadyPresent { get; set; }
+
         public List<string> MoviesNotFound { get; set; } = new List<string>();
+
+        // Rows whose import threw; the rest of the request still completed.
+        public List<string> MoviesFailed { get; set; } = new List<string>();
     }
 }

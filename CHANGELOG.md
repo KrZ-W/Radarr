@@ -10,7 +10,22 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- **User title import pipeline moved into Core** (`Movies/UserTitles/`). The two import
+  endpoints are now thin controllers over `IUserTitleImportService`; movie resolution, the
+  cross-movie guard, language mapping and the summary were previously duplicated across
+  the two controllers in the API project. Behaviour is unchanged for existing callers.
+  Improvements that came with the move: the guard runs **one** title sweep per movie
+  instead of three queries per title (per-title attribution only when a collision is
+  found); a row that throws is reported in a new `moviesFailed` list and the request
+  continues instead of returning HTTP 500 with partial writes; requests are validated up
+  front (max 5000 movies, 100 titles per movie, 500 characters per title → HTTP 400);
+  the summary gains `titlesGuarded`, `titlesUnknownLanguage` and `titlesAlreadyPresent`
+  (their sum is the existing `titlesSkipped`); `titles` is accepted as an alias of
+  `missingFrenchTitles`. `RegionalLanguageTag` is now the single definition of the
+  `RegionalLanguage` storage shape, used by both SkyHook (TMDB rows) and the importer.
+  See [docs](docs/features/user-alternative-titles.md#architecture).
 
 ## [v6.3.0.10514+krzw.1] — based on Radarr 6.3.0.10514
 
