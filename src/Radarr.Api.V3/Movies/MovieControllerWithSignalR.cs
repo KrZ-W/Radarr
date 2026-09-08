@@ -126,7 +126,10 @@ namespace Radarr.Api.V3.Movies
                 };
             }
 
-            return translations.FirstOrDefault(t => t.Language == language && t.MovieMetadataId == movie.Id);
+            // krzw(regional-translations): several rows per language; keep the preferred variant
+            return translations.Where(t => t.Language == language && t.MovieMetadataId == movie.Id)
+                               .OrderByRegionalPreference(_configService.RegionalTranslationVariants)
+                               .FirstOrDefault();
         }
 
         private void FetchAndLinkMovieStatistics(MovieResource resource)

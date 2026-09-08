@@ -49,6 +49,13 @@ one and `RegionalLanguage` was always empty.
 - `IsoLanguages.Find()` gains a fallback: when a code has a country part but no exact
   match and no empty-country entry exists, it keeps the base-language entries so the
   lookup returns the base language (e.g. `fr-BE` → French) instead of `null`.
+- **Deterministic pick.** Because a movie now has several rows for one language, every
+  place that shows or uses "the" translation for a language orders the candidates with
+  `OrderByRegionalPreference` (variants list order → bare language → other regions
+  alphabetically) before taking the first: the movie/collection/lookup/discover API
+  titles, `{Movie TranslatedTitle}` in renaming, Kodi NFO metadata, and the search title
+  kept per language in `Standard` mode (or per region in `OnePerRegion`). With `fr-CA`
+  in the variants list, French UI titles are the Quebec ones.
 
 ## Configuration
 
@@ -63,6 +70,12 @@ one and `RegionalLanguage` was always empty.
 - Leaving **Regional Translation Variants** empty is allowed — all regional variants of
   your profile's acceptable languages are then searched (one per region / all titles,
   per the mode).
+- **The field is not empty by default.** A fresh install starts with
+  `fr-CA,en-CA,es-MX,pt-BR`. SkyHook tags *every* TMDB translation with a region
+  (`fr-FR`, `en-US`, `es-ES`, …), so in `OnePerRegion`/`AllTitles` this default drops
+  the France/US/Spain/Portugal titles from searches. Clear the field to search all
+  regions, or add the ones you want (e.g. `fr-CA,fr-FR`). Only user-imported
+  translations without a region are "bare" and pass regardless.
 - Historical note: before `v6.2.1.10461+krzw.2` the variants list was accepted but never
   read — the search modes worked, but the list did not restrict anything.
 - `AllTitles` casts the widest net but can surface more false positives — pair it with
@@ -83,4 +96,7 @@ fix + AllTitles incl. alternative titles), `c43445fc6` (IsoLanguages fallback).
 Key files: `Configuration/RegionalTranslationSearchMode.cs`,
 `Datastore/Migration/243_add_regional_language_to_movie_translations.cs`,
 `IndexerSearch/ReleaseSearchService.cs`, `Parser/IsoLanguages.cs`,
-`MetadataSource/SkyHook/SkyHookProxy.cs`.
+`MetadataSource/SkyHook/SkyHookProxy.cs`,
+`Movies/Translations/MovieTranslationExtensions.cs` (`OrderByRegionalPreference`, used by
+`Organizer/FileNameBuilder.cs`, `Extras/Metadata/Consumers/Xbmc/XbmcMetadata.cs` and the
+movie/collection/lookup/import-list API controllers).
