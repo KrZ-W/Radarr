@@ -16,6 +16,15 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
 
         public ImportSpecDecision IsSatisfiedBy(LocalMovie localMovie, DownloadClientItem downloadClientItem)
         {
+            // krzw: language is a download-time gate. Files already inside the library (disk rescan,
+            // DB rebuild, upgrade crash recovery) must map back regardless of their audio language,
+            // matching MinimumCustomFormatScoreSpecification.
+            if (localMovie.ExistingFile)
+            {
+                _logger.Debug("Existing file, skipping language check");
+                return ImportSpecDecision.Accept();
+            }
+
             var wantedLanguage = localMovie.Movie.QualityProfile.Language;
 
             if (wantedLanguage == Language.Any)
