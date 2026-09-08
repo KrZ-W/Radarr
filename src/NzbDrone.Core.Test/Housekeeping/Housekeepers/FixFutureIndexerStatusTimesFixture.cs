@@ -4,6 +4,7 @@ using System.Linq;
 using FizzWare.NBuilder;
 using Moq;
 using NUnit.Framework;
+using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Housekeeping.Housekeepers;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Test.Framework;
@@ -108,6 +109,34 @@ namespace NzbDrone.Core.Test.Housekeeping.Housekeepers
                   .Verify(v => v.UpdateMany(
                           It.Is<List<IndexerStatus>>(i => i.All(
                               s => s.DisabledTill.Value <= DateTime.UtcNow.AddMinutes(maxDelay)))));
+        }
+
+        [Test]
+        public void should_bound_disabled_till_with_the_configured_cooldown_schedule()
+        {
+            // krzw(indexer-cooldown): level 1 is 60 minutes here, far above the default table's level 1,
+            // so a DisabledTill the status service legitimately set must not be clipped by housekeeping.
+            Mocker.GetMock<IConfigService>()
+                  .SetupGet(s => s.IndexerCooldownPeriods)
+                  .Returns("0,60");
+
+            var indexerStatuses = Builder<IndexerStatus>.CreateListOfSize(5)
+                                                        .All()
+                                                        .With(t => t.DisabledTill = DateTime.UtcNow.AddMinutes(100))
+                                                        .With(t => t.InitialFailure = DateTime.UtcNow.AddDays(-5))
+                                                        .With(t => t.MostRecentFailure = DateTime.UtcNow.AddDays(-5))
+                                                        .With(t => t.EscalationLevel = 1)
+                                                        .BuildListOfNew();
+
+            Mocker.GetMock<IIndexerStatusRepository>()
+                  .Setup(s => s.All())
+                  .Returns(indexerStatuses);
+
+            Subject.Clean();
+
+            Mocker.GetMock<IIndexerStatusRepository>()
+                  .Verify(v => v.UpdateMany(
+                          It.Is<List<IndexerStatus>>(i => i.Count == 0)));
         }
 
         [Test]
