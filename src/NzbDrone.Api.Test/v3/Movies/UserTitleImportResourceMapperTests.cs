@@ -95,6 +95,35 @@ public class UserTitleImportResourceMapperTests
         act.Should().Throw<BadRequestException>();
     }
 
+    [TestCase("CANADA")]
+    [TestCase("C")]
+    [TestCase("C4")]
+    public void Rejects_region_that_is_not_a_two_letter_code(string region)
+    {
+        var resources = new List<UserAlternativeTitleImportResource>
+        {
+            Row(194, new UserAlternativeTitleImportEntryResource { Title = "Amélie de Montmartre", Region = region })
+        };
+
+        var act = () => resources.ToImportRequests("fr");
+
+        act.Should().Throw<BadRequestException>().WithMessage("*Region*tmdb:194*");
+    }
+
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("CA")]
+    [TestCase("ca")]
+    public void Accepts_blank_or_two_letter_region(string region)
+    {
+        var requests = new List<UserAlternativeTitleImportResource>
+        {
+            Row(194, new UserAlternativeTitleImportEntryResource { Title = "Amélie de Montmartre", Region = region })
+        }.ToImportRequests("fr");
+
+        requests.Single().Titles.Single().Region.Should().Be(region);
+    }
+
     [Test]
     public void Result_maps_counts_and_lists()
     {

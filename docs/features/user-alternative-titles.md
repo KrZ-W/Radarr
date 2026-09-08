@@ -122,7 +122,9 @@ search-code changes.
 - `POST /api/v3/translation/user/import` — same envelope and summary response as
   the alt-titles importer; title entries use **standard identifiers**:
   `{title, language?, region?}` with `language` an ISO 639-1 code (defaults to `fr`
-  for the curated dataset) and `region` an ISO 3166-1 alpha-2 code. ISO 639-2 codes
+  for the curated dataset) and `region` an ISO 3166-1 alpha-2 code (anything other
+  than two letters is rejected with HTTP 400, since it could never match a variants
+  entry). ISO 639-2 codes
   (`fra`) and full tags (`fr-CA`) are accepted and canonicalised. The stored
   `RegionalLanguage` tag is built uniformly — `{language}` or
   `{language}-{region}`, lowercase two-letter language, the same shape SkyHook

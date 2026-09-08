@@ -60,6 +60,15 @@ namespace Radarr.Api.V3.Movies
                 throw new BadRequestException($"Title longer than {MaxTitleLength} characters for tmdb:{resource.TmdbId}");
             }
 
+            // A region is stored verbatim in the RegionalLanguage tag ("fr-ca"); anything but a two-letter
+            // ISO 3166-1 code would never match a Regional Translation Variants entry.
+            var badRegion = titles.FirstOrDefault(t => t.Region.IsNotNullOrWhiteSpace() && !IsRegionCode(t.Region));
+
+            if (badRegion != null)
+            {
+                throw new BadRequestException($"Region must be a two-letter ISO 3166-1 code (got '{badRegion.Region}' for tmdb:{resource.TmdbId})");
+            }
+
             return new UserTitleImportRequest
             {
                 TmdbId = resource.TmdbId,
@@ -73,6 +82,13 @@ namespace Radarr.Api.V3.Movies
                     Region = t.Region
                 }).ToList()
             };
+        }
+
+        private static bool IsRegionCode(string region)
+        {
+            var trimmed = region.Trim();
+
+            return trimmed.Length == 2 && trimmed.All(char.IsLetter);
         }
     }
 }
