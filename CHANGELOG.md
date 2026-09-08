@@ -24,7 +24,7 @@ _Nothing yet._
   `krzw(<feature>)` comment (116 markers across 44 files; previously 3). Comment-only
   change, no functional difference. `git grep -n 'krzw('` lists them.
 - **CI:** `docker-image.yml` now also builds `feat/**` branches; `docker-release.yml`
-  only triggers on `v*+krzw.*` tags so a mirrored upstream tag can never publish a
+  only triggers on `v*krzw*` tags so a mirrored upstream tag can never publish a
   release image.
 - **Repository hygiene:** default branch is `personal/all-features-master`; the
   40 upstream development branches that had been mirrored into the fork were removed

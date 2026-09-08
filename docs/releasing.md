@@ -103,4 +103,4 @@ docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.3.0.10514-kr
 | Workflow | Trigger | Produces |
 |---|---|---|
 | `docker-image.yml` | push to `personal/**`, `feature/**`, `feat/**`, `fix/**` | `:latest` (primary branch), `:<branch>`, `:sha-<short>` |
-| `docker-release.yml` | push of a `v*+krzw.*` tag | `:<upstream-version>-krzw.<N>` (immutable release image) |
+| `docker-release.yml` | push of a `v*krzw*` tag (fork release tags) | `:<upstream-version>-krzw.<N>` (immutable release image) |
