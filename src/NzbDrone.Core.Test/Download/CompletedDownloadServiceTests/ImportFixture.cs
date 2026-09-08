@@ -98,6 +98,23 @@ namespace NzbDrone.Core.Test.Download
         }
 
         [Test]
+        public void should_revert_import_pending_to_downloading_when_download_status_is_no_longer_completed()
+        {
+            _trackedDownload.State = TrackedDownloadState.ImportPending;
+            _trackedDownload.Warn("Stale import warning");
+            _trackedDownload.DownloadItem.Status = DownloadItemStatus.Downloading;
+
+            Subject.Import(_trackedDownload);
+
+            _trackedDownload.State.Should().Be(TrackedDownloadState.Downloading);
+            _trackedDownload.Status.Should().Be(TrackedDownloadStatus.Ok);
+            _trackedDownload.StatusMessages.Should().BeEmpty();
+
+            Mocker.GetMock<IDownloadedMovieImportService>()
+                  .Verify(v => v.ProcessPath(It.IsAny<string>(), It.IsAny<ImportMode>(), It.IsAny<Movie>(), It.IsAny<DownloadClientItem>()), Times.Never());
+        }
+
+        [Test]
         public void should_not_mark_as_imported_if_all_files_were_rejected()
         {
             Mocker.GetMock<IDownloadedMovieImportService>()
