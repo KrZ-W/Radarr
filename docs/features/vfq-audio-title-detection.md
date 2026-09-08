@@ -65,10 +65,13 @@ release name.
 
 ## Behavior & edge cases
 
-- **Existing library re-probes automatically.** The MediaInfo schema revision was
-  bumped **14 → 15** (both the *current* and the *minimum* revision), so existing
-  files are re-probed and gain `AudioTitles` on the **next library scan / refresh**.
-  Until that scan runs, older files have no audio titles to match.
+- **Existing library re-probes automatically.** A probe always stores an `AudioTitles`
+  list (empty when no stream is titled), so a file whose media info has **no** list was
+  probed before this feature existed and is re-probed on the **next library scan /
+  refresh**, gaining `AudioTitles`. Until that scan runs, older files have no audio
+  titles to match. The MediaInfo *schema revision* is left at upstream's value (14): an
+  earlier fork build bumped it to 15, which would have collided with upstream's own next
+  bump; files it stamped with 15 already carry `AudioTitles` and need nothing.
 - **Empty titles match nothing.** Files whose audio streams have no title tag simply
   don't satisfy the condition (it returns false rather than erroring).
 - **Grab time is title-only.** Audio Title conditions can never match a remote
