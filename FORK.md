@@ -8,10 +8,11 @@ person for a private *arr stack; it is not affiliated with the Radarr team.
 - **Upstream base:** Radarr `6.2.1.10461` (the commit this fork is rebased onto)
 - **Primary branch:** `personal/all-features-master` (all features merged together)
 - **Container image:** `ghcr.io/krz-w/radarr`
-- **Current fork version:** `v6.2.1.10461+krzw.10`
+- **Current fork version:** `v6.2.1.10461+krzw.11`
 
-> The stock upstream `README.md` is preserved below this fork section. Everything
-> KrZ-W-specific lives in [`docs/`](docs/) and [`CHANGELOG.md`](CHANGELOG.md).
+> The stock upstream `README.md` is kept as-is apart from a short fork callout at the
+> top. Everything KrZ-W-specific lives in [`docs/`](docs/) and
+> [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Features at a glance
 
@@ -60,16 +61,18 @@ docker image ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1
 
 See [docs/releasing.md](docs/releasing.md) for how to cut a release.
 
-> **In-app version:** the version Radarr shows in *System → Status* still comes from
-> upstream's build machinery (`Directory.Build.props`, currently the `10.0.0.*`
-> develop placeholder) and is **not** changed by this fork. Use the git tag / image
+> **In-app version:** the version Radarr shows in *System → Status* comes from
+> upstream's build machinery (`src/Directory.Build.props` sets `AssemblyVersion`
+> `10.0.0.*`; upstream's CI substitutes the real number, this fork's workflows do
+> not, so the compiler fills the last part with a build-time stamp such as
+> `10.0.0.6727`). It is meaningless here and **not** changed by this fork. Use the git tag / image
 > tag above as the source of truth for "which fork build am I running".
 
 ## Pulling the image
 
 ```bash
 # Pinned to a release (recommended for stability)
-docker pull ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1
+docker pull ghcr.io/krz-w/radarr:6.2.1.10461-krzw.11
 
 # Bleeding edge — tip of personal/all-features-master
 docker pull ghcr.io/krz-w/radarr:latest
@@ -80,8 +83,11 @@ See [features/docker-deployment.md](docs/features/docker-deployment.md) for a fu
 
 ## Relationship to upstream
 
-- `upstream` remote → `Radarr/Radarr` (the real project)
-- `myfork` remote → `KrZ-W/Radarr` (this fork)
-- Each feature lives on its own `feature/*` or `fix/*` branch and is merged into
-  `personal/all-features-master`. Rebasing onto a newer upstream is done per-branch,
+- The clone has one remote, `origin` → `KrZ-W/Radarr` (this fork). Upstream
+  `Radarr/Radarr` is fetched by URL when rebasing (see
+  [docs/releasing.md](docs/releasing.md)); `origin/master` and `origin/develop` are
+  stale upstream mirrors and are **not** the base.
+- Each feature lives on its own `feature/*` or `fix/*` branch cut from the upstream
+  release tag the fork is based on (`-master` suffix = master line, `-develop` =
+  develop line), and is merged into `personal/all-features-master`. Rebasing onto a newer upstream is done per-branch,
   then re-merged. See [CHANGELOG.md](CHANGELOG.md) for the per-feature history.

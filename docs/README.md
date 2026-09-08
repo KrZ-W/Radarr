@@ -22,6 +22,7 @@ exact behavior.
 | [Import-time Enforcement](features/import-time-enforcement.md) | MinFormatScore + quality-profile Language enforced at import, not just grab |
 | [Atomic Upgrade Imports](features/atomic-upgrade-imports.md) | Existing file survives unless the replacement import fully commits; failed upgrades restore everything |
 | [Regional Language & Translations](features/regional-language-and-translations.md) | Regional title variants in search + regional ISO-code fallback |
+| [User Alternative Titles & Translations](features/user-alternative-titles.md) | Bulk-import curated titles TMDB lacks: alt titles for parse/import matching plus regional translations the `OnePerRegion` search queries; both survive refreshes |
 | [Configurable Indexer Cooldown](features/configurable-indexer-cooldown.md) | Editable indexer back-off/escalation schedule |
 | [Completed Download Handling](features/completed-download-handling.md) | Stuck `ImportPending`/`ImportBlocked` items self-heal instead of stalling until a cleaner marks them failed |
 | [Docker / GHCR Deployment](features/docker-deployment.md) | LinuxServer.io-style image published to GHCR |

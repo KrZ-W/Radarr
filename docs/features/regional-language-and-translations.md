@@ -29,7 +29,7 @@ one and `RegionalLanguage` was always empty.
 | Setting | What it does |
 |---|---|
 | **Regional Translation Variants** | CSV of regional language codes to include in searches (e.g. `fr-CA`). In `OnePerRegion`/`AllTitles` modes, region-qualified titles **not** in the list are dropped; bare-language titles (e.g. `fr`) always pass. Empty = include all variants. Has no effect in `Standard` mode. |
-| **Regional Translation Search Mode** | How regional titles are used when searching — see below. |
+| **Translation Search Mode** | How regional titles are used when searching — see below. |
 
 ### Search modes
 
@@ -54,7 +54,7 @@ one and `RegionalLanguage` was always empty.
 
 1. **Settings → Media Management → Regional Translation Variants** — add the regional
    code(s) you want, e.g. `fr-CA`.
-2. **Regional Translation Search Mode** — choose `OnePerRegion` for a focused search or
+2. **Translation Search Mode** — choose `OnePerRegion` for a focused search or
    `AllTitles` for the widest coverage. Leave on `Standard` to keep stock behavior.
 3. Trigger a search; regionally-titled releases should now be matched.
 

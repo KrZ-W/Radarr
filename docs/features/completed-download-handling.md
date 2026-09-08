@@ -32,6 +32,12 @@ failed-download path, which keys off the **client** status rather than the track
 
 Recovery is automatic on the next CDH run — no restart or queue intervention needed.
 
+**Where it runs:** the guard lives in both `CompletedDownloadService.Check` (reached by
+`ImportBlocked` items via the download monitor) and `CompletedDownloadService.Import`
+(reached by `ImportPending` items via download processing). `krzw.10` only had the
+`Check` half, so `ImportPending` items never self-healed; `krzw.11` added the `Import`
+half.
+
 ## Relationship to the Sonarr fork
 
 The same fix ships in the [KrZ-W/Sonarr](https://github.com/KrZ-W/Sonarr) fork as of
@@ -40,6 +46,7 @@ download client, which both share.
 
 ## Source
 
-Commits: `f86cb016a` (fix), `faeb8c6c3` (regression tests). Key files:
+Commits: `f86cb016a` (fix in `Check`), `faeb8c6c3` (regression tests), `15eb66557` (same guard in
+`Import`, the path `ImportPending` items actually take). Key files:
 `Download/CompletedDownloadService.cs` (`Check()` early-return branch),
 `Download/TrackedDownloads/TrackedDownload.cs` (`ResetStatus()`).
