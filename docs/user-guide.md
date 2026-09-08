@@ -161,7 +161,7 @@ curl -X POST "http://<host>:7878/api/v3/translation/user/import" \
 ```yaml
 services:
   radarr:
-    image: ghcr.io/krz-w/radarr:6.3.0.10514-krzw.2   # pin to a release
+    image: ghcr.io/krz-w/radarr:6.3.0.10514-krzw.3   # pin to a release
     container_name: radarr
     environment:
       - PUID=1000

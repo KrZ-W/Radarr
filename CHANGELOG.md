@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.3.0.10514+krzw.3] — based on Radarr 6.3.0.10514
+
 ### Fixed
 
 - **Atomic upgrade imports: same-name upgrades no longer lose the new subtitles/NFO.**
@@ -50,6 +54,8 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   an earlier design (no behaviour change).
 - Docs: the regional-translations page now says plainly that Regional Translation
   Variants is **not** empty by default and what that drops from `OnePerRegion` searches.
+
+Container image: `ghcr.io/krz-w/radarr:6.3.0.10514-krzw.3`.
 
 ## [v6.3.0.10514+krzw.2] — based on Radarr 6.3.0.10514
 
@@ -384,7 +390,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.2...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.3...HEAD
+[v6.3.0.10514+krzw.3]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.3
 [v6.3.0.10514+krzw.2]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.2
 [v6.3.0.10514+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.1
 [v6.2.1.10461+krzw.11]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.11
