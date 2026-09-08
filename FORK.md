@@ -5,10 +5,10 @@ handful of features focused on **language-aware grabbing/importing** (Quebec Fre
 VFQ in particular) and **self-hosted Docker deployment**. It is maintained by a single
 person for a private *arr stack; it is not affiliated with the Radarr team.
 
-- **Upstream base:** Radarr `6.2.1.10461` (the commit this fork is rebased onto)
+- **Upstream base:** Radarr `6.3.0.10514` (the commit this fork is rebased onto)
 - **Primary branch:** `personal/all-features-master` (all features merged together)
 - **Container image:** `ghcr.io/krz-w/radarr`
-- **Current fork version:** `v6.2.1.10461+krzw.11`
+- **Current fork version:** `v6.3.0.10514+krzw.1`
 
 > The stock upstream `README.md` is kept as-is apart from a short fork callout at the
 > top. Everything KrZ-W-specific lives in [`docs/`](docs/) and
@@ -72,7 +72,7 @@ See [docs/releasing.md](docs/releasing.md) for how to cut a release.
 
 ```bash
 # Pinned to a release (recommended for stability)
-docker pull ghcr.io/krz-w/radarr:6.2.1.10461-krzw.11
+docker pull ghcr.io/krz-w/radarr:6.3.0.10514-krzw.1
 
 # Bleeding edge — tip of personal/all-features-master
 docker pull ghcr.io/krz-w/radarr:latest
@@ -87,6 +87,10 @@ See [features/docker-deployment.md](docs/features/docker-deployment.md) for a fu
   `Radarr/Radarr` is fetched by URL when rebasing (see
   [docs/releasing.md](docs/releasing.md)); `origin/master` and `origin/develop` are
   stale upstream mirrors and are **not** the base.
+- Every fork change to an upstream file carries a `krzw(<feature>)` marker comment
+  (`// krzw(atomic-upgrade): ...`), so fork hunks are identifiable at rebase time;
+  `git grep -n 'krzw('` lists them. Files that cannot hold comments (`en.json`,
+  generated `*.css.d.ts`) are the only unmarked ones.
 - Each feature lives on its own `feature/*` or `fix/*` branch cut from the upstream
   release tag the fork is based on (`-master` suffix = master line, `-develop` =
   develop line), and is merged into `personal/all-features-master`. Rebasing onto a newer upstream is done per-branch,

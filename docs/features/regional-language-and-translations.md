@@ -78,8 +78,8 @@ one and `RegionalLanguage` was always empty.
 
 ## Source
 
-Commits: `2364f27f9` (settings + migration 243 + enum), `7322fbaf7` (RegionalLanguage
-fix + AllTitles incl. alternative titles), `0f3c83e61` (IsoLanguages fallback).
+Commits: `d6bf51274` (settings + migration 243 + enum), `cb54d996d` (RegionalLanguage
+fix + AllTitles incl. alternative titles), `c43445fc6` (IsoLanguages fallback).
 Key files: `Configuration/RegionalTranslationSearchMode.cs`,
 `Datastore/Migration/243_add_regional_language_to_movie_translations.cs`,
 `IndexerSearch/ReleaseSearchService.cs`, `Parser/IsoLanguages.cs`,

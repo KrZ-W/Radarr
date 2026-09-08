@@ -12,6 +12,28 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 _Nothing yet._
 
+## [v6.3.0.10514+krzw.1] — based on Radarr 6.3.0.10514
+
+### Changed
+
+- **Rebased onto Radarr 6.3.0.10514** (from 6.2.1.10461; 7 upstream commits, no
+  conflicts in fork code). Picks up upstream's *custom formats with year for imported
+  files* fix, the Simkl import-list fix and the StyleCop bump. All fork features
+  unchanged; fork commit hashes cited in `docs/features/*.md` were refreshed.
+- **Fork markers:** every fork change to an upstream source file now carries a
+  `krzw(<feature>)` comment (116 markers across 44 files; previously 3). Comment-only
+  change, no functional difference. `git grep -n 'krzw('` lists them.
+- **CI:** `docker-image.yml` now also builds `feat/**` branches; `docker-release.yml`
+  only triggers on `v*+krzw.*` tags so a mirrored upstream tag can never publish a
+  release image.
+- **Repository hygiene:** default branch is `personal/all-features-master`; the
+  40 upstream development branches that had been mirrored into the fork were removed
+  (they still exist on Radarr/Radarr); `origin/master` and `origin/develop` are now
+  current upstream mirrors instead of 2025 snapshots; the byte-identical duplicate
+  `feature/custom-format-priority-mode` was dropped in favour of the `-master` branch.
+
+Container image: `ghcr.io/krz-w/radarr:6.3.0.10514-krzw.1`.
+
 ## [v6.2.1.10461+krzw.11] — based on Radarr 6.2.1.10461
 
 ### Fixed
@@ -302,7 +324,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.2.1.10461+krzw.11...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.1...HEAD
+[v6.3.0.10514+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.1
 [v6.2.1.10461+krzw.11]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.11
 [v6.2.1.10461+krzw.10]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.10
 [v6.2.1.10461+krzw.9]: https://github.com/KrZ-W/Radarr/releases/tag/v6.2.1.10461%2Bkrzw.9

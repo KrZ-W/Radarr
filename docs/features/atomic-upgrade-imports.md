@@ -88,7 +88,7 @@ turned upstream's latent ordering flaw into recurring loss. Those features decid
 
 ## Source
 
-Commit: `a179188ad`. Key files:
+Commit: `053eb33b9`. Key files:
 `MediaFiles/UpgradeMediaFileService.cs` (park / finalize / rollback),
 `MediaFiles/PendingUpgradeFile.cs`, `MediaFiles/MovieFileMoveResult.cs`,
 `MediaFiles/MovieImport/ImportApprovedMovie.cs` (commit orchestration),

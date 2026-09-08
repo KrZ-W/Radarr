@@ -26,7 +26,7 @@ pre-built fork image instead of building locally.
 
 | Tag | Points at | Use for |
 |---|---|---|
-| `6.2.1.10461-krzw.11` | a tagged release (immutable) | **production — pin to this** |
+| `6.3.0.10514-krzw.1` | a tagged release (immutable) | **production — pin to this** |
 | `latest` | tip of `personal/all-features-master` | bleeding edge |
 | `personal-all-features-master` | same branch (ref tag) | bleeding edge |
 | `sha-<short>` | a specific commit | debugging / rollback |
@@ -45,7 +45,7 @@ docker run -d --name radarr \
   -v /path/to/config:/config \
   -v /path/to/movies:/movies \
   -v /path/to/downloads:/downloads \
-  ghcr.io/krz-w/radarr:6.2.1.10461-krzw.11
+  ghcr.io/krz-w/radarr:6.3.0.10514-krzw.1
 ```
 
 ### docker-compose
@@ -53,7 +53,7 @@ docker run -d --name radarr \
 ```yaml
 services:
   radarr:
-    image: ghcr.io/krz-w/radarr:6.2.1.10461-krzw.11
+    image: ghcr.io/krz-w/radarr:6.3.0.10514-krzw.1
     container_name: radarr
     environment:
       - PUID=1000
@@ -95,6 +95,6 @@ no pre-built artifacts.
 
 ## Source
 
-Commits: `61cba4a41` (Dockerfile + workflow + entrypoint), `05d52a29b` (ffprobe),
-`b820361f2` (`-o` GID/UID reuse). Key files: `Dockerfile`, `docker/entrypoint.sh`,
+Commits: `987cd349c` (Dockerfile + workflow + entrypoint), `8d851eb8e` (ffprobe),
+`b95e4f90c` (`-o` GID/UID reuse). Key files: `Dockerfile`, `docker/entrypoint.sh`,
 `.dockerignore`, `.github/workflows/docker-image.yml`.

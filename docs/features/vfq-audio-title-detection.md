@@ -91,7 +91,7 @@ release name.
 
 ## Source
 
-Commit: `a4431f24c`. Key files:
+Commit: `5bbc63204`. Key files:
 `CustomFormats/Specifications/AudioTitleSpecification.cs` (`ImplementationName = "Audio Title"`),
 `CustomFormats/CustomFormatInput.cs`, `CustomFormats/CustomFormatCalculationService.cs`,
 `MediaFiles/MediaInfo/MediaInfoModel.cs`, `MediaFiles/MediaInfo/VideoFileInfoReader.cs`.
