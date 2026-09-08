@@ -34,12 +34,11 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             var qualityCompare = qualityComparer.Compare(newQuality?.Quality, currentQuality.Quality);
             var downloadPropersAndRepacks = _configService.DownloadPropersAndRepacks;
 
-            // krzw(cf-priority): priority CFs decide before quality; block hoisted from below
-            // Calculate priority and regular CF scores separately
+            // krzw(cf-priority): priority CFs decide before quality; block hoisted from below.
+            // With equal priority scores the total score comparison below is equivalent to comparing
+            // the non-priority ("regular") scores, so only priority and total are needed.
             var currentPriorityScore = qualityProfile.CalculatePriorityFormatScore(currentCustomFormats);
             var newPriorityScore = qualityProfile.CalculatePriorityFormatScore(newCustomFormats);
-            var currentRegularScore = qualityProfile.CalculateRegularFormatScore(currentCustomFormats);
-            var newRegularScore = qualityProfile.CalculateRegularFormatScore(newCustomFormats);
             var currentFormatScore = qualityProfile.CalculateCustomFormatScore(currentCustomFormats);
             var newFormatScore = qualityProfile.CalculateCustomFormatScore(newCustomFormats);
 
@@ -141,8 +140,7 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 return UpgradeableRejectReason.QualityCutoff;
             }
 
-// krzw(cf-priority): currentFormatScore and newFormatScore are already calculated above
-
+            // krzw(cf-priority): currentFormatScore and newFormatScore are already calculated above
             if (newFormatScore <= currentFormatScore)
             {
                 _logger.Debug("New item's custom formats [{0}] ({1}) do not improve on [{2}] ({3}), skipping",
