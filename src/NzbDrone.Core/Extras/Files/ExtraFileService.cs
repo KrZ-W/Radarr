@@ -112,9 +112,23 @@ namespace NzbDrone.Core.Extras.Files
             {
                 var movie = _movieService.GetMovie(message.MovieFile.MovieId);
 
+                // krzw(atomic-upgrade): an upgrade to the same file name recreates the extras under the
+                // old paths right after the old file's delete event fires, and this handler is async. If
+                // the replacement's extras already own a path, the file there is theirs: leave it alone.
+                var pathsOwnedByOtherFiles = _repository.GetFilesByMovie(movieFile.MovieId)
+                    .Where(e => e.MovieFileId.HasValue && e.MovieFileId.Value != movieFile.Id)
+                    .Select(e => e.RelativePath)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
                 foreach (var extra in _repository.GetFilesByMovieFile(movieFile.Id))
                 {
                     var path = Path.Combine(movie.Path, extra.RelativePath);
+
+                    if (pathsOwnedByOtherFiles.Contains(extra.RelativePath))
+                    {
+                        _logger.Debug("Not recycling extra '{0}': the path now belongs to another movie file", path);
+                        continue;
+                    }
 
                     if (_diskProvider.FileExists(path))
                     {

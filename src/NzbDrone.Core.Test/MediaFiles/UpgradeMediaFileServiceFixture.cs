@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
@@ -66,6 +67,20 @@ namespace NzbDrone.Core.Test.MediaFiles
                     Id = 1,
                     RelativePath = @"A.Movie.2019.avi",
                 };
+
+            // The parked path is empty when the stale check runs, then holds the parked original for
+            // every later look (finalize / restore). A test that wants a stale leftover overrides this.
+            Mocker.GetMock<IDiskProvider>()
+                  .SetupSequence(c => c.FileExists(ExistingFilePath() + ParkedFileSuffix))
+                  .Returns(false)
+                  .Returns(true)
+                  .Returns(true)
+                  .Returns(true);
+        }
+
+        private string ExistingFilePath()
+        {
+            return Path.Combine(_localMovie.Movie.Path, _localMovie.Movie.MovieFile.RelativePath);
         }
 
         private MovieFileMoveResult UpgradeAndFinalize()
@@ -133,6 +148,84 @@ namespace NzbDrone.Core.Test.MediaFiles
             GivenSingleMovieWithSingleMovieFile();
 
             UpgradeAndFinalize().OldFiles.Count.Should().Be(1);
+        }
+
+        [Test]
+        public void should_expose_old_file_to_the_import_script_during_the_transfer()
+        {
+            GivenSingleMovieWithSingleMovieFile();
+
+            var oldFilesSeenByMover = -1;
+
+            // ScriptImportDecider runs inside the mover and reads localMovie.OldFiles for
+            // Radarr_DeletedPaths; the entry must exist before FinalizeUpgrade.
+            Mocker.GetMock<IMoveMovieFiles>()
+                  .Setup(c => c.MoveMovieFile(It.IsAny<MovieFile>(), It.IsAny<LocalMovie>()))
+                  .Callback<MovieFile, LocalMovie>((f, l) => oldFilesSeenByMover = l.OldFiles.Count)
+                  .Returns(new MovieFile { RelativePath = @"A.Movie.2019.new.mkv" });
+
+            var result = Subject.UpgradeMovieFile(_movieFile, _localMovie);
+
+            oldFilesSeenByMover.Should().Be(1);
+            result.OldFiles.Single().MovieFile.Should().BeSameAs(_localMovie.Movie.MovieFile);
+            result.OldFiles.Single().RecycleBinPath.Should().BeNull();
+        }
+
+        [Test]
+        public void should_fill_in_recycle_bin_path_on_finalize_without_duplicating_old_files()
+        {
+            GivenSingleMovieWithSingleMovieFile();
+
+            Mocker.GetMock<IRecycleBinProvider>()
+                  .Setup(c => c.DeleteFile(It.IsAny<string>(), It.IsAny<string>()))
+                  .Returns(@"C:\Test\Recycle\A.Movie.2019.avi".AsOsAgnostic());
+
+            var result = UpgradeAndFinalize();
+
+            result.OldFiles.Should().HaveCount(1);
+            result.OldFiles.Single().RecycleBinPath.Should().Be(@"C:\Test\Recycle\A.Movie.2019.avi".AsOsAgnostic());
+            _localMovie.OldFiles.Should().BeSameAs(result.OldFiles);
+        }
+
+        [Test]
+        public void should_recycle_a_stale_parked_file_instead_of_deleting_it_permanently()
+        {
+            GivenSingleMovieWithSingleMovieFile();
+
+            var stalePath = ExistingFilePath() + ParkedFileSuffix;
+
+            Mocker.GetMock<IDiskProvider>()
+                  .Setup(c => c.FileExists(stalePath))
+                  .Returns(true);
+
+            Subject.UpgradeMovieFile(_movieFile, _localMovie);
+
+            Mocker.GetMock<IRecycleBinProvider>().Verify(v => v.DeleteFile(stalePath, It.IsAny<string>()), Times.Once());
+            Mocker.GetMock<IDiskProvider>().Verify(v => v.DeleteFile(stalePath), Times.Never());
+
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public void should_delete_a_stale_parked_file_permanently_when_recycling_fails()
+        {
+            GivenSingleMovieWithSingleMovieFile();
+
+            var stalePath = ExistingFilePath() + ParkedFileSuffix;
+
+            Mocker.GetMock<IDiskProvider>()
+                  .Setup(c => c.FileExists(stalePath))
+                  .Returns(true);
+
+            Mocker.GetMock<IRecycleBinProvider>()
+                  .Setup(c => c.DeleteFile(stalePath, It.IsAny<string>()))
+                  .Throws(new RecycleBinException("Simulated recycle bin failure"));
+
+            Subject.UpgradeMovieFile(_movieFile, _localMovie);
+
+            Mocker.GetMock<IDiskProvider>().Verify(v => v.DeleteFile(stalePath), Times.Once());
+
+            ExceptionVerification.ExpectedWarns(2);
         }
 
         [Test]
