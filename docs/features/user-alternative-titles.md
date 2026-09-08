@@ -150,16 +150,16 @@ already carries the dataset as alt titles.
 
 ## Source
 
-Commit: `09477768b`. Key files:
+Commit: `86aa71646`. Key files:
 `Movies/AlternativeTitles/AlternativeTitleService.cs` (refresh preservation +
 `UpsertUserTitles`), `Radarr.Api.V3/Movies/AlternativeTitleController.cs` (endpoint),
 `Radarr.Api.V3/Movies/UserAlternativeTitleImportResource.cs` (DTOs).
 
-Phase 1b commits: `01d42c840`, `07064c7b8`. Key files:
+Phase 1b commits: `4f2c02074`, `76dc748a5`. Key files:
 `Movies/Translations/MovieTranslationService.cs` (preservation +
 `UpsertUserTranslations`), `Radarr.Api.V3/Movies/UserTranslationController.cs`
 (endpoint + `UserTranslationMapper`),
 `Datastore/Migration/244_add_source_type_to_movie_translations.cs`.
 
-Review fixes: `3537c8b7f` (shared `UserTitleImportGuard` across both importers),
-`b5cd77084` (canonical language code in the stored tag).
+Review fixes: `f2ec81c7e` (shared `UserTitleImportGuard` across both importers),
+`57350200f` (canonical language code in the stored tag).

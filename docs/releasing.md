@@ -6,8 +6,8 @@ How to cut a versioned release of the KrZ-W/Radarr fork. See
 ## Version format recap
 
 ```
-git tag / GitHub release :  v<upstream-version>+krzw.<N>     e.g. v6.2.1.10461+krzw.1
-docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.2.1.10461-krzw.1
+git tag / GitHub release :  v<upstream-version>+krzw.<N>     e.g. v6.3.0.10514+krzw.1
+docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.3.0.10514-krzw.1
 ```
 
 - `<upstream-version>` = the Radarr version `personal/all-features-master` is rebased
@@ -44,27 +44,27 @@ docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.2.1.10461-kr
 3. **Commit** the changelog (and any doc updates):
 
    ```bash
-   git commit -am "docs: release v6.2.1.10461+krzw.1"
+   git commit -am "docs: release v6.3.0.10514+krzw.1"
    git push origin personal/all-features-master
    ```
 
 4. **Tag and push the tag.** The `+` is fine in a git tag:
 
    ```bash
-   git tag -a 'v6.2.1.10461+krzw.1' -m 'Fork release based on Radarr 6.2.1.10461'
-   git push origin 'v6.2.1.10461+krzw.1'
+   git tag -a 'v6.3.0.10514+krzw.1' -m 'Fork release based on Radarr 6.3.0.10514'
+   git push origin 'v6.3.0.10514+krzw.1'
    ```
 
    This triggers `docker-release.yml`, which builds and pushes the immutable image tag
-   `ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1` (it maps `+` → `-` automatically).
+   `ghcr.io/krz-w/radarr:6.3.0.10514-krzw.1` (it maps `+` → `-` automatically).
 
 5. **Boot-test the release image before announcing it.** A green CI build is not
    proof the image runs — the Sonarr fork's `v4.0.19.2979+krzw.1` image built green
    but crash-looped in production:
 
    ```bash
-   docker pull ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1
-   docker run -d --name radarr-boot-test -p 17878:7878 ghcr.io/krz-w/radarr:6.2.1.10461-krzw.1
+   docker pull ghcr.io/krz-w/radarr:6.3.0.10514-krzw.1
+   docker run -d --name radarr-boot-test -p 17878:7878 ghcr.io/krz-w/radarr:6.3.0.10514-krzw.1
    sleep 20
    curl -sf http://localhost:17878/ping    # expect {"status":"OK"}
    docker rm -f radarr-boot-test
@@ -76,10 +76,10 @@ docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.2.1.10461-kr
 6. **Create the GitHub release** from the tag, using the changelog section as the body:
 
    ```bash
-   gh release create 'v6.2.1.10461+krzw.1' \
+   gh release create 'v6.3.0.10514+krzw.1' \
      --repo KrZ-W/Radarr \
-     --title 'v6.2.1.10461+krzw.1' \
-     --notes-file <(sed -n '/## \[v6.2.1.10461+krzw.1\]/,/## \[/p' CHANGELOG.md | sed '$d')
+     --title 'v6.3.0.10514+krzw.1' \
+     --notes-file <(sed -n '/## \[v6.3.0.10514+krzw.1\]/,/## \[/p' CHANGELOG.md | sed '$d')
    ```
 
    (Or paste the changelog section into the web UI.)
