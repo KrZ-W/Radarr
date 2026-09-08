@@ -11,7 +11,7 @@ name: Docker release image
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*+krzw.*'   # fork release tags only; never a mirrored upstream tag
   workflow_dispatch:
     inputs:
       tag:
