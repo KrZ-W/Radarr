@@ -162,6 +162,35 @@ namespace NzbDrone.Core.Configuration
             set { SetValue("RegionalTranslationSearchMode", value); }
         }
 
+        // krzw(imdb-title-provider): settings
+        public bool ImdbTitleProviderEnabled
+        {
+            get { return GetValueBoolean("ImdbTitleProviderEnabled", false); }
+
+            set { SetValue("ImdbTitleProviderEnabled", value); }
+        }
+
+        public string ImdbTitleProviderRegions
+        {
+            get { return GetValue("ImdbTitleProviderRegions", "CA,FR"); }
+
+            set { SetValue("ImdbTitleProviderRegions", value); }
+        }
+
+        public string ImdbTitleProviderLanguages
+        {
+            get { return GetValue("ImdbTitleProviderLanguages", "fr"); }
+
+            set { SetValue("ImdbTitleProviderLanguages", value); }
+        }
+
+        public int ImdbTitleProviderRefreshInterval
+        {
+            get { return GetValueInt("ImdbTitleProviderRefreshInterval", 7); }
+
+            set { SetValue("ImdbTitleProviderRefreshInterval", value); }
+        }
+
         public int MaximumSize
         {
             get { return GetValueInt("MaximumSize", 0); }
