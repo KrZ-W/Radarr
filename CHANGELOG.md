@@ -10,7 +10,21 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **IMDb Title Provider.** Settings → Metadata gains an *IMDb Title Provider* section
+  (Enabled, Regions `CA,FR`, Languages `fr`, Refresh Interval 7 days). A new scheduled
+  task `ImdbTitleDatasetRefresh` downloads IMDb's `title.akas` dataset (conditionally on
+  ETag / Last-Modified), streams the rows for the configured regions/languages into a
+  local `imdb-akas.db` index (atomic replace, previous index kept on failure) and then
+  adds every title a movie is missing as a user alternative title **and** a user
+  translation through the existing import service. New movies are synced on
+  `MovieAddedEvent` and after each metadata refresh. Region is stored only when its tag
+  is in Regional Translation Variants (`CA` → `fr-ca`, `FR` → bare `fr`); rows whose
+  attributes say `literal` are skipped. A health check warns while the feature is on but
+  the index is missing or older than twice the interval. Replaces the external
+  `build_index.py` / `title_sync.py` / `title_webhook.py` feeder. Docs:
+  [features/imdb-title-provider.md](docs/features/imdb-title-provider.md).
 
 ## [v6.3.0.10514+krzw.4] — based on Radarr 6.3.0.10514
 
