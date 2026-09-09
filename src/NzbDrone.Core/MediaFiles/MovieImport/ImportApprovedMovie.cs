@@ -97,6 +97,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                     movieFile.Movie = localMovie.Movie;
                     movieFile.ReleaseGroup = localMovie.ReleaseGroup;
                     movieFile.Edition = localMovie.Edition;
+                    movieFile.AudioLanguageVerification = localMovie.AudioLanguageVerification;  // krzw(audio-language-verification)
 
                     if (downloadClientItem?.DownloadId.IsNotNullOrWhiteSpace() == true)
                     {
