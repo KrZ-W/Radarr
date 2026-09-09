@@ -16,6 +16,7 @@ using NzbDrone.Core.MediaFiles.Commands;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Movies.Commands;
+using NzbDrone.Core.Movies.ImdbTitles;
 using NzbDrone.Core.Update.Commands;
 
 namespace NzbDrone.Core.Jobs
@@ -130,6 +131,13 @@ namespace NzbDrone.Core.Jobs
                         Interval = GetRefreshMonitoredInterval(),
                         TypeName = typeof(RefreshMonitoredDownloadsCommand).FullName,
                         Priority = CommandPriority.High
+                    },
+
+                    // krzw(imdb-title-provider): interval 0 (never scheduled) while the feature is off
+                    new ScheduledTask
+                    {
+                        Interval = GetImdbTitleDatasetRefreshInterval(),
+                        TypeName = typeof(ImdbTitleDatasetRefreshCommand).FullName
                     }
                 };
 
@@ -198,6 +206,24 @@ namespace NzbDrone.Core.Jobs
             return interval;
         }
 
+        // krzw(imdb-title-provider): days -> minutes, at least one day, 0 when disabled
+        private int GetImdbTitleDatasetRefreshInterval()
+        {
+            if (!_configService.ImdbTitleProviderEnabled)
+            {
+                return 0;
+            }
+
+            var days = _configService.ImdbTitleProviderRefreshInterval;
+
+            if (days < 1)
+            {
+                days = 1;
+            }
+
+            return days * 60 * 24;
+        }
+
         private int GetRefreshMonitoredInterval()
         {
             var interval = _configService.CheckForFinishedDownloadInterval;
@@ -237,11 +263,16 @@ namespace NzbDrone.Core.Jobs
             var refreshMonitoredDownloads = _scheduledTaskRepository.GetDefinition(typeof(RefreshMonitoredDownloadsCommand));
             refreshMonitoredDownloads.Interval = GetRefreshMonitoredInterval();
 
-            _scheduledTaskRepository.UpdateMany(new List<ScheduledTask> { rss, refreshMonitoredDownloads, backup });
+            // krzw(imdb-title-provider): enabling/disabling or changing the interval takes effect on save
+            var imdbTitles = _scheduledTaskRepository.GetDefinition(typeof(ImdbTitleDatasetRefreshCommand));
+            imdbTitles.Interval = GetImdbTitleDatasetRefreshInterval();
+
+            _scheduledTaskRepository.UpdateMany(new List<ScheduledTask> { rss, refreshMonitoredDownloads, backup, imdbTitles });
 
             _cache.Find(rss.TypeName).Interval = rss.Interval;
             _cache.Find(backup.TypeName).Interval = backup.Interval;
             _cache.Find(refreshMonitoredDownloads.TypeName).Interval = refreshMonitoredDownloads.Interval;
+            _cache.Find(imdbTitles.TypeName).Interval = imdbTitles.Interval;
         }
     }
 }
