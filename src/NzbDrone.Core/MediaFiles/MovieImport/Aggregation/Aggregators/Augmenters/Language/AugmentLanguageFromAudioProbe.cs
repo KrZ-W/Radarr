@@ -49,6 +49,20 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenter
 
         public AugmentLanguageResult AugmentLanguage(LocalMovie localMovie, DownloadClientItem downloadClientItem)
         {
+            // Nothing in here may ever reach the aggregator: any failure means "no extra evidence".
+            try
+            {
+                return Augment(localMovie, downloadClientItem);
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn(ex, "Audio language verification failed for '{0}', importing on existing evidence", localMovie.Path);
+                return null;
+            }
+        }
+
+        private AugmentLanguageResult Augment(LocalMovie localMovie, DownloadClientItem downloadClientItem)
+        {
             if (!_configService.AudioLanguageVerificationEnabled || _configService.AudioLanguageVerificationEndpoint.IsNullOrWhiteSpace())
             {
                 return null;

@@ -66,7 +66,7 @@ Settings → Media Management → **Audio Language Verification** (show advanced
 | **Clip Length** | `30` s | Sample length. Files shorter than offset + length are sampled from the middle. |
 | **Verify Tagged Tracks** | Never | Also probe tracks already tagged with an expected language: *Never*, *For release groups* (list below), *Always*. |
 | **Verify Tagged Tracks For Groups** | empty | Comma-separated release groups for the *For release groups* mode (case-insensitive). |
-| **Timeout** | `120` s | Per-track limit for clip extraction and for the detector reply. |
+| **Timeout** | `120` s | Total time budget per probed track: the clip extraction gets at most a third of it, the detector call whatever is left. |
 
 All fields are on `GET/PUT /api/v3/config/mediamanagement`
 (`audioLanguageVerification*`). "Expected languages" are never hard-coded: they come from
@@ -106,9 +106,13 @@ the first rule that applies decides which tracks are sent:
 `WhisperAsrAudioLanguageProbe` extracts one audio stream (`ffmpeg -ss <offset> -t <length>
 -map 0:a:N -ac 1 -ar 16000 pcm_s16le`, argument list, no shell) to a temp WAV, POSTs it as
 `audio_file` to `/detect-language`, deletes the temp file and maps the ISO 639-1 code back to
-a Radarr language. **It never throws into the import**: ffmpeg failure, timeout, connection
-refused, HTTP error or an unparsable reply log one warning and return "no result", and the
-import proceeds on the existing evidence exactly as before the feature.
+a Radarr language. The *Timeout* setting is one budget per track: ffmpeg gets at most a
+third of it (`120` s → 40 s) and the detector call gets what is left when the clip exists;
+a track can therefore never take longer than the setting. **It never throws into the
+import**: ffmpeg failure, timeout, connection refused, HTTP error, an unparsable reply, or
+any unexpected exception inside the augmenter (history lookup included) logs one warning
+and returns "no result", and the import proceeds on the existing evidence exactly as before
+the feature.
 
 ### Cache: one probe per track layout per pack
 
@@ -116,8 +120,9 @@ Results are cached in memory per *(pack, track layout, stream)*, where the pack 
 download client item id (or the parent folder for a manual/folder import) and the layout is
 the ordered list of `(codec, channels, language tag, title)` of the audio streams. All files
 of a pack that share a layout reuse the first file's answer, so a 10-file download with one
-layout costs one probe per triggered track, not ten. Failed probes are cached too (a down
-server costs one attempt per layout). Entries expire after 12 hours.
+layout costs one probe per triggered track, not ten. Failed probes are cached too, but only
+for **15 minutes** (a down server costs one attempt per layout per quarter hour, and a
+retry once Whisper is back probes again); successful results expire after 12 hours.
 
 ### Result
 
