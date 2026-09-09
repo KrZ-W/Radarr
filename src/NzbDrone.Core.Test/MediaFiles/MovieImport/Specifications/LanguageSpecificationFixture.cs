@@ -3,6 +3,7 @@ using FizzWare.NBuilder;
 using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.Languages;
+using NzbDrone.Core.MediaFiles.AudioLanguage;
 using NzbDrone.Core.MediaFiles.MovieImport.Specifications;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Parser.Model;
@@ -85,6 +86,66 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
             _localMovie.Languages = new List<Language> { Language.English };
 
             Subject.IsSatisfiedBy(_localMovie, null).Accepted.Should().BeFalse();
+        }
+
+        // krzw(audio-language-verification)
+        private void GivenVerified(AudioLanguageTrigger trigger)
+        {
+            _localMovie.AudioLanguageTrigger = trigger;
+            _localMovie.AudioLanguageVerification = new List<AudioLanguageVerification>
+            {
+                new AudioLanguageVerification { StreamIndex = 0, TaggedLanguage = "eng", DetectedLanguage = "en", Confidence = 0.97 },
+                new AudioLanguageVerification { StreamIndex = 1, TaggedLanguage = "und", DetectedLanguage = "en", Confidence = 0.94 }
+            };
+        }
+
+        [Test]
+        public void should_say_audio_verified_when_a_probe_ran_and_the_file_is_still_rejected()
+        {
+            _localMovie.Languages = new List<Language> { Language.English };
+            GivenVerified(AudioLanguageTrigger.Contradiction);
+
+            var decision = Subject.IsSatisfiedBy(_localMovie, null);
+
+            decision.Accepted.Should().BeFalse();
+            decision.Message.Should().Be("File audio language English does not contain the profile's required language (French). Audio verified: no French track (detected en 0.97, en 0.94)");
+        }
+
+        [Test]
+        public void should_say_audio_verified_for_original_language_rejections()
+        {
+            _movie.QualityProfile.Language = Language.Original;
+            _movie.MovieMetadata.Value.OriginalLanguage = Language.German;
+            _localMovie.Languages = new List<Language> { Language.English };
+            GivenVerified(AudioLanguageTrigger.ImpendingRejection);
+
+            Subject.IsSatisfiedBy(_localMovie, null).Message.Should().EndWith("Audio verified: no German track (detected en 0.97, en 0.94)");
+        }
+
+        [Test]
+        public void should_not_mention_verification_when_no_probe_ran()
+        {
+            _localMovie.Languages = new List<Language> { Language.English };
+
+            Subject.IsSatisfiedBy(_localMovie, null).Message.Should().Be("File audio language English does not contain the profile's required language (French)");
+        }
+
+        [Test]
+        public void should_not_mention_verification_for_positive_verification_probes()
+        {
+            _localMovie.Languages = new List<Language> { Language.English };
+            GivenVerified(AudioLanguageTrigger.PositiveVerification);
+
+            Subject.IsSatisfiedBy(_localMovie, null).Message.Should().NotContain("Audio verified");
+        }
+
+        [Test]
+        public void verification_should_not_change_the_decision()
+        {
+            _localMovie.Languages = new List<Language> { Language.French };
+            GivenVerified(AudioLanguageTrigger.Contradiction);
+
+            Subject.IsSatisfiedBy(_localMovie, null).Accepted.Should().BeTrue();
         }
     }
 }

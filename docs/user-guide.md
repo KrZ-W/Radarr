@@ -78,6 +78,57 @@ A file that fails will be rejected at import with reason `WantedLanguage` or
 
 ---
 
+## Recipe: Rescue mislabeled French audio
+
+**Goal:** a release named `FRENCH`/`VFQ` whose only audio track is tagged `eng` or
+`und` (very common with Quebec dubs) should import as French instead of being rejected
+as "not French" — and a release that merely *claims* French should still be refused, with
+a reason that says the audio was actually checked.
+
+1. Run a [whisper-asr-webservice](https://github.com/ahmetoner/whisper-asr-webservice)
+   container reachable from Radarr (the same one Bazarr's Whisper provider uses; the
+   `base` model is enough for language identification):
+
+   ```yaml
+   whisper:
+     image: onerahmet/openai-whisper-asr-webservice:latest
+     environment:
+       - ASR_MODEL=base
+       - ASR_ENGINE=faster_whisper
+   ```
+
+2. **Settings → Media Management → show advanced → Audio Language Verification:** tick
+   **Enable**, set **Whisper Endpoint** to `http://whisper:9000`, keep the defaults
+   (threshold `0.85`, clip at 300 s for 30 s, *Verify Tagged Tracks* = Never). Save.
+
+3. Make sure the quality profile of the movies you care about has **Language = French**
+   (or a positively scored *Language: French* custom format). With Language = *Any* and
+   no language custom format, nothing is ever probed.
+
+That's it. On the next import whose tags disagree with the release claim, Radarr
+extracts a clip of each suspicious track with the bundled `ffmpeg`, asks Whisper, and:
+
+- a confident `fr` detection makes the file import with `Languages = French` — the
+  "Not French" custom format no longer matches and a French release is not offered as
+  an upgrade;
+- no French anywhere keeps the rejection, now worded
+  `… Audio verified: no French track (detected en 0.97, en 0.94)`;
+- Whisper down or slow → one warning in the log and the import behaves exactly as
+  before you enabled the feature.
+
+The outcome is stored per track on the movie file (`audioLanguageVerification` in
+`GET /api/v3/moviefile?movieId=…`) and is left untouched by *Rescan Movie*. Files are
+never modified; the planned *Audio Track Retag* feature will use that record.
+
+> **Cost:** one ffmpeg extraction and one Whisper call per suspicious track per distinct
+> track layout in a download — a 10-file pack with identical layouts costs one probe.
+> Set *Verify Tagged Tracks* to *For release groups* with a group list only if you know
+> a group mislabels tracks that *look* right.
+
+> Full reference: [Audio Language Verification](features/audio-language-verification.md).
+
+---
+
 ## Recipe: Find releases under regional (Quebec) titles
 
 **Goal:** search for a movie using its Quebec title and alternative titles, not just
