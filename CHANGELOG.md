@@ -420,7 +420,7 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.4...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.5...HEAD
 [v6.3.0.10514+krzw.5]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.5
 [v6.3.0.10514+krzw.4]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.4
 [v6.3.0.10514+krzw.3]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.3
