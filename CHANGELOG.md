@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.3.0.10514+krzw.6] — based on Radarr 6.3.0.10514
+
 ### Added
 
 - **Audio Language Verification.** Settings → Media Management gains an advanced
@@ -32,6 +36,8 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   of the external `frtag_rescue.py`. Image: `ffmpeg` is now symlinked into `/app` next to
   `ffprobe`. Docs:
   [features/audio-language-verification.md](docs/features/audio-language-verification.md).
+
+Container image: `ghcr.io/krz-w/radarr:6.3.0.10514-krzw.6`.
 
 ## [v6.3.0.10514+krzw.5] — based on Radarr 6.3.0.10514
 
@@ -441,7 +447,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.5...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.6...HEAD
+[v6.3.0.10514+krzw.6]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.6
 [v6.3.0.10514+krzw.5]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.5
 [v6.3.0.10514+krzw.4]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.4
 [v6.3.0.10514+krzw.3]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.3
