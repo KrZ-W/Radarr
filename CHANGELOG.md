@@ -12,6 +12,31 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 _Nothing yet._
 
+## [v6.3.0.10514+krzw.7] — based on Radarr 6.3.0.10514
+
+### Fixed
+
+- **Audio Language Verification follow-ups.**
+  - Settings saved through the API were written with the process culture, so in a
+    comma-decimal locale (the image runs with `LANG=fr_FR.UTF-8` and real globalization) the
+    confidence threshold was stored as `0,75`, read back as the `0.85` default and could
+    never be changed. `ConfigService.SaveConfigDictionary` now writes and compares values
+    with `InvariantCulture`; the threshold getter also accepts a value an older build wrote
+    in the current culture. No other fork setting is a double.
+  - Failed probes were cached for 12 hours like successes, so a download imported while
+    Whisper was down was not re-probed on retry. Failures now expire after **15 minutes**.
+  - The augmenter's history lookup ran outside its error handling; the whole augmenter is
+    now guarded, so any exception logs one warning and the import falls through to the
+    existing evidence.
+  - *Timeout* is now a per-track **total**: the clip extraction gets at most a third of it
+    and the detector call whatever is left, so a track can never take longer than the
+    setting (it used to be two separate budgets). UI help text and docs updated.
+  - The clip extractor reads the clip and locates the bundled `ffmpeg` through the disk
+    provider, and its failure paths (ffmpeg missing, non-zero exit, timeout → process
+    killed, temp file always deleted) are unit-tested.
+
+Container image: `ghcr.io/krz-w/radarr:6.3.0.10514-krzw.7`.
+
 ## [v6.3.0.10514+krzw.6] — based on Radarr 6.3.0.10514
 
 ### Added
@@ -447,7 +472,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.6...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.7...HEAD
+[v6.3.0.10514+krzw.7]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.7
 [v6.3.0.10514+krzw.6]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.6
 [v6.3.0.10514+krzw.5]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.5
 [v6.3.0.10514+krzw.4]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.4
