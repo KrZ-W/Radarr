@@ -63,6 +63,18 @@ Language = *Any* and MinFormatScore = the default, behavior is unchanged.
 - [VFQ Audio-Title Detection](vfq-audio-title-detection.md)
 - User Guide: [Stop wrong-language files from importing](../user-guide.md#recipe-stop-wrong-language-files-from-importing).
 
+## Upstream
+
+Adjacent upstream Radarr issues (state as of 2026-09-09):
+
+- [Radarr#11422](https://github.com/Radarr/Radarr/issues/11422) — *Custom Format Score
+  mismatch between grab and import causes upgrade loop* (open, +4, 2026). Same seam (grab-time
+  vs import-time scoring) but a different cause: release name vs file name parsing. Not fixed
+  here.
+- [Radarr#9345](https://github.com/Radarr/Radarr/issues/9345) — automatic import when the CF
+  score is higher (closed Won't Fix 2023). The inverse request; upstream's answer was "merge
+  your qualities and rank with custom formats".
+
 ## Source
 
 Commits: `8b80f198e` (language), `50cb4b801` (MinFormatScore), `28483baa8` (existing files skip

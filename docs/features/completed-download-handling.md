@@ -44,6 +44,11 @@ The same fix ships in the [KrZ-W/Sonarr](https://github.com/KrZ-W/Sonarr) fork a
 `v4.0.19.2979+krzw.10`. The code path is identical in both, and the trigger is the
 download client, which both share.
 
+## Upstream
+
+No open or declined upstream Radarr request matches the stuck `ImportPending` self-heal
+(searched 2026-09-09).
+
 ## Source
 
 Commits: `f86cb016a` (fix in `Check`), `faeb8c6c3` (regression tests), `6475b4196` (same guard in

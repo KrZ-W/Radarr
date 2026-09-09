@@ -181,6 +181,20 @@ The `"fr"` language default and the `missingFrenchTitles` field name are propert
 the curated dataset, so they exist only in the API layer (`UserTitleImportResourceMapper`
 and `UserTranslationController`); Core is language-neutral.
 
+## Upstream
+
+Related upstream Radarr issues (state as of 2026-09-09):
+
+- [Radarr#11443](https://github.com/Radarr/Radarr/issues/11443) — missed localized releases
+  because alternate titles are not searched (open, 2026). A contributor in that thread
+  proposed user-typed search titles with a per-movie toggle; this feature is the same idea
+  delivered as a bulk import of curated titles, searched in `AllTitles` mode.
+- [Radarr#11373](https://github.com/Radarr/Radarr/issues/11373) — *wrong alternate titles*
+  (working titles) hijack matching (open, 2026) and
+  [Radarr#3602](https://github.com/Radarr/Radarr/issues/3602) — *Ignore alternative titles of
+  "working title" type* (closed, Maybe One Day, +6). The cross-movie guard here protects only
+  user-imported titles from doing the same; TMDB working titles are untouched.
+
 ## Source
 
 Commit: `86aa71646`. Key files:

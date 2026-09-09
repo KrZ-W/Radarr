@@ -81,6 +81,21 @@ docker pull ghcr.io/krz-w/radarr:latest
 See [features/docker-deployment.md](docs/features/docker-deployment.md) for a full
 `docker run` / compose example.
 
+## Upstream issues this fork relates to
+
+For people arriving from an upstream issue: the table below maps each fork feature to the
+Radarr issues it addresses or was declined as. Each feature page has an **Upstream** section
+with details. This fork does not submit changes upstream.
+
+| Upstream issue | State | Fork feature | Relationship |
+|---|---|---|---|
+| [Radarr#8444](https://github.com/Radarr/Radarr/issues/8444) deleted-event flood on failed imports | open, Confirmed | [Atomic Upgrade Imports](docs/features/atomic-upgrade-imports.md) | Fixed here (delete deferred until the import commits) |
+| [Radarr#11443](https://github.com/Radarr/Radarr/issues/11443) alternate titles not searched | open | [Regional Translations](docs/features/regional-language-and-translations.md), [User Titles](docs/features/user-alternative-titles.md) | `AllTitles` search mode + curated user titles |
+| [Radarr#11373](https://github.com/Radarr/Radarr/issues/11373), [#3602](https://github.com/Radarr/Radarr/issues/3602) wrong/working alt titles | open / Maybe One Day | [User Titles](docs/features/user-alternative-titles.md) | Cross-movie guard for user titles only |
+| [Radarr#5074](https://github.com/Radarr/Radarr/issues/5074), [#8010](https://github.com/Radarr/Radarr/issues/8010), [#9363](https://github.com/Radarr/Radarr/issues/9363) language before quality | Won't Fix | [Custom Format Priority Mode](docs/features/custom-format-priority-mode.md) | Declined upstream; fork-only by design |
+| [Radarr#11422](https://github.com/Radarr/Radarr/issues/11422) grab vs import CF score mismatch | open | [Import-time Enforcement](docs/features/import-time-enforcement.md) | Adjacent only, not fixed |
+| [Sonarr#5598](https://github.com/Sonarr/Sonarr/issues/5598) CF comparison release vs file | open (Sonarr) | [VFQ Audio-Title Detection](docs/features/vfq-audio-title-detection.md) | Related discussion |
+
 ## Relationship to upstream
 
 - The clone has one remote, `origin` → `KrZ-W/Radarr` (this fork). Upstream

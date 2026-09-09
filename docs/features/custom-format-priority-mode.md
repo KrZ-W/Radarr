@@ -74,6 +74,20 @@ instead of only a bare delta — so you can see *why* a release was kept or refu
   Language / MinFormatScore checks.
 - User Guide: [Make VFQ win over higher-quality English](../user-guide.md#recipe-make-vfq-win-over-higher-quality-english-audio).
 
+## Upstream
+
+Requested upstream and **declined**, repeatedly — this stays a fork-only feature by design:
+
+- [Radarr#5074](https://github.com/Radarr/Radarr/issues/5074) — *Language Profiles (like in
+  Sonarr)* (closed Won't Fix 2022, +13): "Custom formats resolve this issue".
+- [Radarr#8010](https://github.com/Radarr/Radarr/issues/8010),
+  [Radarr#9363](https://github.com/Radarr/Radarr/issues/9363) — language priority requests
+  (closed Won't Fix 2023): "This can already be done with custom formats. No plans for
+  language profiles."
+
+Plain custom formats cannot express "language first, then quality", which is exactly what the
+per-CF **Priority** flag adds.
+
 ## Source
 
 Commits: `fac3bfd70` (per-CF flag), `f59d6a34a` (grab), `b2fb6c737` (import),

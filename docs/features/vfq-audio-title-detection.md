@@ -92,6 +92,15 @@ release name.
   from importing over a correct one once VFQ is scored properly.
 - User Guide: [Detect VFQ from audio tracks](../user-guide.md#recipe-detect-vfq-from-audio-tracks).
 
+## Upstream
+
+No upstream request asks for an audio-stream-title condition. The nearest is
+[Radarr#10160](https://github.com/Radarr/Radarr/issues/10160) — skip file parsing for custom
+formats (closed Won't Fix 2024), i.e. the opposite direction. The Sonarr fork's copy of this
+feature belongs to Sonarr's open
+[#5598 Improve CF Comparison Between Release and File](https://github.com/Sonarr/Sonarr/issues/5598)
+discussion.
+
 ## Source
 
 Commit: `5bbc63204`. Key files:
