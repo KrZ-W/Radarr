@@ -1,6 +1,7 @@
 using NLog;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Languages;
+using NzbDrone.Core.MediaFiles.AudioLanguage;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
@@ -41,9 +42,10 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
                 {
                     _logger.Debug("Original Language ({0}) is wanted, but found {1} in file. Skipping {2}", originalLanguage, languages.ToExtendedString(), localMovie.Path);
                     return ImportSpecDecision.Reject(ImportRejectionReason.WantedLanguage,
-                        "File audio language {0} does not contain the profile's required Original Language ({1})",
+                        "File audio language {0} does not contain the profile's required Original Language ({1}){2}",
                         languages.ToExtendedString(),
-                        originalLanguage);
+                        originalLanguage,
+                        VerifiedSuffix(localMovie, originalLanguage));  // krzw(audio-language-verification)
                 }
 
                 return ImportSpecDecision.Accept();
@@ -53,12 +55,22 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
             {
                 _logger.Debug("Wanted language {0} not found in file languages {1}. Skipping {2}", wantedLanguage, languages.ToExtendedString(), localMovie.Path);
                 return ImportSpecDecision.Reject(ImportRejectionReason.WantedLanguage,
-                    "File audio language {0} does not contain the profile's required language ({1})",
+                    "File audio language {0} does not contain the profile's required language ({1}){2}",
                     languages.ToExtendedString(),
-                    wantedLanguage);
+                    wantedLanguage,
+                    VerifiedSuffix(localMovie, wantedLanguage));  // krzw(audio-language-verification)
             }
 
             return ImportSpecDecision.Accept();
+        }
+
+        // krzw(audio-language-verification): once the audio was listened to, say so in the rejection
+        // (history/blocklist truthfulness). Never changes the decision itself.
+        private static string VerifiedSuffix(LocalMovie localMovie, Language wantedLanguage)
+        {
+            var verified = AudioLanguageVerificationMessage.Describe(localMovie, wantedLanguage);
+
+            return verified == null ? string.Empty : ". " + verified;
         }
     }
 }
