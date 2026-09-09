@@ -461,6 +461,198 @@ function MediaManagement() {
               </FormGroup>
             </FieldSet>
 
+            {/* krzw(audio-language-verification) */}
+            {showAdvancedSettings ? (
+              <FieldSet legend={translate('AudioLanguageVerification')}>
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                  size={sizes.MEDIUM}
+                >
+                  <FormLabel>
+                    {translate('AudioLanguageVerificationEnabled')}
+                  </FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.CHECK}
+                    name="audioLanguageVerificationEnabled"
+                    helpText={translate(
+                      'AudioLanguageVerificationEnabledHelpText'
+                    )}
+                    onChange={handleInputChange}
+                    {...settings.audioLanguageVerificationEnabled}
+                  />
+                </FormGroup>
+
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                >
+                  <FormLabel>
+                    {translate('AudioLanguageVerificationEndpoint')}
+                  </FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.TEXT}
+                    name="audioLanguageVerificationEndpoint"
+                    helpText={translate(
+                      'AudioLanguageVerificationEndpointHelpText'
+                    )}
+                    placeholder="http://whisper:9000"
+                    onChange={handleInputChange}
+                    {...settings.audioLanguageVerificationEndpoint}
+                  />
+                </FormGroup>
+
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                >
+                  <FormLabel>
+                    {translate('AudioLanguageVerificationConfidenceThreshold')}
+                  </FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.NUMBER}
+                    name="audioLanguageVerificationConfidenceThreshold"
+                    helpText={translate(
+                      'AudioLanguageVerificationConfidenceThresholdHelpText'
+                    )}
+                    isFloat={true}
+                    min={0}
+                    max={1}
+                    onChange={handleInputChange}
+                    {...settings.audioLanguageVerificationConfidenceThreshold}
+                  />
+                </FormGroup>
+
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                >
+                  <FormLabel>
+                    {translate('AudioLanguageVerificationClipOffset')}
+                  </FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.NUMBER}
+                    name="audioLanguageVerificationClipOffset"
+                    unit={translate('Seconds')}
+                    helpText={translate(
+                      'AudioLanguageVerificationClipOffsetHelpText'
+                    )}
+                    min={0}
+                    onChange={handleInputChange}
+                    {...settings.audioLanguageVerificationClipOffset}
+                  />
+                </FormGroup>
+
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                >
+                  <FormLabel>
+                    {translate('AudioLanguageVerificationClipLength')}
+                  </FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.NUMBER}
+                    name="audioLanguageVerificationClipLength"
+                    unit={translate('Seconds')}
+                    helpText={translate(
+                      'AudioLanguageVerificationClipLengthHelpText'
+                    )}
+                    min={1}
+                    max={600}
+                    onChange={handleInputChange}
+                    {...settings.audioLanguageVerificationClipLength}
+                  />
+                </FormGroup>
+
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                >
+                  <FormLabel>
+                    {translate('AudioLanguageVerificationVerifyTagged')}
+                  </FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.SELECT}
+                    name="audioLanguageVerificationVerifyTagged"
+                    helpText={translate(
+                      'AudioLanguageVerificationVerifyTaggedHelpText'
+                    )}
+                    values={[
+                      {
+                        key: 'never',
+                        get value() {
+                          return translate('Never');
+                        },
+                      },
+                      {
+                        key: 'forReleaseGroups',
+                        get value() {
+                          return translate(
+                            'AudioLanguageVerificationVerifyTaggedForReleaseGroups'
+                          );
+                        },
+                      },
+                      {
+                        key: 'always',
+                        get value() {
+                          return translate('Always');
+                        },
+                      },
+                    ]}
+                    onChange={handleInputChange}
+                    {...settings.audioLanguageVerificationVerifyTagged}
+                  />
+                </FormGroup>
+
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                >
+                  <FormLabel>
+                    {translate('AudioLanguageVerificationVerifyTaggedGroups')}
+                  </FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.TEXT}
+                    name="audioLanguageVerificationVerifyTaggedGroups"
+                    helpText={translate(
+                      'AudioLanguageVerificationVerifyTaggedGroupsHelpText'
+                    )}
+                    onChange={handleInputChange}
+                    {...settings.audioLanguageVerificationVerifyTaggedGroups}
+                  />
+                </FormGroup>
+
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                >
+                  <FormLabel>
+                    {translate('AudioLanguageVerificationTimeout')}
+                  </FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.NUMBER}
+                    name="audioLanguageVerificationTimeout"
+                    unit={translate('Seconds')}
+                    helpText={translate(
+                      'AudioLanguageVerificationTimeoutHelpText'
+                    )}
+                    min={1}
+                    max={3600}
+                    onChange={handleInputChange}
+                    {...settings.audioLanguageVerificationTimeout}
+                  />
+                </FormGroup>
+              </FieldSet>
+            ) : null}
+
             {showAdvancedSettings && !isWindows ? (
               <FieldSet legend={translate('Permissions')}>
                 <FormGroup
