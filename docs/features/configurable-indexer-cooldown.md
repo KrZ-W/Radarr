@@ -50,6 +50,11 @@ Rules:
 2. **Options → Indexer Cooldown Periods** — enter your CSV, e.g. `0,2,10,30,120`.
 3. Save.
 
+## Upstream
+
+No open or declined upstream Radarr request for an editable back-off schedule was found
+(searched 2026-09-09).
+
 ## Source
 
 Commits: `4bd509b39` (backend + UI), `767c8a8c1` (TS type). Key files:

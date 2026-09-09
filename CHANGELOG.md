@@ -10,7 +10,11 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- Docs: every feature page gains an **Upstream** section cross-referencing the Radarr
+  issues it addresses, is adjacent to, or was declined as, and FORK.md gains an index table of
+  those issues so people arriving from upstream can find the corresponding patch. Docs only.
 
 ## [v6.3.0.10514+krzw.3] — based on Radarr 6.3.0.10514
 

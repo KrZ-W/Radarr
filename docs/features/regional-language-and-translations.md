@@ -89,6 +89,25 @@ one and `RegionalLanguage` was always empty.
   [VFQ Audio-Title Detection](vfq-audio-title-detection.md) — for *grading* the
   regional releases this feature helps you *find*.
 
+## Upstream
+
+Related upstream Radarr issues (state as of 2026-09-09):
+
+- [Radarr#11443](https://github.com/Radarr/Radarr/issues/11443) — *Torznab movie search does
+  not fall back to alternate/original titles, causing missed localized releases* (open, 2026).
+  Upstream searches only the title, original title and one translation per profile language;
+  a maintainer called searching every TMDB alternative title "careless". The `AllTitles` mode
+  here does search them (opt-in), and the
+  [user titles](user-alternative-titles.md) feature covers the "let me type the title the
+  indexer actually uses" request made in that thread. Earlier duplicates closed as support:
+  [#3346](https://github.com/Radarr/Radarr/issues/3346),
+  [#7155](https://github.com/Radarr/Radarr/issues/7155),
+  [#9167](https://github.com/Radarr/Radarr/issues/9167).
+- [Radarr#1447](https://github.com/Radarr/Radarr/issues/1447) — *Allow selecting Alternate Name
+  when adding movies* (open, Help Wanted, +67 since 2017). Only partially related: the
+  deterministic regional pick decides which `fr-*` row is shown, it does not let you choose a
+  display title.
+
 ## Source
 
 Commits: `d6bf51274` (settings + migration 243 + enum), `cb54d996d` (RegionalLanguage

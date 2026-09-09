@@ -99,6 +99,21 @@ frequent (language-first swaps of files that are otherwise fine) — which is ex
 turned upstream's latent ordering flaw into recurring loss. Those features decide
 *whether* to upgrade; this one guarantees the swap itself can't destroy anything.
 
+## Upstream
+
+Related upstream Radarr issues (state as of 2026-09-09; this fork is not affiliated with
+the Radarr team and does not submit upstream):
+
+- [Radarr#8444](https://github.com/Radarr/Radarr/issues/8444) — *Import failures can create
+  excessive deleted events in the history view* (open, **Confirmed**, 2023). Upstream deletes
+  the existing file's DB row before the transfer, so every retried import logs another
+  `movieFileDeleted`. The park → finalize ordering here removes that: the delete event only
+  ever accompanies a successful import. The "stuck in queue" half of that report has a
+  different cause and is not addressed.
+- [Radarr#11437](https://github.com/Radarr/Radarr/issues/11437) — *.strm imported then
+  immediately deleted (concurrent grab upgrade loop)* (open, 2026). Adjacent: a deletion
+  ordering problem, but driven by concurrent grabs rather than by the upgrade transfer.
+
 ## Source
 
 Commit: `053eb33b9`. Key files:
