@@ -10,7 +10,28 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **Audio Language Verification.** Settings → Media Management gains an advanced
+  *Audio Language Verification* section (Enable, Whisper Endpoint, Confidence Threshold
+  `0.85`, Clip Offset `300` s, Clip Length `30` s, Verify Tagged Tracks `Never` / for
+  release groups / `Always`, Timeout `120` s). At import, when a download's audio-track
+  language tags contradict the language claimed by the release name, folder, download
+  client or grab history, are `und`/missing, or would get the file rejected by the
+  import-time Language / MinFormatScore checks, a 30 s clip of each suspicious track is
+  sent to a self-hosted [whisper-asr-webservice](https://github.com/ahmetoner/whisper-asr-webservice)
+  (`POST /detect-language`); a detection at or above the threshold outranks the MediaInfo
+  tags. One probe per distinct track layout per download (season packs / multi-file packs
+  reuse it). The per-track outcome is stored on `MovieFile.AudioLanguageVerification`
+  (migration 245, exposed read-only on `/api/v3/moviefile`) for the planned *Audio Track
+  Retag* feature; rescans and media-info refreshes never re-probe or rewrite it. Files are
+  never modified. A language rejection after a probe now reads "… Audio verified: no French
+  track (detected en 0.97, en 0.94)". Any probe failure (endpoint down, timeout, ffmpeg
+  error) logs one warning and the import proceeds exactly as before. Profiles with
+  Language = *Any* and no language custom format never probe. Replaces the detection half
+  of the external `frtag_rescue.py`. Image: `ffmpeg` is now symlinked into `/app` next to
+  `ffprobe`. Docs:
+  [features/audio-language-verification.md](docs/features/audio-language-verification.md).
 
 ## [v6.3.0.10514+krzw.5] — based on Radarr 6.3.0.10514
 

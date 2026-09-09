@@ -1,6 +1,7 @@
 using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Download;
+using NzbDrone.Core.MediaFiles.AudioLanguage;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
@@ -32,11 +33,16 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
                     minScore,
                     localMovie.CustomFormats.ConcatToString(),
                     localMovie.Path);
+
+                // krzw(audio-language-verification): append the verified languages when a probe ran for this file
+                var verified = AudioLanguageVerificationMessage.Describe(localMovie, null);
+
                 return ImportSpecDecision.Reject(ImportRejectionReason.CustomFormatMinimumScore,
-                    "Custom Formats [{0}] have score {1} below profile minimum {2}",
+                    "Custom Formats [{0}] have score {1} below profile minimum {2}{3}",
                     localMovie.CustomFormats.ConcatToString(),
                     score,
-                    minScore);
+                    minScore,
+                    verified == null ? string.Empty : ". " + verified);
             }
 
             return ImportSpecDecision.Accept();

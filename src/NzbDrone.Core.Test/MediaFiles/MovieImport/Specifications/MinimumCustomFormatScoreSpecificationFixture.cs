@@ -3,6 +3,7 @@ using FizzWare.NBuilder;
 using FluentAssertions;
 using NUnit.Framework;
 using NzbDrone.Core.CustomFormats;
+using NzbDrone.Core.MediaFiles.AudioLanguage;
 using NzbDrone.Core.MediaFiles.MovieImport.Specifications;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Parser.Model;
@@ -68,6 +69,31 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
             _movie.QualityProfile.MinFormatScore = -5000;
             _localMovie.CustomFormatScore = -1000;
             Subject.IsSatisfiedBy(_localMovie, null).Accepted.Should().BeTrue();
+        }
+
+        // krzw(audio-language-verification)
+        [Test]
+        public void should_say_audio_verified_when_a_probe_ran_and_the_score_is_still_too_low()
+        {
+            _localMovie.CustomFormatScore = -10000;
+            _localMovie.AudioLanguageTrigger = AudioLanguageTrigger.ImpendingRejection;
+            _localMovie.AudioLanguageVerification = new List<AudioLanguageVerification>
+            {
+                new AudioLanguageVerification { StreamIndex = 0, TaggedLanguage = "eng", DetectedLanguage = "en", Confidence = 0.97 }
+            };
+
+            var decision = Subject.IsSatisfiedBy(_localMovie, null);
+
+            decision.Accepted.Should().BeFalse();
+            decision.Message.Should().EndWith(". Audio verified (detected en 0.97)");
+        }
+
+        [Test]
+        public void should_not_mention_verification_when_no_probe_ran()
+        {
+            _localMovie.CustomFormatScore = -10000;
+
+            Subject.IsSatisfiedBy(_localMovie, null).Message.Should().NotContain("Audio verified");
         }
     }
 }
