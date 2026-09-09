@@ -7,6 +7,7 @@ using NUnit.Framework;
 using NzbDrone.Common.Disk;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MediaFiles.AudioLanguage;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Movies;
@@ -313,6 +314,29 @@ namespace NzbDrone.Core.Test.MediaFiles.MediaInfo
 
             Mocker.GetMock<IMediaFileService>()
                 .Verify(v => v.Update(movieFile), Times.Never());
+        }
+
+        // krzw(audio-language-verification)
+        [Test]
+        public void should_not_touch_audio_language_verification_when_refreshing_media_info()
+        {
+            var verification = new List<AudioLanguageVerification>
+            {
+                new AudioLanguageVerification { StreamIndex = 0, TaggedLanguage = "eng", DetectedLanguage = "fr", Confidence = 0.97 }
+            };
+
+            var movieFile = Builder<MovieFile>.CreateNew()
+                .With(v => v.RelativePath = "media.mkv")
+                .With(v => v.AudioLanguageVerification = verification)
+                .Build();
+
+            GivenFileExists();
+            GivenSuccessfulScan();
+
+            Subject.UpdateMediaInfo(movieFile, _movie).Should().BeTrue();
+
+            Mocker.GetMock<IMediaFileService>()
+                  .Verify(v => v.Update(It.Is<MovieFile>(f => f.AudioLanguageVerification == verification)), Times.Once());
         }
     }
 }

@@ -18,4 +18,13 @@ export default interface MediaManagement {
   importExtraFiles: boolean;
   extraFileExtensions: string;
   enableMediaInfo: boolean;
+  // krzw(audio-language-verification)
+  audioLanguageVerificationEnabled: boolean;
+  audioLanguageVerificationEndpoint: string;
+  audioLanguageVerificationConfidenceThreshold: number;
+  audioLanguageVerificationClipOffset: number;
+  audioLanguageVerificationClipLength: number;
+  audioLanguageVerificationVerifyTagged: string;
+  audioLanguageVerificationVerifyTaggedGroups: string;
+  audioLanguageVerificationTimeout: number;
 }
