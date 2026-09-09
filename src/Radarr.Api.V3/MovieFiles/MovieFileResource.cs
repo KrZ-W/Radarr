@@ -5,6 +5,7 @@ using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.DecisionEngine.Specifications;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MediaFiles.AudioLanguage;
 using NzbDrone.Core.Qualities;
 using Radarr.Api.V3.CustomFormats;
 using Radarr.Http.REST;
@@ -27,6 +28,7 @@ namespace Radarr.Api.V3.MovieFiles
         public int? CustomFormatScore { get; set; }
         public int? IndexerFlags { get; set; }
         public MediaInfoResource MediaInfo { get; set; }
+        public List<AudioLanguageVerification> AudioLanguageVerification { get; set; }  // krzw(audio-language-verification): read-only
 
         public string OriginalFilePath { get; set; }
         public bool QualityCutoffNotMet { get; set; }
@@ -58,6 +60,7 @@ namespace Radarr.Api.V3.MovieFiles
                 ReleaseGroup = model.ReleaseGroup,
                 Edition = model.Edition,
                 MediaInfo = model.MediaInfo.ToResource(model.SceneName),
+                AudioLanguageVerification = model.AudioLanguageVerification,  // krzw(audio-language-verification)
                 OriginalFilePath = model.OriginalFilePath
             };
         }
@@ -84,6 +87,7 @@ namespace Radarr.Api.V3.MovieFiles
                 Edition = model.Edition,
                 ReleaseGroup = model.ReleaseGroup,
                 MediaInfo = model.MediaInfo.ToResource(model.SceneName),
+                AudioLanguageVerification = model.AudioLanguageVerification,  // krzw(audio-language-verification)
                 QualityCutoffNotMet = upgradableSpecification?.QualityCutoffNotMet(movie.QualityProfile, model.Quality) ?? false,
                 OriginalFilePath = model.OriginalFilePath,
                 IndexerFlags = (int)model.IndexerFlags

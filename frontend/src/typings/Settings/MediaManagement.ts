@@ -20,4 +20,13 @@ export default interface MediaManagement {
   enableMediaInfo: boolean;
   regionalTranslationVariants: string; // krzw(regional-translations)
   regionalTranslationSearchMode: string; // krzw(regional-translations)
+  // krzw(audio-language-verification)
+  audioLanguageVerificationEnabled: boolean;
+  audioLanguageVerificationEndpoint: string;
+  audioLanguageVerificationConfidenceThreshold: number;
+  audioLanguageVerificationClipOffset: number;
+  audioLanguageVerificationClipLength: number;
+  audioLanguageVerificationVerifyTagged: string;
+  audioLanguageVerificationVerifyTaggedGroups: string;
+  audioLanguageVerificationTimeout: number;
 }
