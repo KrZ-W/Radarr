@@ -11,6 +11,7 @@ reference, follow the links into [features/](features/).
 - [Recipe: Stop wrong-language files from importing](#recipe-stop-wrong-language-files-from-importing)
 - [Recipe: Find releases under regional (Quebec) titles](#recipe-find-releases-under-regional-quebec-titles)
 - [Recipe: Add missing French/Quebec titles TMDB doesn't have](#recipe-add-missing-frenchquebec-titles-tmdb-doesnt-have)
+- [Recipe: Let IMDb fill in French/Quebec titles automatically](#recipe-let-imdb-fill-in-frenchquebec-titles-automatically)
 - [Recipe: Tune indexer cooldown](#recipe-tune-indexer-cooldown)
 - [Recipe: Run the fork in Docker](#recipe-run-the-fork-in-docker)
 
@@ -138,6 +139,33 @@ curl -X POST "http://<host>:7878/api/v3/translation/user/import" \
 > `fr-CA` are accepted and canonicalised).
 
 > Full reference: [User Alternative Titles](features/user-alternative-titles.md).
+
+---
+
+## Recipe: Let IMDb fill in French/Quebec titles automatically
+
+**Goal:** stop maintaining a curated JSON file — have the instance pull the missing
+titles from IMDb's public dataset itself, for the library and for every movie you add.
+
+1. Check *Settings → Media Management → Regional Translation Variants* contains
+   `fr-CA` (it does by default). Quebec titles are stored as `fr-ca` only when that
+   tag is listed; France titles are always stored as bare `fr`.
+2. *Settings → Metadata → IMDb Title Provider*: tick **Enable**. Defaults: Regions
+   `CA,FR`, Languages `fr`, Refresh Interval `7` days. Save.
+3. *System → Tasks* → run **Imdb Title Dataset Refresh** once (or
+   `POST /api/v3/command` with `{"name":"ImdbTitleDatasetRefresh"}`). The first run
+   downloads ~300 MB; the log ends with `IMDb titles applied to library: …`.
+4. Spot-check a movie: `GET /api/v3/alttitle?movieId=<id>` lists the new rows with
+   `"sourceType": "user"`; `GET /api/v3/parse?title=<French release name>` resolves.
+
+From now on the dataset is re-downloaded on the interval (skipped when IMDb reports it
+unchanged), every movie you add is synced within seconds, and a health warning appears
+if the index is missing or has not been rebuilt for twice the interval.
+
+> **Licence:** IMDb's datasets are for personal, non-commercial use. The fork downloads
+> them on your instance only and never redistributes them.
+
+> Full reference: [IMDb Title Provider](features/imdb-title-provider.md).
 
 ---
 

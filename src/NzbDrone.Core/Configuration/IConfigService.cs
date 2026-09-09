@@ -71,6 +71,12 @@ namespace NzbDrone.Core.Configuration
         string RegionalTranslationVariants { get; set; }
         RegionalTranslationSearchMode RegionalTranslationSearchMode { get; set; }
 
+        // krzw(imdb-title-provider)
+        bool ImdbTitleProviderEnabled { get; set; }
+        string ImdbTitleProviderRegions { get; set; }
+        string ImdbTitleProviderLanguages { get; set; }
+        int ImdbTitleProviderRefreshInterval { get; set; }
+
         // UI
         int FirstDayOfWeek { get; set; }
         string CalendarWeekColumnHeader { get; set; }
