@@ -93,6 +93,11 @@ namespace NzbDrone.Core.Test.Configuration
                 {
                     value = 0;
                 }
+                else if (propertyInfo.PropertyType == typeof(double))
+                {
+                    // krzw(audio-language-verification): double settings round-trip through InvariantCulture
+                    value = 0.75;
+                }
 
                 propertyInfo.GetSetMethod().Invoke(configProvider, new[] { value });
                 var returnValue = propertyInfo.GetGetMethod().Invoke(configProvider, null);
