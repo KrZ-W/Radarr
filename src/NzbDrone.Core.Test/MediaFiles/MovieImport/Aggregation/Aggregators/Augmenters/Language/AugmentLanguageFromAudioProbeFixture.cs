@@ -17,6 +17,7 @@ using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles;
 using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Test.Framework;
+using NzbDrone.Test.Common;
 
 namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenters.Language
 {
@@ -303,6 +304,22 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Aggregation.Aggregators.Augm
 
             _localMovie.AudioLanguageTrigger.Should().Be(AudioLanguageTrigger.PositiveVerification);
             result.Languages.Should().Equal(new List<Core.Languages.Language> { Core.Languages.Language.English });
+        }
+
+        [Test]
+        public void should_fall_through_with_one_warning_when_anything_inside_throws()
+        {
+            Mocker.GetMock<IHistoryService>()
+                  .Setup(h => h.FindByDownloadId(It.IsAny<string>()))
+                  .Throws(new InvalidOperationException("db gone"));
+
+            AugmentLanguageResult result = null;
+            Action act = () => result = Subject.AugmentLanguage(_localMovie, _downloadClientItem);
+
+            act.Should().NotThrow();
+            result.Should().BeNull();
+            VerifyProbeCount(0);
+            ExceptionVerification.ExpectedWarns(1);
         }
     }
 }
