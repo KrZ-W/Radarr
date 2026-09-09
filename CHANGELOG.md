@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.3.0.10514+krzw.5] — based on Radarr 6.3.0.10514
+
 ### Added
 
 - **IMDb Title Provider.** Settings → Metadata gains an *IMDb Title Provider* section
@@ -25,6 +29,8 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   the index is missing or older than twice the interval. Replaces the external
   `build_index.py` / `title_sync.py` / `title_webhook.py` feeder. Docs:
   [features/imdb-title-provider.md](docs/features/imdb-title-provider.md).
+
+Container image: `ghcr.io/krz-w/radarr:6.3.0.10514-krzw.5`.
 
 ## [v6.3.0.10514+krzw.4] — based on Radarr 6.3.0.10514
 
@@ -415,6 +421,7 @@ First documented fork release. Bundles every feature currently merged into
   collides with Debian's `users` group.
 
 [Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.4...HEAD
+[v6.3.0.10514+krzw.5]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.5
 [v6.3.0.10514+krzw.4]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.4
 [v6.3.0.10514+krzw.3]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.3
 [v6.3.0.10514+krzw.2]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.2
