@@ -10,11 +10,17 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.3.0.10514+krzw.4] — based on Radarr 6.3.0.10514
+
 ### Changed
 
 - Docs: every feature page gains an **Upstream** section cross-referencing the Radarr
   issues it addresses, is adjacent to, or was declined as, and FORK.md gains an index table of
   those issues so people arriving from upstream can find the corresponding patch. Docs only.
+
+Container image: `ghcr.io/krz-w/radarr:6.3.0.10514-krzw.4`.
 
 ## [v6.3.0.10514+krzw.3] — based on Radarr 6.3.0.10514
 
@@ -394,7 +400,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.3...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.4...HEAD
+[v6.3.0.10514+krzw.4]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.4
 [v6.3.0.10514+krzw.3]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.3
 [v6.3.0.10514+krzw.2]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.2
 [v6.3.0.10514+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.1
