@@ -775,6 +775,39 @@ function MediaManagement() {
                     {...settings.audioTrackRetagHardlinkMode}
                   />
                 </FormGroup>
+
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                >
+                  <FormLabel>
+                    {translate('AudioTrackRetagNonMkvMode')}
+                  </FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.SELECT}
+                    name="audioTrackRetagNonMkvMode"
+                    helpText={translate('AudioTrackRetagNonMkvModeHelpText')}
+                    values={[
+                      {
+                        key: 'skip',
+                        get value() {
+                          return translate('AudioTrackRetagNonMkvModeSkip');
+                        },
+                      },
+                      {
+                        key: 'remuxToMkv',
+                        get value() {
+                          return translate(
+                            'AudioTrackRetagNonMkvModeRemuxToMkv'
+                          );
+                        },
+                      },
+                    ]}
+                    onChange={handleInputChange}
+                    {...settings.audioTrackRetagNonMkvMode}
+                  />
+                </FormGroup>
               </FieldSet>
             ) : null}
 
