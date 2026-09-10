@@ -74,6 +74,9 @@ services:
 - **ffprobe is bundled.** Recent Radarr probes media with ffprobe (via `FFMpegCore`)
   rather than libmediainfo. The image installs `ffmpeg` (providing `/usr/bin/ffprobe`)
   and symlinks it to `/app/ffprobe` so `FFMpegCore` finds it locally; `jq` is included
+- **mkvpropedit is bundled** (for [Audio Track Retag](audio-track-retag.md)): the `mkvtoolnix`
+  package is installed, only `/usr/bin/mkvpropedit` is kept (`mkvmerge`/`mkvextract`/`mkvinfo`
+  are removed) and it is symlinked to `/app/mkvpropedit`, resolved the same way `ffmpeg` is
   for LSIO-style script compatibility. Without this, imports fail with
   *"Cannot determinate if file is a sample"*. `mediainfo` is intentionally **not**
   installed (unused at runtime, matching the LSIO image).
