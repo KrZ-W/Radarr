@@ -650,6 +650,64 @@ function MediaManagement() {
                     {...settings.audioLanguageVerificationTimeout}
                   />
                 </FormGroup>
+
+                {/* krzw(audio-track-retag) */}
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                  size={sizes.MEDIUM}
+                >
+                  <FormLabel>{translate('AudioTrackRetagEnabled')}</FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.CHECK}
+                    name="audioTrackRetagEnabled"
+                    helpText={translate('AudioTrackRetagEnabledHelpText')}
+                    onChange={handleInputChange}
+                    {...settings.audioTrackRetagEnabled}
+                  />
+                </FormGroup>
+
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                >
+                  <FormLabel>
+                    {translate('AudioTrackRetagHardlinkMode')}
+                  </FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.SELECT}
+                    name="audioTrackRetagHardlinkMode"
+                    helpText={translate('AudioTrackRetagHardlinkModeHelpText')}
+                    values={[
+                      {
+                        key: 'skip',
+                        get value() {
+                          return translate('AudioTrackRetagHardlinkModeSkip');
+                        },
+                      },
+                      {
+                        key: 'copyThenRetag',
+                        get value() {
+                          return translate(
+                            'AudioTrackRetagHardlinkModeCopyThenRetag'
+                          );
+                        },
+                      },
+                      {
+                        key: 'retagInPlace',
+                        get value() {
+                          return translate(
+                            'AudioTrackRetagHardlinkModeRetagInPlace'
+                          );
+                        },
+                      },
+                    ]}
+                    onChange={handleInputChange}
+                    {...settings.audioTrackRetagHardlinkMode}
+                  />
+                </FormGroup>
               </FieldSet>
             ) : null}
 

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NzbDrone.Common.Disk;
 using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Languages;
@@ -47,6 +48,9 @@ namespace NzbDrone.Core.Parser.Model
         // krzw(audio-language-verification): per-track probe outcome and why it ran; carried to MovieFile at import
         public List<AudioLanguageVerification> AudioLanguageVerification { get; set; }
         public AudioLanguageTrigger AudioLanguageTrigger { get; set; }
+
+        // krzw(audio-track-retag): how the file actually reached the library (hardlink hint for the retag)
+        public TransferMode? TransferMode { get; set; }
 
         public override string ToString()
         {
