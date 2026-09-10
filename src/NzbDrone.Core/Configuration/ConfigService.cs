@@ -9,6 +9,7 @@ using NzbDrone.Core.Configuration.Events;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.AudioLanguage;
+using NzbDrone.Core.MediaFiles.AudioTags;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.MetadataSource.SkyHook.Resource;
 using NzbDrone.Core.Qualities;
@@ -405,6 +406,21 @@ namespace NzbDrone.Core.Configuration
             get { return GetValueInt("AudioLanguageVerificationTimeout", 120); }
 
             set { SetValue("AudioLanguageVerificationTimeout", value); }
+        }
+
+        // krzw(audio-track-retag)
+        public bool AudioTrackRetagEnabled
+        {
+            get { return GetValueBoolean("AudioTrackRetagEnabled", false); }
+
+            set { SetValue("AudioTrackRetagEnabled", value); }
+        }
+
+        public AudioTrackRetagHardlinkMode AudioTrackRetagHardlinkMode
+        {
+            get { return GetValueEnum("AudioTrackRetagHardlinkMode", AudioTrackRetagHardlinkMode.Skip); }
+
+            set { SetValue("AudioTrackRetagHardlinkMode", value); }
         }
 
         public bool UseScriptImport

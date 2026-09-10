@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using NzbDrone.Common.Http.Proxy;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.AudioLanguage;
+using NzbDrone.Core.MediaFiles.AudioTags;
 using NzbDrone.Core.MetadataSource.SkyHook.Resource;
 using NzbDrone.Core.Qualities;
 using NzbDrone.Core.Security;
@@ -47,6 +48,10 @@ namespace NzbDrone.Core.Configuration
         AudioLanguageVerifyTaggedMode AudioLanguageVerificationVerifyTagged { get; set; }
         string AudioLanguageVerificationVerifyTaggedGroups { get; set; }
         int AudioLanguageVerificationTimeout { get; set; }
+
+        // krzw(audio-track-retag)
+        bool AudioTrackRetagEnabled { get; set; }
+        AudioTrackRetagHardlinkMode AudioTrackRetagHardlinkMode { get; set; }
         bool UseScriptImport { get; set; }
         string ScriptImportPath { get; set; }
         bool ImportExtraFiles { get; set; }
