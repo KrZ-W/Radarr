@@ -4,6 +4,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles.AudioLanguage;
+using NzbDrone.Core.MediaFiles.AudioTags;
 using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Parser.Model;
@@ -28,6 +29,7 @@ namespace NzbDrone.Core.MediaFiles
         public Movie Movie { get; set; }
         public List<Language> Languages { get; set; }
         public List<AudioLanguageVerification> AudioLanguageVerification { get; set; }  // krzw(audio-language-verification): written at import only
+        public AudioTrackRetag AudioTrackRetag { get; set; }  // krzw(audio-track-retag): post-import retag outcome, "done" is final
 
         public override string ToString()
         {

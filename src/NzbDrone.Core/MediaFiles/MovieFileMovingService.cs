@@ -140,7 +140,13 @@ namespace NzbDrone.Core.MediaFiles
             }
             else
             {
-                _diskTransferService.TransferFile(movieFilePath, destinationFilePath, mode);
+                var transferred = _diskTransferService.TransferFile(movieFilePath, destinationFilePath, mode);
+
+                // krzw(audio-track-retag): remember whether the library file is a hardlink of the download
+                if (localMovie is not null)
+                {
+                    localMovie.TransferMode = transferred;
+                }
             }
 
             _updateMovieFileService.ChangeFileDateForFile(movieFile, movie);
