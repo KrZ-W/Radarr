@@ -10,7 +10,12 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- Docs: the Audio Track Retag page and the FORK.md issue index now also cross-reference
+  upstream [Radarr#6072](https://github.com/Radarr/Radarr/issues/6072) (open, retag
+  downloaded files) and [Radarr#1976](https://github.com/Radarr/Radarr/issues/1976) (closed,
+  wipe embedded file properties). Docs only.
 
 ## [v6.3.0.10514+krzw.10] — based on Radarr 6.3.0.10514
 

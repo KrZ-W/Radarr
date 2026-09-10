@@ -102,6 +102,8 @@ with details. This fork does not submit changes upstream.
 | [Sonarr#8453](https://github.com/Sonarr/Sonarr/issues/8453), [#7523](https://github.com/Sonarr/Sonarr/issues/7523) same request / reject wrong-language imports | not planned (Sonarr) | [Audio Language Verification](docs/features/audio-language-verification.md) | Implemented natively in both forks |
 | [Radarr#7584](https://github.com/Radarr/Radarr/issues/7584), [#11189](https://github.com/Radarr/Radarr/issues/11189) rescan does not re-read track languages after an external retag | closed (support / logs needed) | [Audio Track Retag](docs/features/audio-track-retag.md) | Adjacent only: the fork's own edits re-probe and update the record; external retags still need a rescan trigger |
 | [Sonarr#3366](https://github.com/Sonarr/Sonarr/issues/3366) reanalyze files after fixing language tags by hand | closed (2019, Sonarr) | [Audio Track Retag](docs/features/audio-track-retag.md) | Adjacent: tags fixed automatically and record refreshed in the same step |
+| [Radarr#6072](https://github.com/Radarr/Radarr/issues/6072) retag already downloaded files (Lidarr-style) | open (2021) | [Audio Track Retag](docs/features/audio-track-retag.md) | Adjacent: the fork writes only the audio-track language element, not container titles |
+| [Radarr#1976](https://github.com/Radarr/Radarr/issues/1976) wipe embedded file properties on move (Plex trusts them) | closed (2017, workaround) | [Audio Track Retag](docs/features/audio-track-retag.md) | Same motivation (players read the file); adjacent only |
 
 ## Relationship to upstream
 
