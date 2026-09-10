@@ -25,6 +25,7 @@ exact behavior.
 | [User Alternative Titles & Translations](features/user-alternative-titles.md) | Bulk-import curated titles TMDB lacks: alt titles for parse/import matching plus regional translations the `OnePerRegion` search queries; both survive refreshes |
 | [Configurable Indexer Cooldown](features/configurable-indexer-cooldown.md) | Editable indexer back-off/escalation schedule |
 | [Audio Language Verification](features/audio-language-verification.md) | Whisper-backed audio language probe at import when tags contradict the claim / are unknown / would cause a rejection; verified languages outrank tags, outcome stored per track |
+| [Audio Track Retag](features/audio-track-retag.md) | Post-import header-only `mkvpropedit` rewrite of the mistagged MKV audio-track language tags from the verification record; hardlink-aware modes, outcome stored per file, manual per-file command |
 | [Completed Download Handling](features/completed-download-handling.md) | Stuck `ImportPending`/`ImportBlocked` items self-heal instead of stalling until a cleaner marks them failed |
 | [Docker / GHCR Deployment](features/docker-deployment.md) | LinuxServer.io-style image published to GHCR |
 

@@ -66,7 +66,9 @@ RUN apt-get update \
         sqlite3 \
         libsqlite3-0 \
         ffmpeg \
+        mkvtoolnix \
         jq \
+    && rm -f /usr/bin/mkvmerge /usr/bin/mkvextract /usr/bin/mkvinfo \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=backend /src/_output/net8.0/linux-x64/publish/ /app/
@@ -78,8 +80,10 @@ RUN rm -f /app/ServiceInstall.* /app/ServiceUninstall.* /app/Radarr.Windows.*
 # FFMpegCore (Radarr's media-probe wrapper) looks for ffprobe next to the binary
 # before falling back to PATH. Symlink the apt-installed one into /app so behavior
 # matches the upstream release distribution and lscr.io/linuxserver/radarr's layout.
+# mkvpropedit (Audio Track Retag) is resolved the same way; only that mkvtoolnix binary is kept.
 RUN ln -sf /usr/bin/ffprobe /app/ffprobe \
-    && ln -sf /usr/bin/ffmpeg /app/ffmpeg
+    && ln -sf /usr/bin/ffmpeg /app/ffmpeg \
+    && ln -sf /usr/bin/mkvpropedit /app/mkvpropedit
 
 COPY docker/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh /app/Radarr
