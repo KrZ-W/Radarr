@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.3.0.10514+krzw.8] — based on Radarr 6.3.0.10514
+
 ### Added
 
 - **Audio Track Retag.** The follow-up to Audio Language Verification: after a successful
@@ -35,6 +39,8 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   upstream [Radarr#11385](https://github.com/Radarr/Radarr/issues/11385) (open),
   [Sonarr#8453](https://github.com/Sonarr/Sonarr/issues/8453) and
   [Sonarr#7523](https://github.com/Sonarr/Sonarr/issues/7523) (not planned). Docs only.
+
+Container image: `ghcr.io/krz-w/radarr:6.3.0.10514-krzw.8`.
 
 ## [v6.3.0.10514+krzw.7] — based on Radarr 6.3.0.10514
 
@@ -496,7 +502,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.7...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.8...HEAD
+[v6.3.0.10514+krzw.8]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.8
 [v6.3.0.10514+krzw.7]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.7
 [v6.3.0.10514+krzw.6]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.6
 [v6.3.0.10514+krzw.5]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.5
