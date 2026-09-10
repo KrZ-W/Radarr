@@ -226,7 +226,6 @@ State as of 2026-09-10 (this fork does not submit changes upstream):
   named wrong, and the reporter fixed the tags by hand; the workaround given was rename +
   rescan. Adjacent: this fork fixes the tags automatically and refreshes the record, so the
   renamer sees the right languages without a rescan.
-
 - [Radarr#6072](https://github.com/Radarr/Radarr/issues/6072) — *Feature Request for
   retagging already downloaded files* (open since 2021, still requested in 2025). Asks Radarr
   to write tags into media files the way Lidarr does, aimed at the container title release
