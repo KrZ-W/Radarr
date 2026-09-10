@@ -97,6 +97,8 @@ with details. This fork does not submit changes upstream.
 | [Radarr#5074](https://github.com/Radarr/Radarr/issues/5074), [#8010](https://github.com/Radarr/Radarr/issues/8010), [#9363](https://github.com/Radarr/Radarr/issues/9363) language before quality | Won't Fix | [Custom Format Priority Mode](docs/features/custom-format-priority-mode.md) | Declined upstream; fork-only by design |
 | [Radarr#11422](https://github.com/Radarr/Radarr/issues/11422) grab vs import CF score mismatch | open | [Import-time Enforcement](docs/features/import-time-enforcement.md) | Adjacent only, not fixed |
 | [Sonarr#5598](https://github.com/Sonarr/Sonarr/issues/5598) CF comparison release vs file | open (Sonarr) | [VFQ Audio-Title Detection](docs/features/vfq-audio-title-detection.md) | Related discussion |
+| [Radarr#11385](https://github.com/Radarr/Radarr/issues/11385) external audio language provider / AI-assisted tagging | open, Needs Triage | [Audio Language Verification](docs/features/audio-language-verification.md) | Fixed here (Whisper detection at import; retag is a planned follow-up) |
+| [Sonarr#8453](https://github.com/Sonarr/Sonarr/issues/8453), [#7523](https://github.com/Sonarr/Sonarr/issues/7523) same request / reject wrong-language imports | not planned (Sonarr) | [Audio Language Verification](docs/features/audio-language-verification.md) | Implemented natively in both forks |
 
 ## Relationship to upstream
 
