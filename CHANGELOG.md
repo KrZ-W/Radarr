@@ -12,6 +12,20 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 _Nothing yet._
 
+## [v6.3.0.10514+krzw.10] — based on Radarr 6.3.0.10514
+
+### Fixed
+
+- **Audio Track Retag: languages of unprobed tracks.** The verification record only covers the
+  tracks the trigger probed (*Unknown* probes just the `und` tracks, *positive verification*
+  just the expected-language ones). The post-retag reconciliation of `MovieFile.Languages` now
+  counts every stream the record does not cover as its post-edit tag language, so an unprobed
+  English track next to a rewritten one keeps English in the list. A test cross-checks the
+  20-pair ISO 639-2 bibliographic table (the complete set the standard defines) against the
+  file-naming map.
+
+Container image: `ghcr.io/krz-w/radarr:6.3.0.10514-krzw.10`.
+
 ## [v6.3.0.10514+krzw.9] — based on Radarr 6.3.0.10514
 
 ### Fixed
@@ -534,7 +548,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.9...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.10...HEAD
+[v6.3.0.10514+krzw.10]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.10
 [v6.3.0.10514+krzw.9]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.9
 [v6.3.0.10514+krzw.8]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.8
 [v6.3.0.10514+krzw.7]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.7
