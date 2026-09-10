@@ -184,12 +184,26 @@ at grab time, at rescan, or for libraries whose profiles do not care about langu
 
 ## Upstream
 
-No upstream Radarr issue asks for speech-based language detection at import. Adjacent:
-[Radarr#8010](https://github.com/Radarr/Radarr/issues/8010) (language before quality,
-Won't Fix) and Sonarr's open
-[#5598](https://github.com/Sonarr/Sonarr/issues/5598) (CF comparison release vs file). The
-same design ships in the Sonarr fork as *Audio Language Verification* against
-`EpisodeFile.AudioLanguageVerification`, where season packs are the main cache case.
+State as of 2026-09-10:
+
+- [Radarr#11385](https://github.com/Radarr/Radarr/issues/11385) — *Support for External
+  Audio Language Provider / AI-Assisted Tagging* (open, Needs Triage, filed 2026-03). Asks for
+  exactly this: files whose tracks are tagged `und`/`eng` regardless of content, detected by
+  an external provider such as Whisper and used for language scoring. **Fixed here** for the
+  detection half (the tags are never rewritten; that is the planned *Audio Track Retag*
+  follow-up).
+- [Sonarr#8453](https://github.com/Sonarr/Sonarr/issues/8453) — the same request on Sonarr
+  (closed *not planned* the day it was filed, 2026-03; maintainers pointed to *Import Using
+  Script* / a post-import custom script calling ffmpeg+whisper). The Sonarr fork implements it
+  natively, see the Sonarr copy of this page.
+- [Sonarr#7523](https://github.com/Sonarr/Sonarr/issues/7523) — *Reject Import if Audio
+  Language is Wrong* (closed not planned, 2024-12; deferred to #5598). Adjacent: the fork's
+  [Import-time Enforcement](import-time-enforcement.md) does the rejection and this feature
+  makes sure it is based on verified audio, not tags.
+- [Sonarr#5598](https://github.com/Sonarr/Sonarr/issues/5598) — *Improve CF Comparison
+  Between Release and File* (open). Related discussion.
+
+This fork does not submit changes upstream.
 
 ## Source
 
