@@ -29,4 +29,8 @@ export default interface MediaManagement {
   audioLanguageVerificationVerifyTagged: string;
   audioLanguageVerificationVerifyTaggedGroups: string;
   audioLanguageVerificationTimeout: number;
+
+  // krzw(audio-track-retag)
+  audioTrackRetagEnabled: boolean;
+  audioTrackRetagHardlinkMode: 'skip' | 'copyThenRetag' | 'retagInPlace';
 }
