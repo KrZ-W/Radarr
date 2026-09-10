@@ -8,7 +8,7 @@ person for a private *arr stack; it is not affiliated with the Radarr team.
 - **Upstream base:** Radarr `6.3.0.10514` (the commit this fork is rebased onto)
 - **Primary branch:** `personal/all-features-master` (all features merged together)
 - **Container image:** `ghcr.io/krz-w/radarr`
-- **Current fork version:** `v6.3.0.10514+krzw.10`
+- **Current fork version:** `v6.3.0.10514+krzw.11`
 
 > The stock upstream `README.md` is kept as-is apart from a short fork callout at the
 > top. Everything KrZ-W-specific lives in [`docs/`](docs/) and
@@ -27,7 +27,7 @@ person for a private *arr stack; it is not affiliated with the Radarr team.
 | **User Alternative Titles & Translations** | Bulk-import curated titles that TMDB lacks: alt titles (`SourceType=User`) for parse/import matching, plus regional translations (e.g. `fr-CA`) that the `OnePerRegion` search mode queries. Both survive TMDB refreshes | [features/user-alternative-titles.md](docs/features/user-alternative-titles.md) |
 | **IMDb Title Provider** | Downloads IMDb's alternative-title dataset on a schedule and feeds the missing French/Quebec titles into the user-titles pipeline automatically (new movies within seconds); no external scripts | [features/imdb-title-provider.md](docs/features/imdb-title-provider.md) |
 | **Audio Language Verification** | Listens to a short clip of suspicious audio tracks with a self-hosted Whisper server at import, so a French track mistagged `eng`/`und` imports as French (and a truly non-French file is rejected with an "Audio verified" reason); stores the per-track outcome on the file, never modifies files | [features/audio-language-verification.md](docs/features/audio-language-verification.md) |
-| **Audio Track Retag** | After import, rewrites the language tag of the MKV audio tracks verification found mistagged (`mkvpropedit`, header-only, streams never rewritten) so Plex/Jellyfin/Bazarr agree; hardlink-aware (*Skip* / *Copy then retag* / *Retag in place*), outcome stored on the file, manual per-file command | [features/audio-track-retag.md](docs/features/audio-track-retag.md) |
+| **Audio Track Retag** | After import, rewrites the language tag of the MKV audio tracks verification found mistagged (`mkvpropedit`, header-only, streams never rewritten) so Plex/Jellyfin/Bazarr agree; hardlink-aware (*Skip* / *Copy then retag* / *Retag in place*); non-MKV files skipped or, opt-in, stream-copied by ffmpeg into a new `.mkv` with the tags written in the same pass (no re-encode, verified with ffprobe, rename events raised); outcome stored on the file, manual per-file command | [features/audio-track-retag.md](docs/features/audio-track-retag.md) |
 | **Completed Download Handling** | Stuck `ImportPending`/`ImportBlocked` queue items self-heal back to `Downloading` when the client stops reporting the download complete | [features/completed-download-handling.md](docs/features/completed-download-handling.md) |
 | **Docker / GHCR Deployment** | LinuxServer.io-style image (PUID/PGID/TZ/UMASK, `/config`, ffprobe bundled) published to GHCR | [features/docker-deployment.md](docs/features/docker-deployment.md) |
 
@@ -75,7 +75,7 @@ See [docs/releasing.md](docs/releasing.md) for how to cut a release.
 
 ```bash
 # Pinned to a release (recommended for stability)
-docker pull ghcr.io/krz-w/radarr:6.3.0.10514-krzw.10
+docker pull ghcr.io/krz-w/radarr:6.3.0.10514-krzw.11
 
 # Bleeding edge — tip of personal/all-features-master
 docker pull ghcr.io/krz-w/radarr:latest

@@ -10,12 +10,47 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.3.0.10514+krzw.11] — based on Radarr 6.3.0.10514
+
+### Added
+
+- **Audio Track Retag: remux of non-MKV files.** New advanced setting **Non-MKV Files**
+  (*Skip*, the default, unchanged behaviour: record `skipped-container` / *Remux to MKV then
+  retag*) next to *Hardlinked Files*, on `/api/v3/config/mediamanagement` as
+  `audioTrackRetagNonMkvMode` (`skip` / `remuxToMkv`). With *Remux* selected, a mistagged
+  MP4/M4V/AVI (a verification record with at least one mismatched track) is **stream-copied**
+  by the bundled `ffmpeg` (the same binary and process runner the verification clip extractor
+  uses) into `<stem>.krzw-remux.tmp.mkv` in the same directory, with the corrected language
+  of each mismatched audio track written in the same pass (`-map` per stream, `-c copy`,
+  `-metadata:s:a:N language=<ISO 639-2>`, never a re-encode, no second `mkvpropedit` pass).
+  Every video, audio, subtitle and attachment stream is kept; only streams Matroska cannot
+  carry (MP4 timed text, `eia_608`, `xsub`, teletext, timecode/data) are dropped and logged;
+  audio/video streams are never dropped, so a file ffmpeg refuses ends as `failed` with the
+  ffmpeg stderr tail, never a half-converted library file. Free space for the full source
+  size is checked first; the run is bounded by 10 × the verification *Timeout* (default 20
+  min, floor 10 min). The result is verified with ffprobe (stream count, duration within 1 s
+  of the source, requested tags present), then the source is parked as `.krzw-remux.bak`,
+  the temp moved to `<stem>.mkv`, the backup deleted, and the file record updated
+  (`RelativePath`/`Path` with the new extension, `Size`, `MediaInfo`, `Languages` by the
+  existing reconcile rule) with `result = done`, `remuxed = true`,
+  `originalContainer = "<ext>"`. The renamer's `MovieFileRenamedEvent + MovieRenamedEvent` are raised so history,
+  notifications (*On Rename*: webhook / cross-seed, Plex / Jellyfin / Emby library updates),
+  extras and metadata see the new path. Any failure deletes the temp, restores the original
+  from the backup when one was made, and records `failed`. A remux writes a brand-new file
+  (link count 1) and only removes the library's own directory entry, so a hardlinked
+  non-MKV source is remuxed whatever *Hardlinked Files* says and the seed keeps its bytes.
+  The manual `RetagAudioTracks` command honours the setting.
+
 ### Changed
 
 - Docs: the Audio Track Retag page and the FORK.md issue index now also cross-reference
   upstream [Radarr#6072](https://github.com/Radarr/Radarr/issues/6072) (open, retag
   downloaded files) and [Radarr#1976](https://github.com/Radarr/Radarr/issues/1976) (closed,
   wipe embedded file properties). Docs only.
+
+Container image: `ghcr.io/krz-w/radarr:6.3.0.10514-krzw.11`.
 
 ## [v6.3.0.10514+krzw.10] — based on Radarr 6.3.0.10514
 
@@ -553,7 +588,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.10...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.11...HEAD
+[v6.3.0.10514+krzw.11]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.11
 [v6.3.0.10514+krzw.10]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.10
 [v6.3.0.10514+krzw.9]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.9
 [v6.3.0.10514+krzw.8]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.8
