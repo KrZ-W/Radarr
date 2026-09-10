@@ -173,6 +173,23 @@ namespace NzbDrone.Core.Test.MediaFiles.AudioTags
         }
 
         [Test]
+        public void should_keep_the_language_of_a_track_the_record_does_not_cover()
+        {
+            // stream 0 is a real English track the trigger never probed; stream 1 is the mistagged French one
+            _movieFile.AudioLanguageVerification = new List<AudioLanguageVerification>
+            {
+                new AudioLanguageVerification { StreamIndex = 1, TaggedLanguage = "eng", DetectedLanguage = "fr", Confidence = 0.99 }
+            };
+            _movieFile.Languages = new List<Language> { Language.English, Language.French };
+            _probedTags = new List<string> { "eng", "fre" };
+
+            Import();
+
+            _movieFile.AudioTrackRetag.Result.Should().Be(AudioTrackRetagResult.Done);
+            _movieFile.Languages.Should().Equal(Language.English, Language.French);
+        }
+
+        [Test]
         public void should_not_add_unknown_for_an_und_track()
         {
             _movieFile.AudioLanguageVerification.Add(new AudioLanguageVerification { StreamIndex = 1, TaggedLanguage = "und", DetectedLanguage = null, Confidence = 0 });
