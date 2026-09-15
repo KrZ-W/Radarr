@@ -405,5 +405,35 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport
 
             Mocker.GetMock<IMediaFileService>().Verify(v => v.Add(It.Is<MovieFile>(c => c.AudioLanguageVerification == null)), Times.Once());
         }
+
+        // krzw(grabbed-release-title)
+        [Test]
+        public void should_store_the_sanitised_grabbed_release_title_from_the_grab_history()
+        {
+            Mocker.GetMock<IHistoryService>()
+                  .Setup(x => x.FindByDownloadId(_downloadClientItem.DownloadId))
+                  .Returns(new List<MovieHistory>
+                  {
+                      new MovieHistory
+                      {
+                          EventType = MovieHistoryEventType.Grabbed,
+                          SourceTitle = "Movie.Title.2022.MULTi.1080p-DRONE\r\n\t\r\n\tTaille: 4 GB Seeders: 27"
+                      }
+                  });
+
+            Subject.Import(new List<ImportDecision> { _approvedDecisions.First() }, true, _downloadClientItem);
+
+            Mocker.GetMock<IMediaFileService>()
+                  .Verify(v => v.Add(It.Is<MovieFile>(c => c.GrabbedReleaseTitle == "Movie.Title.2022.MULTi.1080p-DRONE")), Times.Once());
+        }
+
+        [Test]
+        public void should_leave_the_grabbed_release_title_null_for_a_manual_import_without_a_download_id()
+        {
+            Subject.Import(new List<ImportDecision> { _approvedDecisions.First() }, true);
+
+            Mocker.GetMock<IMediaFileService>()
+                  .Verify(v => v.Add(It.Is<MovieFile>(c => c.GrabbedReleaseTitle == null)), Times.Once());
+        }
     }
 }

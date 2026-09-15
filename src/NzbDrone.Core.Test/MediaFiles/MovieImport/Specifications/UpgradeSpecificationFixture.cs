@@ -155,11 +155,12 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(movieFileCustomFormats);
 
             _localMovie.Quality = new QualityModel(Quality.Bluray1080p);
             _localMovie.CustomFormats = Builder<CustomFormat>.CreateListOfSize(1).Build().ToList();
+            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 20;
 
             _localMovie.Movie.MovieFileId = 1;
@@ -190,11 +191,12 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(movieFileCustomFormats);
 
             _localMovie.Quality = new QualityModel(Quality.Bluray1080p);
             _localMovie.CustomFormats = Builder<CustomFormat>.CreateListOfSize(1).Build().ToList();
+            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 20;
 
             _localMovie.Movie.MovieFileId = 1;
@@ -225,11 +227,12 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(movieFileCustomFormats);
 
             _localMovie.Quality = new QualityModel(Quality.Bluray1080p);
             _localMovie.CustomFormats = Builder<CustomFormat>.CreateListOfSize(1).Build().ToList();
+            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 20;
 
             _localMovie.Movie.MovieFileId = 1;
@@ -262,11 +265,12 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(new System.Collections.Generic.List<CustomFormat>());
 
             _localMovie.Quality = new QualityModel(Quality.WEBDL1080p);
             _localMovie.CustomFormats = new System.Collections.Generic.List<CustomFormat> { priorityFormat };
+            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 100;
 
             _localMovie.Movie.MovieFileId = 1;
@@ -295,11 +299,12 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(new System.Collections.Generic.List<CustomFormat> { priorityFormat });
 
             _localMovie.Quality = new QualityModel(Quality.Bluray2160p);
             _localMovie.CustomFormats = new System.Collections.Generic.List<CustomFormat>();
+            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 0;
 
             _localMovie.Movie.MovieFileId = 1;
@@ -331,11 +336,12 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(new System.Collections.Generic.List<CustomFormat> { existingPriorityFormat });
 
             _localMovie.Quality = new QualityModel(Quality.WEBDL1080p);
             _localMovie.CustomFormats = new System.Collections.Generic.List<CustomFormat> { newPriorityFormat };
+            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 200;
 
             _localMovie.Movie.MovieFileId = 1;
@@ -366,11 +372,12 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(new System.Collections.Generic.List<CustomFormat> { regularFormat });
 
             _localMovie.Quality = new QualityModel(Quality.Bluray1080p);
             _localMovie.CustomFormats = new System.Collections.Generic.List<CustomFormat>();
+            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 0;
 
             _localMovie.Movie.MovieFileId = 1;

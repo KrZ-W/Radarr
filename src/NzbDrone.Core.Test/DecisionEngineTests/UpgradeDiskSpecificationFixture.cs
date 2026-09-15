@@ -59,7 +59,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             };
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(x => x.ParseCustomFormat(It.IsAny<MovieFile>()))
+                .Setup(x => x.ParseCustomFormatForScoring(It.IsAny<MovieFile>()))
                 .Returns(new List<CustomFormat>());
         }
 
@@ -86,7 +86,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         private void GivenOldCustomFormats(List<CustomFormat> formats)
         {
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(x => x.ParseCustomFormat(It.IsAny<MovieFile>()))
+                .Setup(x => x.ParseCustomFormatForScoring(It.IsAny<MovieFile>()))
                 .Returns(formats);
         }
 
@@ -118,7 +118,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         public void should_not_be_upgradable_if_qualities_are_the_same()
         {
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(x => x.ParseCustomFormat(It.IsAny<MovieFile>()))
+                .Setup(x => x.ParseCustomFormatForScoring(It.IsAny<MovieFile>()))
                 .Returns(new List<CustomFormat>());
 
             _firstFile.Quality = new QualityModel(Quality.WEBDL1080p);
