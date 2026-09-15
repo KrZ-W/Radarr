@@ -102,7 +102,7 @@ namespace Radarr.Api.V3.MovieFiles
             if (formatCalculationService != null)
             {
                 model.Movie = movie;
-                var customFormats = formatCalculationService?.ParseCustomFormat(model, model.Movie);
+                var customFormats = formatCalculationService?.ParseCustomFormatForScoring(model, model.Movie);  // krzw(grabbed-release-title)
                 var customFormatScore = movie?.QualityProfile?.CalculateCustomFormatScore(customFormats) ?? 0;
 
                 resource.CustomFormats = customFormats.ToResource(false);

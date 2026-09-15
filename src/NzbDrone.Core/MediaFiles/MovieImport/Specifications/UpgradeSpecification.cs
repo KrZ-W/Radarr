@@ -42,12 +42,14 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
 
                 // krzw(cf-priority): import-side mirror of UpgradableSpecification; CF parse hoisted from below
                 movieFile.Movie = localMovie.Movie;
-                var currentCustomFormats = _formatService.ParseCustomFormat(movieFile);
+
+                // krzw(grabbed-release-title): both sides of this comparison use the scoring ladder
+                var currentCustomFormats = _formatService.ParseCustomFormatForScoring(movieFile);
                 var currentPriorityScore = qualityProfile.CalculatePriorityFormatScore(currentCustomFormats);
-                var newPriorityScore = qualityProfile.CalculatePriorityFormatScore(localMovie.CustomFormats);
+                var newPriorityScore = qualityProfile.CalculatePriorityFormatScore(localMovie.ScoringCustomFormats);
                 var currentFormatScore = qualityProfile.CalculateCustomFormatScore(currentCustomFormats);
                 var newFormatScore = localMovie.CustomFormatScore;
-                var newCustomFormats = localMovie.CustomFormats;
+                var newCustomFormats = localMovie.ScoringCustomFormats;
 
                 // Priority CFs are compared BEFORE quality, matching grab-side UpgradableSpecification.
                 // A higher priority score wins even if the new file is a quality downgrade.

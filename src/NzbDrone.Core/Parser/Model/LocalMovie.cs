@@ -16,6 +16,7 @@ namespace NzbDrone.Core.Parser.Model
         public LocalMovie()
         {
             CustomFormats = new List<CustomFormat>();
+            ScoringCustomFormats = new List<CustomFormat>();  // krzw(grabbed-release-title)
         }
 
         public string Path { get; set; }
@@ -51,6 +52,12 @@ namespace NzbDrone.Core.Parser.Model
 
         // krzw(audio-track-retag): how the file actually reached the library (hardlink hint for the retag)
         public TransferMode? TransferMode { get; set; }
+
+        // krzw(grabbed-release-title): sanitised title of the release this file was grabbed as, and the
+        // custom formats the file scores as once that title is considered. CustomFormats above stays on
+        // the legacy ladder because it feeds naming (MovieFileMovingService); only scoring uses these.
+        public string GrabbedReleaseTitle { get; set; }
+        public List<CustomFormat> ScoringCustomFormats { get; set; }
 
         public override string ToString()
         {

@@ -141,8 +141,11 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                         }
                     }
 
+                    // krzw(grabbed-release-title): CustomFormats stays on the legacy ladder (it feeds
+                    // naming); the score and every upgrade comparison use ScoringCustomFormats.
                     localMovie.CustomFormats = _formatCalculator.ParseCustomFormat(localMovie);
-                    localMovie.CustomFormatScore = localMovie.Movie.QualityProfile?.CalculateCustomFormatScore(localMovie.CustomFormats) ?? 0;
+                    localMovie.ScoringCustomFormats = _formatCalculator.ParseCustomFormatForScoring(localMovie);
+                    localMovie.CustomFormatScore = localMovie.Movie.QualityProfile?.CalculateCustomFormatScore(localMovie.ScoringCustomFormats) ?? 0;
 
                     decision = GetDecision(localMovie, downloadClientItem);
                 }

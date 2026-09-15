@@ -2,6 +2,7 @@ using System.Linq;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.History;
+using NzbDrone.Core.MediaFiles.GrabbedReleaseTitles;
 using NzbDrone.Core.Parser.Model;
 
 namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators
@@ -34,6 +35,9 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators
             }
 
             localMovie.Release = new GrabbedReleaseInfo(grabbedHistories);
+
+            // krzw(grabbed-release-title): the grabbed title the import decision scores against
+            localMovie.GrabbedReleaseTitle = GrabbedReleaseTitleSanitizer.Sanitize(localMovie.Release.Title);
 
             return localMovie;
         }
