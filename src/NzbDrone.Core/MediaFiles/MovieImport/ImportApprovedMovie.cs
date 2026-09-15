@@ -10,6 +10,7 @@ using NzbDrone.Core.Extras;
 using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles.Commands;
 using NzbDrone.Core.MediaFiles.Events;
+using NzbDrone.Core.MediaFiles.GrabbedReleaseTitles;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Parser.Model;
@@ -109,6 +110,10 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                         {
                             movieFile.IndexerFlags = flags;
                         }
+
+                        // krzw(grabbed-release-title): remember the title this file was grabbed as, so
+                        // upgrade decisions can score the file the way the grab was scored.
+                        movieFile.GrabbedReleaseTitle = GrabbedReleaseTitleSanitizer.Sanitize(grabHistory?.SourceTitle);
                     }
                     else
                     {
