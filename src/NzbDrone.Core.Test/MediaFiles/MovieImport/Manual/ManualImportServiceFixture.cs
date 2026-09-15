@@ -44,7 +44,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Manual
                   .Returns(new List<MovieFile> { _movieFile });
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                  .Setup(s => s.ParseCustomFormat(It.IsAny<MovieFile>(), It.IsAny<Movie>()))
+                  .Setup(s => s.ParseCustomFormatForScoring(It.IsAny<MovieFile>(), It.IsAny<Movie>()))
                   .Returns(new List<CustomFormat>());
 
             // No unmapped files on disk.

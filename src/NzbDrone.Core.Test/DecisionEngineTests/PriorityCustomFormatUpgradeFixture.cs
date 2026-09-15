@@ -67,7 +67,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             };
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(x => x.ParseCustomFormat(It.IsAny<MovieFile>()))
+                .Setup(x => x.ParseCustomFormatForScoring(It.IsAny<MovieFile>()))
                 .Returns(new List<CustomFormat>());
         }
 
@@ -76,7 +76,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         {
             // Existing file has NO custom formats
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(x => x.ParseCustomFormat(It.IsAny<MovieFile>()))
+                .Setup(x => x.ParseCustomFormatForScoring(It.IsAny<MovieFile>()))
                 .Returns(new List<CustomFormat>());
 
             // New release has the Priority format
@@ -92,7 +92,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             _parseResult.Movie.QualityProfile.UpgradeAllowed = false;
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(x => x.ParseCustomFormat(It.IsAny<MovieFile>()))
+                .Setup(x => x.ParseCustomFormatForScoring(It.IsAny<MovieFile>()))
                 .Returns(new List<CustomFormat>());
 
             _parseResult.CustomFormats = new List<CustomFormat> { _priorityFormat };
@@ -105,7 +105,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         {
             // Existing file HAS the priority format
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(x => x.ParseCustomFormat(It.IsAny<MovieFile>()))
+                .Setup(x => x.ParseCustomFormatForScoring(It.IsAny<MovieFile>()))
                 .Returns(new List<CustomFormat> { _priorityFormat });
 
             // New release also has the same priority format
@@ -127,7 +127,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 
             // Existing file HAS the priority format (lower score)
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(x => x.ParseCustomFormat(It.IsAny<MovieFile>()))
+                .Setup(x => x.ParseCustomFormatForScoring(It.IsAny<MovieFile>()))
                 .Returns(new List<CustomFormat> { _priorityFormat });
 
             // New release has regular format (higher score, but not priority)
@@ -151,7 +151,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
 
             // Existing file has lower priority format
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(x => x.ParseCustomFormat(It.IsAny<MovieFile>()))
+                .Setup(x => x.ParseCustomFormatForScoring(It.IsAny<MovieFile>()))
                 .Returns(new List<CustomFormat> { _priorityFormat });
 
             // New release has higher priority format
