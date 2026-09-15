@@ -262,7 +262,14 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenter
             try
             {
                 localMovie.Languages = evidence;
-                var formats = _formatCalculator.ParseCustomFormat(localMovie);
+
+                // krzw(grabbed-release-title): MinimumCustomFormatScoreSpecification compares
+                // localMovie.CustomFormatScore, which ImportDecisionMaker computes from the scoring
+                // ladder. Predicting with the legacy ladder would over-predict rejection - the Pareto
+                // rule can only raise the score - and fire a Whisper probe for the very files the
+                // grabbed release title just rescued. AggregateReleaseInfo runs at Order 0 so
+                // GrabbedReleaseTitle is already populated by the time this runs.
+                var formats = _formatCalculator.ParseCustomFormatForScoring(localMovie);
                 var score = profile.CalculateCustomFormatScore(formats);
 
                 return score < profile.MinFormatScore;
