@@ -8,6 +8,7 @@ using NzbDrone.Core.Test.Framework;
 
 namespace NzbDrone.Core.Test.Datastore.Migration
 {
+    // krzw(grabbed-release-title)
     [TestFixture]
     public class add_grabbed_release_title_to_movie_filesFixture : MigrationTest<add_grabbed_release_title_to_movie_files>
     {

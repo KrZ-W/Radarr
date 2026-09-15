@@ -43,6 +43,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Manual
                   .Setup(s => s.GetFilesByMovie(_movie.Id))
                   .Returns(new List<MovieFile> { _movieFile });
 
+            // krzw(grabbed-release-title): the listing scores existing files through the scoring ladder
             Mocker.GetMock<ICustomFormatCalculationService>()
                   .Setup(s => s.ParseCustomFormatForScoring(It.IsAny<MovieFile>(), It.IsAny<Movie>()))
                   .Returns(new List<CustomFormat>());
