@@ -59,6 +59,15 @@ Only the **first non-empty line** is kept, trimmed, with internal runs of whites
 to a single space. An empty result is stored as `NULL`. 229 of the grabs in the reference
 library look like this.
 
+`AggregateReleaseInfo`, which sets `LocalMovie.GrabbedReleaseTitle` from that row, runs at
+**`Order => 0`**, ahead of every other aggregator. It reads nothing but the download client item
+and grab history, so it has no dependency on what the other aggregators produce, and running it
+first guarantees the grabbed title is present for anything scoring a `LocalMovie` later in the
+chain — in particular `AggregateLanguage` (`Order => 1`) and the audio-probe augmenter's
+rejection predictor, which scores through the same ladder as
+`MinimumCustomFormatScoreSpecification` so it never fires a probe for a file the grabbed title
+has just rescued.
+
 ### Selection: Pareto, not "highest score"
 
 Scoring an existing file today walks a ladder: `SceneName` → file name of `OriginalFilePath` →
@@ -107,12 +116,43 @@ matching regardless of which title wins.
 `GET /api/v3/movie` is **not** one of them: `MovieController` builds the resource without the
 format calculator, so `customFormatScore` is always `0` there with or without this feature.
 
-### Naming is not affected
+### Naming is not affected — and is the only carve-out
 
 `Organizer/FileNameBuilder` renders the `{Custom Formats}` token through the **legacy** ladder,
 deliberately left untouched. Switching the setting on therefore never changes a rendered name
 and never makes *Rename Files* propose a rename. `{Scene Name}` and `{Original Title}` read
-their own fields and are equally unaffected, as are webhooks and notifications.
+their own fields and are equally unaffected. At import the legacy list travels on
+`LocalMovie.NamingCustomFormats`, which is what `MediaFiles/MovieFileMovingService` hands to
+`BuildFileName`; left unset it falls back to `LocalMovie.CustomFormats`, so a `LocalMovie` built
+outside the import decision makers names files exactly as it did before.
+
+### What reporting surfaces see
+
+Naming aside, a file's custom formats **are** those of the highest-scoring candidate title:
+`LocalMovie.CustomFormats` *is* the scoring ladder's result and `LocalMovie.CustomFormatScore` is
+computed from it. That matters because every reporting surface pairs the two, and a list that
+cannot produce the score printed next to it is a bug:
+
+| Surface | Field pair |
+|---|---|
+| `Notifications/Webhook/WebhookBase` | `customFormatInfo.customFormats` / `customFormatScore` |
+| `Notifications/CustomScript/CustomScript` | `Radarr_MovieFile_CustomFormat` / `Radarr_MovieFile_CustomFormatScore` |
+| `MediaFiles/ScriptImportDecider` | the same two environment variables |
+| `Notifications/Discord/Discord` | the `CustomFormats` / `CustomFormatScore` import fields |
+| `History/HistoryService` | the `downloadFolderImported` row's `CustomFormatScore` |
+| `MediaFiles/MovieImport/Manual/ManualImportService` | the manual-import UI's formats and score |
+
+So, precisely:
+
+- **Naming, the `{Custom Formats}` token, `{Scene Name}` and `{Original Title}` are unchanged**,
+  with the setting on or off.
+- **With the setting on**, the custom format list *and* the score reported on webhooks, Discord,
+  custom scripts, the import script decider, the manual-import UI and the `downloadFolderImported`
+  history row all follow the scoring ladder, and stay consistent with each other. They can differ
+  from what the same file reported before the setting was switched on — that is the intended
+  effect, not a regression.
+- **With the setting off (the default) nothing changes at all**: `ParseCustomFormatForScoring` is
+  byte-identical to `ParseCustomFormat`.
 
 ## Backfill
 
@@ -153,7 +193,10 @@ is loaded once into dictionaries and writes are batched; nothing is queried per 
   `MinCustomFormatScore`) and at `MovieImport/Specifications/UpgradeSpecification.cs`. Releases
   that only looked like upgrades because the file had forgotten its own title will now be
   rejected.
-- **Naming, webhooks and the `{Custom Formats}` token are unchanged**, on purpose.
+- **Naming and the `{Custom Formats}` token are unchanged**, on purpose — and they are the only
+  carve-out. With the setting on, webhooks, Discord, custom scripts, the manual-import UI and the
+  `downloadFolderImported` history row report the scoring ladder's list *and* score together (see
+  [What reporting surfaces see](#what-reporting-surfaces-see)).
 - **Files whose true import was a manual import are skipped by the backfill**, by design: there
   is no grab to attribute, and guessing is what produces wrong titles.
 - **No file is ever read or written.** Only one nullable text column.
@@ -176,7 +219,7 @@ Branch `feature/grabbed-release-title-master`, merged into
 `MediaFiles/GrabbedReleaseTitles/*` (`GrabbedReleaseTitleSanitizer`,
 `BackfillGrabbedReleaseTitlesCommand`, `BackfillGrabbedReleaseTitlesService`),
 `CustomFormats/CustomFormatCalculationService.ParseCustomFormatForScoring`, `MediaFiles/MovieFile.cs`,
-`Parser/Model/LocalMovie.cs` (`GrabbedReleaseTitle`, `ScoringCustomFormats`),
+`Parser/Model/LocalMovie.cs` (`GrabbedReleaseTitle`, `NamingCustomFormats`),
 `MediaFiles/MovieImport/ImportApprovedMovie.cs`,
 `MediaFiles/MovieImport/Aggregation/Aggregators/AggregateReleaseInfo.cs`,
 `History/HistoryRepository.AllByEventType`, `Configuration/ConfigService.cs`,
