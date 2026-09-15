@@ -66,6 +66,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
                 CustomFormats = new List<CustomFormat>()
             };
 
+            // krzw(grabbed-release-title): the specs score existing files through the scoring ladder
             Mocker.GetMock<ICustomFormatCalculationService>()
                 .Setup(x => x.ParseCustomFormatForScoring(It.IsAny<MovieFile>()))
                 .Returns(new List<CustomFormat>());
