@@ -51,6 +51,9 @@ namespace Radarr.Api.V3.Config
         public bool AudioTrackRetagEnabled { get; set; }
         public AudioTrackRetagHardlinkMode AudioTrackRetagHardlinkMode { get; set; }
         public AudioTrackRetagNonMkvMode AudioTrackRetagNonMkvMode { get; set; }
+
+        // krzw(grabbed-release-title)
+        public bool ScoreFilesByGrabbedReleaseTitle { get; set; }
     }
 
     public static class MediaManagementConfigResourceMapper
@@ -99,7 +102,10 @@ namespace Radarr.Api.V3.Config
                 // krzw(audio-track-retag)
                 AudioTrackRetagEnabled = model.AudioTrackRetagEnabled,
                 AudioTrackRetagHardlinkMode = model.AudioTrackRetagHardlinkMode,
-                AudioTrackRetagNonMkvMode = model.AudioTrackRetagNonMkvMode
+                AudioTrackRetagNonMkvMode = model.AudioTrackRetagNonMkvMode,
+
+                // krzw(grabbed-release-title)
+                ScoreFilesByGrabbedReleaseTitle = model.ScoreFilesByGrabbedReleaseTitle
             };
         }
     }

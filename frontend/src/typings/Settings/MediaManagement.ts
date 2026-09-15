@@ -34,4 +34,7 @@ export default interface MediaManagement {
   audioTrackRetagEnabled: boolean;
   audioTrackRetagHardlinkMode: 'skip' | 'copyThenRetag' | 'retagInPlace';
   audioTrackRetagNonMkvMode: 'skip' | 'remuxToMkv';
+
+  // krzw(grabbed-release-title)
+  scoreFilesByGrabbedReleaseTitle: boolean;
 }
