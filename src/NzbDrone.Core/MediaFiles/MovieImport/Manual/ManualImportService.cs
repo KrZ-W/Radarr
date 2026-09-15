@@ -177,10 +177,11 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
             localMovie.IndexerFlags = (IndexerFlags)indexerFlags;
 
             // krzw(grabbed-release-title): parsed after Augment - before it SceneName and Release are
-            // still null, so the preview's accept/reject used a stale custom format list.
-            localMovie.CustomFormats = _formatCalculator.ParseCustomFormat(localMovie);
-            localMovie.ScoringCustomFormats = _formatCalculator.ParseCustomFormatForScoring(localMovie);
-            localMovie.CustomFormatScore = localMovie.Movie?.QualityProfile?.CalculateCustomFormatScore(localMovie.ScoringCustomFormats) ?? 0;
+            // still null, so the preview's accept/reject used a stale custom format list. CustomFormats is
+            // the scoring ladder (it must match CustomFormatScore); naming reads NamingCustomFormats.
+            localMovie.NamingCustomFormats = _formatCalculator.ParseCustomFormat(localMovie);
+            localMovie.CustomFormats = _formatCalculator.ParseCustomFormatForScoring(localMovie);
+            localMovie.CustomFormatScore = localMovie.Movie?.QualityProfile?.CalculateCustomFormatScore(localMovie.CustomFormats) ?? 0;
 
             return MapItem(_importDecisionMaker.GetDecision(localMovie, downloadClientItem), rootFolder, downloadId, null);
         }
@@ -472,10 +473,10 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
                 localMovie.Languages = file.Languages;
                 localMovie.IndexerFlags = (IndexerFlags)file.IndexerFlags;
 
-                // krzw(grabbed-release-title)
-                localMovie.CustomFormats = _formatCalculator.ParseCustomFormat(localMovie);
-                localMovie.ScoringCustomFormats = _formatCalculator.ParseCustomFormatForScoring(localMovie);
-                localMovie.CustomFormatScore = localMovie.Movie.QualityProfile?.CalculateCustomFormatScore(localMovie.ScoringCustomFormats) ?? 0;
+                // krzw(grabbed-release-title): CustomFormats is the scoring ladder, naming keeps the legacy one
+                localMovie.NamingCustomFormats = _formatCalculator.ParseCustomFormat(localMovie);
+                localMovie.CustomFormats = _formatCalculator.ParseCustomFormatForScoring(localMovie);
+                localMovie.CustomFormatScore = localMovie.Movie.QualityProfile?.CalculateCustomFormatScore(localMovie.CustomFormats) ?? 0;
 
                 // TODO: Cleanup non-tracked downloads
                 var importDecision = new ImportDecision(localMovie);

@@ -16,6 +16,11 @@ using NzbDrone.Core.Test.Framework;
 namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
 {
     [TestFixture]
+
+    // krzw(grabbed-release-title): UpgradeSpecification compares both sides through the scoring
+    // ladder, so the existing file is mocked on ParseCustomFormatForScoring. The incoming file's
+    // LocalMovie.CustomFormats IS the scoring ladder's list - there is no separate scoring
+    // property; naming reads LocalMovie.NamingCustomFormats instead.
     public class UpgradeSpecificationFixture : CoreTest<UpgradeSpecification>
     {
         private Movie _movie;
@@ -160,7 +165,6 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
 
             _localMovie.Quality = new QualityModel(Quality.Bluray1080p);
             _localMovie.CustomFormats = Builder<CustomFormat>.CreateListOfSize(1).Build().ToList();
-            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 20;
 
             _localMovie.Movie.MovieFileId = 1;
@@ -196,7 +200,6 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
 
             _localMovie.Quality = new QualityModel(Quality.Bluray1080p);
             _localMovie.CustomFormats = Builder<CustomFormat>.CreateListOfSize(1).Build().ToList();
-            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 20;
 
             _localMovie.Movie.MovieFileId = 1;
@@ -232,7 +235,6 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
 
             _localMovie.Quality = new QualityModel(Quality.Bluray1080p);
             _localMovie.CustomFormats = Builder<CustomFormat>.CreateListOfSize(1).Build().ToList();
-            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 20;
 
             _localMovie.Movie.MovieFileId = 1;
@@ -270,7 +272,6 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
 
             _localMovie.Quality = new QualityModel(Quality.WEBDL1080p);
             _localMovie.CustomFormats = new System.Collections.Generic.List<CustomFormat> { priorityFormat };
-            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 100;
 
             _localMovie.Movie.MovieFileId = 1;
@@ -304,7 +305,6 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
 
             _localMovie.Quality = new QualityModel(Quality.Bluray2160p);
             _localMovie.CustomFormats = new System.Collections.Generic.List<CustomFormat>();
-            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 0;
 
             _localMovie.Movie.MovieFileId = 1;
@@ -341,7 +341,6 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
 
             _localMovie.Quality = new QualityModel(Quality.WEBDL1080p);
             _localMovie.CustomFormats = new System.Collections.Generic.List<CustomFormat> { newPriorityFormat };
-            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 200;
 
             _localMovie.Movie.MovieFileId = 1;
@@ -377,7 +376,6 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
 
             _localMovie.Quality = new QualityModel(Quality.Bluray1080p);
             _localMovie.CustomFormats = new System.Collections.Generic.List<CustomFormat>();
-            _localMovie.ScoringCustomFormats = _localMovie.CustomFormats;  // krzw(grabbed-release-title)
             _localMovie.CustomFormatScore = 0;
 
             _localMovie.Movie.MovieFileId = 1;
