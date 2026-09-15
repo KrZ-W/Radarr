@@ -30,10 +30,21 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   title varies between candidates; release group, languages, quality, size, indexer flags,
   edition, audio titles and file name are taken from the file. Applied at
   `UpgradeAllowedSpecification`, `UpgradeDiskSpecification`, `DelaySpecification`, the import
-  `UpgradeSpecification`, the manual-import listing and `MovieFileResource`. **Naming is
-  deliberately excluded**: `FileNameBuilder` keeps rendering `{Custom Formats}` through the old
-  ladder, so switching the setting on never proposes a rename. Expect the intended behaviour
+  `UpgradeSpecification`, the manual-import listing and `MovieFileResource`. **Naming is the only
+  deliberate exclusion**: `FileNameBuilder` keeps rendering `{Custom Formats}` through the old
+  ladder (carried at import on the new `LocalMovie.NamingCustomFormats`), so switching the setting
+  on never proposes a rename. Everywhere else a file's custom formats *are* those of its
+  highest-scoring candidate title, so with the setting on the custom format list **and** the score
+  reported on webhooks, Discord, custom scripts, the import script decider, the manual-import UI
+  and the `downloadFolderImported` history row all follow the scoring ladder and stay consistent
+  with each other; with the setting off nothing changes at all. Expect the intended behaviour
   change: a better-scoring existing file can now block upgrades that used to be allowed.
+- `AggregateReleaseInfo` now runs at `Order => 0`, ahead of every other import aggregator, so the
+  grabbed release title is always populated before anything scores the `LocalMovie` — notably
+  `AggregateLanguage` and the [audio language
+  verification](docs/features/audio-language-verification.md) probe, whose rejection predictor now
+  scores through the same ladder as `MinimumCustomFormatScoreSpecification` and no longer fires an
+  unnecessary Whisper probe for a file the grabbed title has just lifted above `MinFormatScore`.
 - **`BackfillGrabbedReleaseTitles` command** (`POST /api/v3/command`), manual and idempotent,
   to fill the column for files imported before it existed. Matching uses the
   `downloadFolderImported` row whose `Data["fileId"]` is the movie file id as an exact oracle;
