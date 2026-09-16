@@ -4,6 +4,7 @@ using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
+using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.MovieImport;
@@ -106,6 +107,45 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport
                   {
                       localMovie.Movie = _localMovie.Movie;
                   });
+        }
+
+        // krzw(grabbed-release-title): the reported list and the reported score must be the same thing.
+        // CustomFormats carries the scoring ladder (so CustomFormatScore can be derived from it, and so
+        // every webhook / custom script / Discord / history consumer reports a consistent pair);
+        // NamingCustomFormats carries the legacy ladder, which is all naming ever sees.
+        [Test]
+        public void should_put_the_scoring_ladder_on_custom_formats_and_the_legacy_ladder_on_naming_custom_formats()
+        {
+            // Distinct ids: CustomFormat equality (and therefore the score calculation) is by Id.
+            var legacyFormats = new List<CustomFormat> { new CustomFormat { Id = 1, Name = "LegacyLadder" } };
+            var scoringFormats = new List<CustomFormat> { new CustomFormat { Id = 2, Name = "ScoringLadder" } };
+
+            _movie.QualityProfile.FormatItems = new List<Core.Profiles.ProfileFormatItem>
+            {
+                new Core.Profiles.ProfileFormatItem { Score = 25, Format = scoringFormats[0] },
+                new Core.Profiles.ProfileFormatItem { Score = 5, Format = legacyFormats[0] }
+            };
+
+            Mocker.GetMock<ICustomFormatCalculationService>()
+                  .Setup(c => c.ParseCustomFormat(It.IsAny<LocalMovie>()))
+                  .Returns(legacyFormats);
+
+            Mocker.GetMock<ICustomFormatCalculationService>()
+                  .Setup(c => c.ParseCustomFormatForScoring(It.IsAny<LocalMovie>()))
+                  .Returns(scoringFormats);
+
+            GivenAugmentationSuccess();
+            GivenSpecifications(_pass1);
+
+            var decision = Subject.GetImportDecisions(_videoFiles, _movie).Single();
+
+            decision.LocalMovie.CustomFormats.Should().BeEquivalentTo(scoringFormats);
+            decision.LocalMovie.NamingCustomFormats.Should().BeEquivalentTo(legacyFormats);
+
+            // The score is the score OF the list that gets reported, not of some other list.
+            decision.LocalMovie.CustomFormatScore.Should().Be(25);
+            decision.LocalMovie.CustomFormatScore.Should()
+                    .Be(_movie.QualityProfile.CalculateCustomFormatScore(decision.LocalMovie.CustomFormats));
         }
 
         [Test]

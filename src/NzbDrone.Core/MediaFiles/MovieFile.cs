@@ -30,6 +30,7 @@ namespace NzbDrone.Core.MediaFiles
         public List<Language> Languages { get; set; }
         public List<AudioLanguageVerification> AudioLanguageVerification { get; set; }  // krzw(audio-language-verification): written at import only
         public AudioTrackRetag AudioTrackRetag { get; set; }  // krzw(audio-track-retag): post-import retag outcome, "done" is final
+        public string GrabbedReleaseTitle { get; set; }  // krzw(grabbed-release-title): sanitised SourceTitle of the grab this file came from
 
         public override string ToString()
         {

@@ -10,7 +10,59 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **Grabbed Release Title.** New nullable `MovieFiles.GrabbedReleaseTitle` column (migration
+  247), filled at import from the `SourceTitle` of the `grabbed` history row of the download
+  that produced the file, and exposed read-only as `grabbedReleaseTitle` on
+  `GET /api/v3/moviefile`. Titles are sanitised before storing — some trackers publish a whole
+  description block as the release title, so only the first non-empty line is kept, trimmed,
+  with internal whitespace runs collapsed. Manual imports without a download id store nothing.
+- **Score Files by Grabbed Release Title** (Settings → Media Management → *File Management*,
+  advanced, **off by default**; `scoreFilesByGrabbedReleaseTitle` on
+  `/api/v3/config/mediamanagement`). With it on, every upgrade decision that scores the
+  *existing* file re-scores it under the grabbed release title, the scene name and the original
+  file name, and keeps the best candidate. Selection is **Pareto over (priority score, total
+  score)**, not a plain maximum: a candidate is only eligible if it lowers neither score, and
+  ties keep the title in use today — so enabling the setting can never lower a file's score,
+  including the priority score that [Custom Format Priority
+  Mode](docs/features/custom-format-priority-mode.md) compares before quality. Only the release
+  title varies between candidates; release group, languages, quality, size, indexer flags,
+  edition, audio titles and file name are taken from the file. Applied at
+  `UpgradeAllowedSpecification`, `UpgradeDiskSpecification`, `DelaySpecification`, the import
+  `UpgradeSpecification`, the manual-import listing and `MovieFileResource`. **Naming is the only
+  deliberate exclusion**: `FileNameBuilder` keeps rendering `{Custom Formats}` through the old
+  ladder (carried at import on the new `LocalMovie.NamingCustomFormats`), so switching the setting
+  on never proposes a rename. Everywhere else a file's custom formats *are* those of its
+  highest-scoring candidate title, so with the setting on the custom format list **and** the score
+  reported on webhooks, Discord, custom scripts, the import script decider, the manual-import UI
+  and the `downloadFolderImported` history row all follow the scoring ladder and stay consistent
+  with each other; with the setting off nothing changes at all. Expect the intended behaviour
+  change: a better-scoring existing file can now block upgrades that used to be allowed.
+- `AggregateReleaseInfo` now runs at `Order => 0`, ahead of every other import aggregator, so the
+  grabbed release title is always populated before anything scores the `LocalMovie` — notably
+  `AggregateLanguage` and the [audio language
+  verification](docs/features/audio-language-verification.md) probe, whose rejection predictor now
+  scores through the same ladder as `MinimumCustomFormatScoreSpecification` and no longer fires an
+  unnecessary Whisper probe for a file the grabbed title has just lifted above `MinFormatScore`.
+- **`BackfillGrabbedReleaseTitles` command** (`POST /api/v3/command`), manual and idempotent,
+  to fill the column for files imported before it existed. Matching uses the
+  `downloadFolderImported` row whose `Data["fileId"]` is the movie file id as an exact oracle;
+  a file whose own import row carries no download id was imported manually and is **skipped**
+  rather than matched by time (measured on the reference library, pure time proximity
+  mis-attributed 39 of 2,322 files, 38 of them exactly this case). Only files with no
+  `fileId`-bearing import row fall back to the closest download-id-bearing import within 6
+  hours. History is loaded once and writes are batched; the run logs
+  `scanned / set / no-import-event / no-download-id / no-grab / unchanged`.
+
+### Fixed
+
+- **`DelaySpecification` no longer scores the existing movie file with a null `Movie`.** It was
+  the only file-custom-format call site that never populated `MovieFile.Movie`, which the
+  repository does not populate either.
+- **Manual import preview no longer computes custom formats from a stale file.** `ReprocessItem`
+  parsed them before `Augment`, when `SceneName` and `Release` are still null, so the preview's
+  accept/reject used a custom format list that did not match the file it was previewing.
 
 ## [v6.3.0.10514+krzw.11] — based on Radarr 6.3.0.10514
 

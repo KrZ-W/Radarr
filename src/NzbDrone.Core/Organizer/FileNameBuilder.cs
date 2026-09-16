@@ -427,6 +427,10 @@ namespace NzbDrone.Core.Organizer
             if (customFormats == null)
             {
                 movieFile.Movie = movie;
+
+                // krzw(grabbed-release-title): naming deliberately stays on the legacy ladder. Rendering
+                // this token through ParseCustomFormatForScoring would make Rename Files propose a
+                // library-wide rename the moment the setting is switched on.
                 customFormats = _formatCalculator.ParseCustomFormat(movieFile, movie);
             }
 

@@ -12,6 +12,7 @@ using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles.AudioLanguage;
 using NzbDrone.Core.MediaFiles.MediaInfo;
 using NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenters.Language;
+using NzbDrone.Core.MediaFiles.MovieImport.Specifications;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles;
@@ -62,7 +63,10 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Aggregation.Aggregators.Augm
 
             Mocker.GetMock<IAudioTrackLayoutReader>().Setup(r => r.Read(It.IsAny<MediaInfoModel>())).Returns(() => _tracks);
             Mocker.GetMock<IHistoryService>().Setup(h => h.FindByDownloadId(It.IsAny<string>())).Returns(new List<MovieHistory>());
-            Mocker.GetMock<ICustomFormatCalculationService>().Setup(c => c.ParseCustomFormat(It.IsAny<LocalMovie>())).Returns(new List<CustomFormat>());
+
+            // krzw(grabbed-release-title): the rejection predictor scores through the scoring ladder,
+            // because that is what MinimumCustomFormatScoreSpecification ends up comparing.
+            Mocker.GetMock<ICustomFormatCalculationService>().Setup(c => c.ParseCustomFormatForScoring(It.IsAny<LocalMovie>())).Returns(new List<CustomFormat>());
 
             Mocker.SetConstant<IAudioLanguageProbeCache>(new AudioLanguageProbeCache());
         }
@@ -290,6 +294,49 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Aggregation.Aggregators.Augm
             _localMovie.AudioLanguageTrigger.Should().Be(AudioLanguageTrigger.ImpendingRejection);
             result.Languages.Should().Equal(new List<Core.Languages.Language> { Core.Languages.Language.French });
             _localMovie.Languages.Should().BeNull();
+        }
+
+        // krzw(grabbed-release-title): the predictor and the specification must agree. A grabbed release
+        // title that lifts the score over MinFormatScore means the file is NOT going to be rejected, so
+        // no Whisper probe may fire for it.
+        [Test]
+        public void should_not_predict_rejection_when_the_grabbed_release_title_lifts_the_score_over_the_minimum()
+        {
+            var frenchFormat = new CustomFormat("French", new Core.CustomFormats.LanguageSpecification { Value = Core.Languages.Language.French.Id });
+
+            _movie.QualityProfile.Language = Core.Languages.Language.Any;
+            _movie.QualityProfile.MinFormatScore = 10;
+            _movie.QualityProfile.FormatItems = new List<ProfileFormatItem>
+            {
+                new ProfileFormatItem { Score = 100, Format = frenchFormat }
+            };
+
+            _localMovie.FileMovieInfo.Languages = new List<Core.Languages.Language>();
+            _localMovie.GrabbedReleaseTitle = "Movie.2020.FRENCH.1080p-GRP";
+
+            // The legacy ladder still sees nothing; only the scoring ladder finds the format.
+            Mocker.GetMock<ICustomFormatCalculationService>()
+                  .Setup(c => c.ParseCustomFormat(It.IsAny<LocalMovie>()))
+                  .Returns(new List<CustomFormat>());
+            Mocker.GetMock<ICustomFormatCalculationService>()
+                  .Setup(c => c.ParseCustomFormatForScoring(It.IsAny<LocalMovie>()))
+                  .Returns(new List<CustomFormat> { frenchFormat });
+
+            GivenProbe("fr", 0.97);
+
+            var result = Subject.AugmentLanguage(_localMovie, _downloadClientItem);
+
+            result.Should().BeNull();
+            _localMovie.AudioLanguageTrigger.Should().Be(AudioLanguageTrigger.None);
+            VerifyProbeCount(0);
+
+            // ... and the specification the predictor mirrors accepts the same file.
+            _localMovie.CustomFormats = new List<CustomFormat> { frenchFormat };
+            _localMovie.CustomFormatScore = _movie.QualityProfile.CalculateCustomFormatScore(_localMovie.CustomFormats);
+
+            new MinimumCustomFormatScoreSpecification(TestLogger)
+                .IsSatisfiedBy(_localMovie, _downloadClientItem)
+                .Accepted.Should().BeTrue();
         }
 
         [Test]

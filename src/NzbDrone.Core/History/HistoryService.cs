@@ -30,6 +30,7 @@ namespace NzbDrone.Core.History
         void UpdateMany(List<MovieHistory> toUpdate);
         string FindDownloadId(MovieFileImportedEvent trackedDownload);
         List<MovieHistory> Since(DateTime date, MovieHistoryEventType? eventType);
+        List<MovieHistory> AllByEventType(MovieHistoryEventType eventType);  // krzw(grabbed-release-title)
     }
 
     public class HistoryService : IHistoryService,
@@ -324,6 +325,12 @@ namespace NzbDrone.Core.History
         public List<MovieHistory> Since(DateTime date, MovieHistoryEventType? eventType)
         {
             return _historyRepository.Since(date, eventType);
+        }
+
+        // krzw(grabbed-release-title)
+        public List<MovieHistory> AllByEventType(MovieHistoryEventType eventType)
+        {
+            return _historyRepository.AllByEventType(eventType);
         }
     }
 }

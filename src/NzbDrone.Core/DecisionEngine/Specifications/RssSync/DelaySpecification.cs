@@ -58,7 +58,11 @@ namespace NzbDrone.Core.DecisionEngine.Specifications.RssSync
 
             if (isPreferredProtocol && (subject.Movie.MovieFileId != 0 && file != null))
             {
-                var customFormats = _formatService.ParseCustomFormat(file);
+                // krzw(grabbed-release-title): the only file-CF site that never populated file.Movie;
+                // the scoring ladder needs it for the quality profile, and the legacy ladder for the title.
+                file.Movie = subject.Movie;
+
+                var customFormats = _formatService.ParseCustomFormatForScoring(file);
                 var upgradeableRejectReason = _qualityUpgradableSpecification.IsUpgradable(profile,
                     file.Quality,
                     customFormats,

@@ -430,6 +430,14 @@ namespace NzbDrone.Core.Configuration
             set { SetValue("AudioTrackRetagNonMkvMode", value); }
         }
 
+        // krzw(grabbed-release-title)
+        public bool ScoreFilesByGrabbedReleaseTitle
+        {
+            get { return GetValueBoolean("ScoreFilesByGrabbedReleaseTitle", false); }
+
+            set { SetValue("ScoreFilesByGrabbedReleaseTitle", value); }
+        }
+
         public bool UseScriptImport
         {
             get { return GetValueBoolean("UseScriptImport", false); }

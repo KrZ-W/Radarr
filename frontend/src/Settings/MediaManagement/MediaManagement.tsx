@@ -388,6 +388,30 @@ function MediaManagement() {
                 />
               </FormGroup>
 
+              {/* krzw(grabbed-release-title) */}
+              <FormGroup
+                advancedSettings={showAdvancedSettings}
+                isAdvanced={true}
+                size={sizes.MEDIUM}
+              >
+                <FormLabel>
+                  {translate('ScoreFilesByGrabbedReleaseTitle')}
+                </FormLabel>
+
+                <FormInputGroup
+                  type={inputTypes.CHECK}
+                  name="scoreFilesByGrabbedReleaseTitle"
+                  helpText={translate(
+                    'ScoreFilesByGrabbedReleaseTitleHelpText'
+                  )}
+                  helpTextWarning={translate(
+                    'ScoreFilesByGrabbedReleaseTitleHelpTextWarning'
+                  )}
+                  onChange={handleInputChange}
+                  {...settings.scoreFilesByGrabbedReleaseTitle}
+                />
+              </FormGroup>
+
               <FormGroup
                 advancedSettings={showAdvancedSettings}
                 isAdvanced={true}
