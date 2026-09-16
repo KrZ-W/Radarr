@@ -31,6 +31,7 @@ namespace Radarr.Api.V3.MovieFiles
         public MediaInfoResource MediaInfo { get; set; }
         public List<AudioLanguageVerification> AudioLanguageVerification { get; set; }  // krzw(audio-language-verification): read-only
         public AudioTrackRetag AudioTrackRetag { get; set; }  // krzw(audio-track-retag): read-only
+        public string GrabbedReleaseTitle { get; set; }  // krzw(grabbed-release-title): read-only
 
         public string OriginalFilePath { get; set; }
         public bool QualityCutoffNotMet { get; set; }
@@ -92,6 +93,7 @@ namespace Radarr.Api.V3.MovieFiles
                 MediaInfo = model.MediaInfo.ToResource(model.SceneName),
                 AudioLanguageVerification = model.AudioLanguageVerification,  // krzw(audio-language-verification)
                 AudioTrackRetag = model.AudioTrackRetag,  // krzw(audio-track-retag)
+                GrabbedReleaseTitle = model.GrabbedReleaseTitle,  // krzw(grabbed-release-title)
                 QualityCutoffNotMet = upgradableSpecification?.QualityCutoffNotMet(movie.QualityProfile, model.Quality) ?? false,
                 OriginalFilePath = model.OriginalFilePath,
                 IndexerFlags = (int)model.IndexerFlags
@@ -100,7 +102,7 @@ namespace Radarr.Api.V3.MovieFiles
             if (formatCalculationService != null)
             {
                 model.Movie = movie;
-                var customFormats = formatCalculationService?.ParseCustomFormat(model, model.Movie);
+                var customFormats = formatCalculationService?.ParseCustomFormatForScoring(model, model.Movie);  // krzw(grabbed-release-title)
                 var customFormatScore = movie?.QualityProfile?.CalculateCustomFormatScore(customFormats) ?? 0;
 
                 resource.CustomFormats = customFormats.ToResource(false);

@@ -79,6 +79,25 @@ namespace NzbDrone.Core.Test.DecisionEngineTests.RssSync
                   .Returns(UpgradeableRejectReason.None);
         }
 
+        // krzw(grabbed-release-title)
+        [Test]
+        public void should_populate_the_movie_on_the_existing_file_before_scoring_it()
+        {
+            // DelaySpecification was the only file-CF call site that never set MovieFile.Movie, which the
+            // repository does not populate either - scoring the file dereferenced null.
+            _remoteMovie.ParsedMovieInfo.Quality = new QualityModel(Quality.HDTV720p);
+            _remoteMovie.Release.PublishDate = DateTime.UtcNow;
+            _remoteMovie.Movie.MovieFileId = 1;
+            _delayProfile.UsenetDelay = 720;
+
+            GivenExistingFile(new QualityModel(Quality.SDTV));
+
+            Subject.IsSatisfiedBy(_remoteMovie, null);
+
+            Mocker.GetMock<ICustomFormatCalculationService>()
+                  .Verify(s => s.ParseCustomFormatForScoring(It.Is<MovieFile>(f => f.Movie == _remoteMovie.Movie)), Times.Once());
+        }
+
         [Test]
         public void should_be_true_when_user_invoked_search()
         {

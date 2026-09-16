@@ -19,6 +19,7 @@ namespace NzbDrone.Core.History
         void DeleteForMovies(List<int> movieIds);
         MovieHistory MostRecentForMovie(int movieId);
         List<MovieHistory> Since(DateTime date, MovieHistoryEventType? eventType);
+        List<MovieHistory> AllByEventType(MovieHistoryEventType eventType);  // krzw(grabbed-release-title)
         PagingSpec<MovieHistory> GetPaged(PagingSpec<MovieHistory> pagingSpec, int[] languages, int[] qualities);
     }
 
@@ -123,6 +124,14 @@ namespace NzbDrone.Core.History
             }
 
             return builder;
+        }
+
+        // krzw(grabbed-release-title): every row of one event type in a single query, deliberately
+        // without the Movie + QualityProfile join Since() does - the backfill only needs the history
+        // columns, and the join would materialise a Movie per row over the whole history table.
+        public List<MovieHistory> AllByEventType(MovieHistoryEventType eventType)
+        {
+            return Query(h => h.EventType == eventType);
         }
 
         protected override IEnumerable<MovieHistory> PagedQuery(SqlBuilder builder) =>

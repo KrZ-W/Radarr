@@ -38,13 +38,14 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
 
             file.Movie = subject.Movie;
 
-            var customFormats = _formatService.ParseCustomFormat(file);
+            // krzw(grabbed-release-title)
+            var customFormats = _formatService.ParseCustomFormatForScoring(file);
 
             _logger.Debug("Comparing file quality with report. Existing file is {0} [{1}].", file.Quality, customFormats.ConcatToString());
 
             if (!_upgradableSpecification.CutoffNotMet(qualityProfile,
                     file.Quality,
-                    _formatService.ParseCustomFormat(file),
+                    _formatService.ParseCustomFormatForScoring(file),  // krzw(grabbed-release-title)
                     subject.ParsedMovieInfo.Quality))
             {
                 _logger.Debug("Cutoff already met, rejecting.");

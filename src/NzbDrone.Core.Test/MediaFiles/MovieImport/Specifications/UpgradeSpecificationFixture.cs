@@ -16,6 +16,11 @@ using NzbDrone.Core.Test.Framework;
 namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
 {
     [TestFixture]
+
+    // krzw(grabbed-release-title): UpgradeSpecification compares both sides through the scoring
+    // ladder, so the existing file is mocked on ParseCustomFormatForScoring. The incoming file's
+    // LocalMovie.CustomFormats IS the scoring ladder's list - there is no separate scoring
+    // property; naming reads LocalMovie.NamingCustomFormats instead.
     public class UpgradeSpecificationFixture : CoreTest<UpgradeSpecification>
     {
         private Movie _movie;
@@ -155,7 +160,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(movieFileCustomFormats);
 
             _localMovie.Quality = new QualityModel(Quality.Bluray1080p);
@@ -190,7 +195,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(movieFileCustomFormats);
 
             _localMovie.Quality = new QualityModel(Quality.Bluray1080p);
@@ -225,7 +230,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(movieFileCustomFormats);
 
             _localMovie.Quality = new QualityModel(Quality.Bluray1080p);
@@ -262,7 +267,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(new System.Collections.Generic.List<CustomFormat>());
 
             _localMovie.Quality = new QualityModel(Quality.WEBDL1080p);
@@ -295,7 +300,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(new System.Collections.Generic.List<CustomFormat> { priorityFormat });
 
             _localMovie.Quality = new QualityModel(Quality.Bluray2160p);
@@ -331,7 +336,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(new System.Collections.Generic.List<CustomFormat> { existingPriorityFormat });
 
             _localMovie.Quality = new QualityModel(Quality.WEBDL1080p);
@@ -366,7 +371,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
                 .Returns(ProperDownloadTypes.DoNotPrefer);
 
             Mocker.GetMock<ICustomFormatCalculationService>()
-                .Setup(s => s.ParseCustomFormat(movieFile))
+                .Setup(s => s.ParseCustomFormatForScoring(movieFile))
                 .Returns(new System.Collections.Generic.List<CustomFormat> { regularFormat });
 
             _localMovie.Quality = new QualityModel(Quality.Bluray1080p);

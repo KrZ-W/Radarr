@@ -52,6 +52,24 @@ namespace NzbDrone.Core.Parser.Model
         // krzw(audio-track-retag): how the file actually reached the library (hardlink hint for the retag)
         public TransferMode? TransferMode { get; set; }
 
+        // krzw(grabbed-release-title): sanitised title of the release this file was grabbed as.
+        // CustomFormats above is the scoring ladder's result - the formats CustomFormatScore is computed
+        // from - so the list and the score reported to notifications, scripts and history always agree.
+        public string GrabbedReleaseTitle { get; set; }
+
+        // krzw(grabbed-release-title): naming is the single deliberate carve-out. FileNameBuilder renders
+        // the {Custom Formats} token from this legacy-ladder list, so switching the setting on never makes
+        // Rename Files propose a library-wide rename. Left unset it falls back to CustomFormats, which is
+        // exactly what naming read before this feature, so a LocalMovie built outside ImportDecisionMaker
+        // or ManualImportService keeps its old behaviour and never renders a null.
+        private List<CustomFormat> _namingCustomFormats;
+
+        public List<CustomFormat> NamingCustomFormats
+        {
+            get => _namingCustomFormats ?? CustomFormats;
+            set => _namingCustomFormats = value;
+        }
+
         public override string ToString()
         {
             return Path;

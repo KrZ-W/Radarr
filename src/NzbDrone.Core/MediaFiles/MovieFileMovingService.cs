@@ -72,7 +72,8 @@ namespace NzbDrone.Core.MediaFiles
 
         public MovieFile MoveMovieFile(MovieFile movieFile, LocalMovie localMovie)
         {
-            var newFileName = _buildFileNames.BuildFileName(localMovie.Movie, movieFile, null, localMovie.CustomFormats);
+            // krzw(grabbed-release-title): naming renders the legacy ladder, never the scoring one
+            var newFileName = _buildFileNames.BuildFileName(localMovie.Movie, movieFile, null, localMovie.NamingCustomFormats);
             var filePath = _buildFileNames.BuildFilePath(localMovie.Movie, newFileName, Path.GetExtension(localMovie.Path));
 
             EnsureMovieFolder(movieFile, localMovie, filePath);
@@ -84,7 +85,8 @@ namespace NzbDrone.Core.MediaFiles
 
         public MovieFile CopyMovieFile(MovieFile movieFile, LocalMovie localMovie)
         {
-            var newFileName = _buildFileNames.BuildFileName(localMovie.Movie, movieFile, null, localMovie.CustomFormats);
+            // krzw(grabbed-release-title): naming renders the legacy ladder, never the scoring one
+            var newFileName = _buildFileNames.BuildFileName(localMovie.Movie, movieFile, null, localMovie.NamingCustomFormats);
             var filePath = _buildFileNames.BuildFilePath(localMovie.Movie, newFileName, Path.GetExtension(localMovie.Path));
 
             EnsureMovieFolder(movieFile, localMovie, filePath);

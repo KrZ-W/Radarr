@@ -53,6 +53,10 @@ namespace NzbDrone.Core.Configuration
         bool AudioTrackRetagEnabled { get; set; }
         AudioTrackRetagHardlinkMode AudioTrackRetagHardlinkMode { get; set; }
         AudioTrackRetagNonMkvMode AudioTrackRetagNonMkvMode { get; set; }
+
+        // krzw(grabbed-release-title)
+        bool ScoreFilesByGrabbedReleaseTitle { get; set; }
+
         bool UseScriptImport { get; set; }
         string ScriptImportPath { get; set; }
         bool ImportExtraFiles { get; set; }

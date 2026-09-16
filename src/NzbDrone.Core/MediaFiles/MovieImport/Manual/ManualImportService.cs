@@ -166,9 +166,6 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
             localMovie.Quality = finalQuality;
             localMovie.IndexerFlags = (IndexerFlags)indexerFlags;
 
-            localMovie.CustomFormats = _formatCalculator.ParseCustomFormat(localMovie);
-            localMovie.CustomFormatScore = localMovie.Movie?.QualityProfile?.CalculateCustomFormatScore(localMovie.CustomFormats) ?? 0;
-
             // Augment movie file so imported files have all additional information an automatic import would
             localMovie = _aggregationService.Augment(localMovie, downloadClientItem);
 
@@ -178,6 +175,13 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
             localMovie.Quality = finalQuality;
             localMovie.Languages = finalLanguages;
             localMovie.IndexerFlags = (IndexerFlags)indexerFlags;
+
+            // krzw(grabbed-release-title): parsed after Augment - before it SceneName and Release are
+            // still null, so the preview's accept/reject used a stale custom format list. CustomFormats is
+            // the scoring ladder (it must match CustomFormatScore); naming reads NamingCustomFormats.
+            localMovie.NamingCustomFormats = _formatCalculator.ParseCustomFormat(localMovie);
+            localMovie.CustomFormats = _formatCalculator.ParseCustomFormatForScoring(localMovie);
+            localMovie.CustomFormatScore = localMovie.Movie?.QualityProfile?.CalculateCustomFormatScore(localMovie.CustomFormats) ?? 0;
 
             return MapItem(_importDecisionMaker.GetDecision(localMovie, downloadClientItem), rootFolder, downloadId, null);
         }
@@ -374,7 +378,8 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
             {
                 item.Movie = decision.LocalMovie.Movie;
 
-                item.CustomFormats = _formatCalculator.ParseCustomFormat(decision.LocalMovie);
+                // krzw(grabbed-release-title): the listing shows the formats the score was built from
+                item.CustomFormats = _formatCalculator.ParseCustomFormatForScoring(decision.LocalMovie);
                 item.CustomFormatScore = item.Movie.QualityProfile?.CalculateCustomFormatScore(item.CustomFormats) ?? 0;
             }
 
@@ -410,7 +415,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
 
             item.Rejections = Enumerable.Empty<ImportRejection>();
             item.MovieFileId = movieFile.Id;
-            item.CustomFormats = _formatCalculator.ParseCustomFormat(movieFile, movie);
+            item.CustomFormats = _formatCalculator.ParseCustomFormatForScoring(movieFile, movie);  // krzw(grabbed-release-title)
 
             return item;
         }
@@ -468,7 +473,9 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
                 localMovie.Languages = file.Languages;
                 localMovie.IndexerFlags = (IndexerFlags)file.IndexerFlags;
 
-                localMovie.CustomFormats = _formatCalculator.ParseCustomFormat(localMovie);
+                // krzw(grabbed-release-title): CustomFormats is the scoring ladder, naming keeps the legacy one
+                localMovie.NamingCustomFormats = _formatCalculator.ParseCustomFormat(localMovie);
+                localMovie.CustomFormats = _formatCalculator.ParseCustomFormatForScoring(localMovie);
                 localMovie.CustomFormatScore = localMovie.Movie.QualityProfile?.CalculateCustomFormatScore(localMovie.CustomFormats) ?? 0;
 
                 // TODO: Cleanup non-tracked downloads

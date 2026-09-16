@@ -39,7 +39,10 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 }
 
                 file.Movie = subject.Movie;
-                var customFormats = _formatService.ParseCustomFormat(file);
+
+                // krzw(grabbed-release-title): grab-time upgrade decision scores the file on the best of
+                // its candidate release titles, so a well-named grab is not re-grabbed forever.
+                var customFormats = _formatService.ParseCustomFormatForScoring(file);
                 _logger.Debug("Comparing file quality with report. Existing file is {0} [{1}]", file.Quality, customFormats.ConcatToString());
 
                 if (!_upgradableSpecification.IsUpgradeAllowed(qualityProfile,
