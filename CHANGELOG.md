@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.3.0.10514+krzw.12] — based on Radarr 6.3.0.10514
+
 ### Added
 
 - **Grabbed Release Title.** New nullable `MovieFiles.GrabbedReleaseTitle` column (migration
@@ -641,6 +645,7 @@ First documented fork release. Bundles every feature currently merged into
   collides with Debian's `users` group.
 
 [Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.11...HEAD
+[v6.3.0.10514+krzw.12]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.12
 [v6.3.0.10514+krzw.11]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.11
 [v6.3.0.10514+krzw.10]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.10
 [v6.3.0.10514+krzw.9]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.9
