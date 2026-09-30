@@ -45,7 +45,7 @@ docker run -d --name radarr \
   -v /path/to/config:/config \
   -v /path/to/movies:/movies \
   -v /path/to/downloads:/downloads \
-  ghcr.io/krz-w/radarr:6.3.0.10514-krzw.11
+  ghcr.io/krz-w/radarr:6.3.0.10514-krzw.13
 ```
 
 ### docker-compose
@@ -53,7 +53,7 @@ docker run -d --name radarr \
 ```yaml
 services:
   radarr:
-    image: ghcr.io/krz-w/radarr:6.3.0.10514-krzw.11
+    image: ghcr.io/krz-w/radarr:6.3.0.10514-krzw.13
     container_name: radarr
     environment:
       - PUID=1000
