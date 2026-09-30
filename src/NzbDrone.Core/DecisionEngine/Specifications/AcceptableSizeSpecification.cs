@@ -2,6 +2,7 @@ using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.IndexerSearch.Definitions;
 using NzbDrone.Core.Parser.Model;
+using NzbDrone.Core.Profiles.Qualities; // krzw(profile-size-limits)
 using NzbDrone.Core.Qualities;
 
 namespace NzbDrone.Core.DecisionEngine.Specifications
@@ -32,7 +33,8 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 return DownloadSpecDecision.Accept();
             }
 
-            var qualityDefinition = _qualityDefinitionService.Get(quality);
+            // krzw(profile-size-limits): the movie's quality profile may override the global size limits
+            var qualityDefinition = QualityProfileSizeLimits.Resolve(subject.Movie.QualityProfile, quality, _qualityDefinitionService.Get(quality));
 
             if (subject.Movie.MovieMetadata.Value.Runtime == 0)
             {
@@ -57,7 +59,8 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
                 }
             }
 
-            if (!qualityDefinition.MaxSize.HasValue || qualityDefinition.MaxSize.Value == 0)
+            // krzw(profile-size-limits): null or 0 = unlimited, as upstream
+            if (qualityDefinition.IsMaxUnlimited)
             {
                 _logger.Debug("Max size is unlimited, skipping check");
             }

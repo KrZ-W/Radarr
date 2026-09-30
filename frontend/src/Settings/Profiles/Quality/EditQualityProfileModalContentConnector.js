@@ -15,6 +15,13 @@ function getQualityItemGroupId(qualityProfile) {
   return Math.max(1000, ...ids) + 1;
 }
 
+// krzw(profile-size-limits)
+function clearSizeLimits(item) {
+  item.minSize = null;
+  item.preferredSize = null;
+  item.maxSize = null;
+}
+
 function parseIndex(index) {
   const split = index.split('.');
 
@@ -257,6 +264,22 @@ class EditQualityProfileModalContentConnector extends Component {
     });
   };
 
+  // krzw(profile-size-limits)
+  onQualityProfileItemSizeLimitChange = (id, isGroup, name, value) => {
+    const qualityProfile = _.cloneDeep(this.props.item);
+    const items = qualityProfile.items.value;
+    const item = isGroup ?
+      _.find(items, (i) => i.id === id) :
+      _.find(items, (i) => i.quality && i.quality.id === id);
+
+    item[name] = value == null ? null : value;
+
+    this.props.setQualityProfileValue({
+      name: 'items',
+      value: items
+    });
+  };
+
   onItemGroupAllowedChange = (id, allowed) => {
     const qualityProfile = _.cloneDeep(this.props.item);
     const items = qualityProfile.items.value;
@@ -296,6 +319,9 @@ class EditQualityProfileModalContentConnector extends Component {
     const item = _.find(items, (i) => i.quality && i.quality.id === id);
     const index = items.indexOf(item);
     const groupId = getQualityItemGroupId(qualityProfile);
+
+    // krzw(profile-size-limits): the editor cannot show a member's own override inside a group
+    clearSizeLimits(item);
 
     const group = {
       id: groupId,
@@ -455,6 +481,7 @@ class EditQualityProfileModalContentConnector extends Component {
       if (dropGroupIndex == null) {
         items.splice(dropItemIndex, 0, item);
       } else {
+        clearSizeLimits(item); // krzw(profile-size-limits)
         dropGroup.items.splice(dropItemIndex, 0, item);
       }
 
@@ -497,6 +524,7 @@ class EditQualityProfileModalContentConnector extends Component {
         onDeleteGroupPress={this.onDeleteGroupPress}
         onQualityProfileItemAllowedChange={this.onQualityProfileItemAllowedChange}
         onItemGroupAllowedChange={this.onItemGroupAllowedChange}
+        onQualityProfileItemSizeLimitChange={this.onQualityProfileItemSizeLimitChange} // krzw(profile-size-limits)
         onItemGroupNameChange={this.onItemGroupNameChange}
         onQualityProfileItemDragMove={this.onQualityProfileItemDragMove}
         onQualityProfileItemDragEnd={this.onQualityProfileItemDragEnd}
