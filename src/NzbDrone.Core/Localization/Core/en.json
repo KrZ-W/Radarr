@@ -1595,6 +1595,7 @@
   "QualityLimitsMovieRuntimeHelpText": "Limits are automatically adjusted for the movie runtime.",
   "QualityProfile": "Quality Profile",
   "QualityProfileInUseMovieListCollection": "Can't delete a quality profile that is attached to a movie, list, or collection",
+  "QualityProfileSizeLimitsHelpText": "Size limits for this quality in this profile (MB per minute): minimum, preferred, maximum. Leave empty to use the global Quality Definitions. A maximum of 0 means unlimited.",
   "QualityProfiles": "Quality Profiles",
   "QualityProfilesLoadError": "Unable to load Quality Profiles",
   "QualitySettings": "Quality Settings",

@@ -6,6 +6,7 @@ using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Indexers;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Profiles.Delay;
+using NzbDrone.Core.Profiles.Qualities; // krzw(profile-size-limits)
 using NzbDrone.Core.Qualities;
 
 namespace NzbDrone.Core.DecisionEngine
@@ -177,7 +178,9 @@ namespace NzbDrone.Core.DecisionEngine
         {
             var sizeCompare =  CompareBy(x.RemoteMovie, y.RemoteMovie, remoteMovie =>
             {
-                var preferredSize = _qualityDefinitionService.Get(remoteMovie.ParsedMovieInfo.Quality.Quality).PreferredSize;
+                // krzw(profile-size-limits): the movie's quality profile may override the global preferred size
+                var quality = remoteMovie.ParsedMovieInfo.Quality.Quality;
+                var preferredSize = QualityProfileSizeLimits.Resolve(remoteMovie.Movie.QualityProfile, quality, _qualityDefinitionService.Get(quality)).PreferredSize;
 
                 // If no value for preferred it means unlimited so fallback to sort largest is best
                 if (preferredSize.HasValue && remoteMovie.Movie.MovieMetadata.Value.Runtime > 0)
