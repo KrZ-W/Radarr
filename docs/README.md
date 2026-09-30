@@ -27,6 +27,7 @@ exact behavior.
 | [Audio Language Verification](features/audio-language-verification.md) | Whisper-backed audio language probe at import when tags contradict the claim / are unknown / would cause a rejection; verified languages outrank tags, outcome stored per track |
 | [Audio Track Retag](features/audio-track-retag.md) | Post-import header-only `mkvpropedit` rewrite of the mistagged MKV audio-track language tags from the verification record; hardlink-aware modes, outcome stored per file, manual per-file command |
 | [Grabbed Release Title](features/grabbed-release-title.md) | Stores the grabbed release title on the file and, opt-in, scores existing files by the best of their candidate titles (never lowering the total or priority score); naming unchanged, manual backfill |
+| [Per-Profile Size Limits](features/profile-size-limits.md) | Each quality profile can override the min / preferred / max MB-per-minute size limits of any quality or group it contains; UI inputs in the profile editor, preferred clamped into the window, no migration |
 | [Completed Download Handling](features/completed-download-handling.md) | Stuck `ImportPending`/`ImportBlocked` items self-heal instead of stalling until a cleaner marks them failed |
 | [Docker / GHCR Deployment](features/docker-deployment.md) | LinuxServer.io-style image published to GHCR |
 

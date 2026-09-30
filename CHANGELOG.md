@@ -10,7 +10,23 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **Per-Profile Size Limits** (port of the Sonarr feature). Each item of a quality profile (a
+  quality row or a group row) can now override the global Quality Definition size limits with
+  its own `minSize`, `preferredSize` and `maxSize` in MB per minute (`/api/v3/qualityprofile`
+  items; three inputs per row in the profile editor). `null` inherits the global value;
+  `maxSize: 0` means unlimited in that profile. Resolution per field is
+  *member override → group override → global definition*, and the effective preferred size is
+  clamped into the effective `[min, max]` window so the release ordering can never prefer a size
+  the size check rejects, even after the global definitions change. Used by the grab-time size
+  check (`AcceptableSizeSpecification`) and the release ordering's preferred-size comparison,
+  both times the movie runtime. Validation bounds every override to 0..2000 MB/min, checks
+  `min ≤ preferred ≤ max` among the values set on the same item, and refuses an inverted
+  effective `min`/`max` window with a message naming where each value came from. Moving a
+  quality into a group in the editor clears its own overrides. Items are embedded JSON, so
+  there is no migration and untouched profiles serialise unchanged.
+  Docs: [docs/features/profile-size-limits.md](docs/features/profile-size-limits.md).
 
 ## [v6.3.0.10514+krzw.12] — based on Radarr 6.3.0.10514
 
