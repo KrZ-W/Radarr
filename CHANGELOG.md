@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.3.0.10514+krzw.13] — based on Radarr 6.3.0.10514
+
 ### Added
 
 - **Per-Profile Size Limits** (port of the Sonarr feature). Each item of a quality profile (a
@@ -660,7 +664,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.11...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.13...HEAD
+[v6.3.0.10514+krzw.13]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.13
 [v6.3.0.10514+krzw.12]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.12
 [v6.3.0.10514+krzw.11]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.11
 [v6.3.0.10514+krzw.10]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.10

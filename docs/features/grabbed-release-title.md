@@ -1,6 +1,6 @@
 # Grabbed Release Title
 
-> **Status:** stable · **Since:** `v6.3.0.10514+krzw.12` (unreleased) · **Surface:** Settings → Media Management → *File Management* (advanced) → *Score Files by Grabbed Release Title*, `MovieFile.GrabbedReleaseTitle` (`GET /api/v3/moviefile?movieId=N`), command `BackfillGrabbedReleaseTitles`
+> **Status:** stable · **Since:** `v6.3.0.10514+krzw.12` · **Surface:** Settings → Media Management → *File Management* (advanced) → *Score Files by Grabbed Release Title*, `MovieFile.GrabbedReleaseTitle` (`GET /api/v3/moviefile?movieId=N`), command `BackfillGrabbedReleaseTitles`
 
 ## What it does
 
