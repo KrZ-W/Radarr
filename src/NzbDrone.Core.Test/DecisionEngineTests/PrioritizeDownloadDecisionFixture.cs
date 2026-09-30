@@ -612,7 +612,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             decisions.Add(new DownloadDecision(remoteMovieSmall));
             decisions.Add(new DownloadDecision(remoteMovieLarge));
 
-            var qualifiedReports = Subject.PrioritizeDecisions(decisions);
+            var qualifiedReports = Subject.PrioritizeDecisionsForMovies(decisions);
             qualifiedReports.First().RemoteMovie.Should().Be(remoteMovieSmall);
         }
 
@@ -629,7 +629,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             decisions.Add(new DownloadDecision(remoteMovieSmall));
             decisions.Add(new DownloadDecision(remoteMovieLarge));
 
-            var qualifiedReports = Subject.PrioritizeDecisions(decisions);
+            var qualifiedReports = Subject.PrioritizeDecisionsForMovies(decisions);
             qualifiedReports.First().RemoteMovie.Should().Be(remoteMovieSmall);
         }
 
@@ -651,7 +651,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             decisions.Add(new DownloadDecision(remoteMovieSmall));
             decisions.Add(new DownloadDecision(remoteMovieLarge));
 
-            var qualifiedReports = Subject.PrioritizeDecisions(decisions);
+            var qualifiedReports = Subject.PrioritizeDecisionsForMovies(decisions);
             qualifiedReports.First().RemoteMovie.Should().Be(remoteMovieSmall);
         }
     }

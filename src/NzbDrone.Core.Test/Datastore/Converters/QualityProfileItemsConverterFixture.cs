@@ -32,7 +32,7 @@ namespace NzbDrone.Core.Test.Datastore.Converters
   }
 ]";
 
-        private EmbeddedDocumentConverter<List<QualityProfileQualityItem>> Subject => new (new QualityIntConverter());
+        private EmbeddedDocumentConverter<List<QualityProfileQualityItem>> Subject => new(new QualityIntConverter());
 
         [Test]
         public void should_deserialize_legacy_items_without_overrides()

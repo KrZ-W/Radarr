@@ -50,7 +50,7 @@ public class QualityItemSizeLimitsValidatorFixture
     }
 
     [TestCase(-1)]
-    [TestCase(1001)]
+    [TestCase(2001)]
     public void should_fail_when_override_is_out_of_range(double value)
     {
         var result = GivenValidator().TestValidate(Profile(Item(NzbDrone.Core.Qualities.Quality.HDTV1080p, max: value)));
