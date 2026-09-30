@@ -588,5 +588,71 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             qualifiedReports.Skip(2).First().RemoteMovie.Should().Be(remoteMovie1);
             qualifiedReports.Last().RemoteMovie.Should().Be(remoteMovie3);
         }
+
+        // krzw(profile-size-limits)
+        private void GivenProfilePreferredSize(RemoteMovie remoteMovie, double? preferredSize)
+        {
+            var item = remoteMovie.Movie.QualityProfile.Items.Single(i => i.Quality == remoteMovie.ParsedMovieInfo.Quality.Quality);
+            item.PreferredSize = preferredSize;
+        }
+
+        [Test]
+        public void should_use_profile_preferred_size_override_over_global()
+        {
+            // global 390 MB/min x 150 min = 58,500 MB would pick the large one; profile override 10 MB/min = 1,500 MB picks the small one
+            GivenPreferredSize(390);
+
+            var remoteMovieSmall = GivenRemoteMovie(new QualityModel(Quality.HDTV720p), size: 1200.Megabytes(), age: 1);
+            var remoteMovieLarge = GivenRemoteMovie(new QualityModel(Quality.HDTV720p), size: 30000.Megabytes(), age: 1);
+
+            GivenProfilePreferredSize(remoteMovieSmall, 10);
+            GivenProfilePreferredSize(remoteMovieLarge, 10);
+
+            var decisions = new List<DownloadDecision>();
+            decisions.Add(new DownloadDecision(remoteMovieSmall));
+            decisions.Add(new DownloadDecision(remoteMovieLarge));
+
+            var qualifiedReports = Subject.PrioritizeDecisions(decisions);
+            qualifiedReports.First().RemoteMovie.Should().Be(remoteMovieSmall);
+        }
+
+        [Test]
+        public void should_use_profile_preferred_size_override_when_global_is_unlimited()
+        {
+            var remoteMovieSmall = GivenRemoteMovie(new QualityModel(Quality.HDTV720p), size: 1200.Megabytes(), age: 1);
+            var remoteMovieLarge = GivenRemoteMovie(new QualityModel(Quality.HDTV720p), size: 30000.Megabytes(), age: 1);
+
+            GivenProfilePreferredSize(remoteMovieSmall, 10);
+            GivenProfilePreferredSize(remoteMovieLarge, 10);
+
+            var decisions = new List<DownloadDecision>();
+            decisions.Add(new DownloadDecision(remoteMovieSmall));
+            decisions.Add(new DownloadDecision(remoteMovieLarge));
+
+            var qualifiedReports = Subject.PrioritizeDecisions(decisions);
+            qualifiedReports.First().RemoteMovie.Should().Be(remoteMovieSmall);
+        }
+
+        [Test]
+        public void should_use_group_preferred_size_override_for_a_member_quality()
+        {
+            var remoteMovieSmall = GivenRemoteMovie(new QualityModel(Quality.HDTV720p), size: 1200.Megabytes(), age: 1);
+            var remoteMovieLarge = GivenRemoteMovie(new QualityModel(Quality.HDTV720p), size: 30000.Megabytes(), age: 1);
+
+            foreach (var remoteMovie in new[] { remoteMovieSmall, remoteMovieLarge })
+            {
+                var items = remoteMovie.Movie.QualityProfile.Items;
+                var member = items.Single(i => i.Quality == Quality.HDTV720p);
+                items.Remove(member);
+                items.Add(new QualityProfileQualityItem { Id = 1000, Name = "HD 720p", Allowed = true, PreferredSize = 10, Items = new List<QualityProfileQualityItem> { member } });
+            }
+
+            var decisions = new List<DownloadDecision>();
+            decisions.Add(new DownloadDecision(remoteMovieSmall));
+            decisions.Add(new DownloadDecision(remoteMovieLarge));
+
+            var qualifiedReports = Subject.PrioritizeDecisions(decisions);
+            qualifiedReports.First().RemoteMovie.Should().Be(remoteMovieSmall);
+        }
     }
 }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.Profiles.Qualities;
+using NzbDrone.Core.Qualities; // krzw(profile-size-limits)
 using Radarr.Http;
 using Radarr.Http.REST;
 using Radarr.Http.REST.Attributes;
@@ -16,11 +17,14 @@ namespace Radarr.Api.V3.Profiles.Quality
     {
         private readonly IQualityProfileService _qualityProfileService;
 
-        public QualityProfileController(IQualityProfileService qualityProfileService, ICustomFormatService formatService)
+        public QualityProfileController(IQualityProfileService qualityProfileService, ICustomFormatService formatService, IQualityDefinitionService qualityDefinitionService /* krzw(profile-size-limits) */)
         {
             _qualityProfileService = qualityProfileService;
 
             SharedValidator.RuleFor(c => c.Name).NotEmpty();
+
+            // krzw(profile-size-limits)
+            SharedValidator.RuleFor(c => c.Items).SetValidator(new QualityItemSizeLimitsValidator<QualityProfileResource>(qualityDefinitionService));
 
             // TODO: Need to validate the cutoff is allowed and the ID/quality ID exists
             // TODO: Need to validate the Items to ensure groups have names and at no item has no name, no items and no quality
