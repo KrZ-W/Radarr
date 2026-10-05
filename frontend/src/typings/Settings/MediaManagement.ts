@@ -37,4 +37,7 @@ export default interface MediaManagement {
 
   // krzw(grabbed-release-title)
   scoreFilesByGrabbedReleaseTitle: boolean;
+
+  // krzw(symlink-import-guard)
+  rejectSymlinkImportSources: boolean;
 }

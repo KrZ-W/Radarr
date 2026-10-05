@@ -438,6 +438,14 @@ namespace NzbDrone.Core.Configuration
             set { SetValue("ScoreFilesByGrabbedReleaseTitle", value); }
         }
 
+        // krzw(symlink-import-guard): on by default in this fork, see NotSymlinkSpecification
+        public bool RejectSymlinkImportSources
+        {
+            get { return GetValueBoolean("RejectSymlinkImportSources", true); }
+
+            set { SetValue("RejectSymlinkImportSources", value); }
+        }
+
         public bool UseScriptImport
         {
             get { return GetValueBoolean("UseScriptImport", false); }

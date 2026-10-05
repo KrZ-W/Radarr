@@ -27,5 +27,6 @@ public enum ImportRejectionReason
     NotRevisionUpgrade,
     NotCustomFormatUpgrade,
     WantedLanguage,  // krzw(import-enforcement)
-    CustomFormatMinimumScore  // krzw(import-enforcement)
+    CustomFormatMinimumScore,  // krzw(import-enforcement)
+    SourceIsSymlink  // krzw(symlink-import-guard)
 }

@@ -57,6 +57,9 @@ namespace NzbDrone.Core.Configuration
         // krzw(grabbed-release-title)
         bool ScoreFilesByGrabbedReleaseTitle { get; set; }
 
+        // krzw(symlink-import-guard)
+        bool RejectSymlinkImportSources { get; set; }
+
         bool UseScriptImport { get; set; }
         string ScriptImportPath { get; set; }
         bool ImportExtraFiles { get; set; }
