@@ -54,6 +54,9 @@ namespace Radarr.Api.V3.Config
 
         // krzw(grabbed-release-title)
         public bool ScoreFilesByGrabbedReleaseTitle { get; set; }
+
+        // krzw(symlink-import-guard)
+        public bool RejectSymlinkImportSources { get; set; }
     }
 
     public static class MediaManagementConfigResourceMapper
@@ -105,7 +108,10 @@ namespace Radarr.Api.V3.Config
                 AudioTrackRetagNonMkvMode = model.AudioTrackRetagNonMkvMode,
 
                 // krzw(grabbed-release-title)
-                ScoreFilesByGrabbedReleaseTitle = model.ScoreFilesByGrabbedReleaseTitle
+                ScoreFilesByGrabbedReleaseTitle = model.ScoreFilesByGrabbedReleaseTitle,
+
+                // krzw(symlink-import-guard)
+                RejectSymlinkImportSources = model.RejectSymlinkImportSources
             };
         }
     }

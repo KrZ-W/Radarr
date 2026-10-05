@@ -8,7 +8,7 @@ person for a private *arr stack; it is not affiliated with the Radarr team.
 - **Upstream base:** Radarr `6.3.0.10514` (the commit this fork is rebased onto)
 - **Primary branch:** `personal/all-features-master` (all features merged together)
 - **Container image:** `ghcr.io/krz-w/radarr`
-- **Current fork version:** `v6.3.0.10514+krzw.13`
+- **Current fork version:** `v6.3.0.10514+krzw.14`
 
 > The stock upstream `README.md` is kept as-is apart from a short fork callout at the
 > top. Everything KrZ-W-specific lives in [`docs/`](docs/) and
@@ -30,6 +30,7 @@ person for a private *arr stack; it is not affiliated with the Radarr team.
 | **Audio Track Retag** | After import, rewrites the language tag of the MKV audio tracks verification found mistagged (`mkvpropedit`, header-only, streams never rewritten) so Plex/Jellyfin/Bazarr agree; hardlink-aware (*Skip* / *Copy then retag* / *Retag in place*); non-MKV files skipped or, opt-in, stream-copied by ffmpeg into a new `.mkv` with the tags written in the same pass (no re-encode, verified with ffprobe, rename events raised); outcome stored on the file, manual per-file command | [features/audio-track-retag.md](docs/features/audio-track-retag.md) |
 | **Grabbed Release Title** | Remembers the title of the release a file was grabbed as and, opt-in, scores the existing file by the best of its candidate titles, so a well-named grab is not re-grabbed forever; selection can never lower the total or the priority score, naming and the `{Custom Formats}` token are untouched, manual idempotent backfill for older files | [features/grabbed-release-title.md](docs/features/grabbed-release-title.md) |
 | **Per-Profile Size Limits** | Override the global Quality Definition size limits (min / preferred / max, MB per minute) per quality or group inside a quality profile, e.g. a "1080p Light" profile capped at 8 MB/min next to a normal 1080p profile; preferred size clamped into the window, validation names the origin of conflicting values, no migration | [features/profile-size-limits.md](docs/features/profile-size-limits.md) |
+| **Symlink Import Guard** | Rejects an import candidate whose source file is a symbolic link (permanent rejection `Source is a symbolic link → <target>`, Warn log naming the target), so seed symlinks in a shared download folder can no longer be imported as upgrades that delete the file they point at; hardlinks unaffected; advanced Media Management setting, on by default | [features/symlink-import-guard.md](docs/features/symlink-import-guard.md) |
 | **Completed Download Handling** | Stuck `ImportPending`/`ImportBlocked` queue items self-heal back to `Downloading` when the client stops reporting the download complete | [features/completed-download-handling.md](docs/features/completed-download-handling.md) |
 | **Docker / GHCR Deployment** | LinuxServer.io-style image (PUID/PGID/TZ/UMASK, `/config`, ffprobe bundled) published to GHCR | [features/docker-deployment.md](docs/features/docker-deployment.md) |
 
@@ -77,7 +78,7 @@ See [docs/releasing.md](docs/releasing.md) for how to cut a release.
 
 ```bash
 # Pinned to a release (recommended for stability)
-docker pull ghcr.io/krz-w/radarr:6.3.0.10514-krzw.13
+docker pull ghcr.io/krz-w/radarr:6.3.0.10514-krzw.14
 
 # Bleeding edge — tip of personal/all-features-master
 docker pull ghcr.io/krz-w/radarr:latest

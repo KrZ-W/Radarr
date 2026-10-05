@@ -266,6 +266,28 @@ function MediaManagement() {
                   />
                 </FormGroup>
 
+                {/* krzw(symlink-import-guard) */}
+                <FormGroup
+                  advancedSettings={showAdvancedSettings}
+                  isAdvanced={true}
+                  size={sizes.MEDIUM}
+                >
+                  <FormLabel>
+                    {translate('RejectSymlinkImportSources')}
+                  </FormLabel>
+
+                  <FormInputGroup
+                    type={inputTypes.CHECK}
+                    name="rejectSymlinkImportSources"
+                    helpText={translate('RejectSymlinkImportSourcesHelpText')}
+                    helpTextWarning={translate(
+                      'RejectSymlinkImportSourcesHelpTextWarning'
+                    )}
+                    onChange={handleInputChange}
+                    {...settings.rejectSymlinkImportSources}
+                  />
+                </FormGroup>
+
                 <FormGroup
                   advancedSettings={showAdvancedSettings}
                   isAdvanced={true}
