@@ -6,8 +6,8 @@ How to cut a versioned release of the KrZ-W/Radarr fork. See
 ## Version format recap
 
 ```
-git tag / GitHub release :  v<upstream-version>+krzw.<N>     e.g. v6.3.0.10514+krzw.1
-docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.3.0.10514-krzw.1
+git tag / GitHub release :  v<upstream-version>+krzw.<N>     e.g. v6.4.4.10685+krzw.1
+docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.4.4.10685-krzw.1
 ```
 
 - `<upstream-version>` = the Radarr version `personal/all-features-master` is rebased
@@ -29,6 +29,10 @@ docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.3.0.10514-kr
 
 1. **Make sure `personal/all-features-master` is in the state you want to ship** and
    the image builds (the `docker-image.yml` workflow already builds branch pushes).
+   For local frontend checks use Yarn 1 explicitly (`npx -y yarn@1.22.22 install
+   --frozen-lockfile`, then `npx -y yarn@1.22.22 lint` / `build`): `package.json` carries
+   no `packageManager` pin, so on a corepack-enabled machine plain `yarn` resolves to
+   Yarn 4, which cannot use this v1 lockfile.
 
 2. **Update `CHANGELOG.md`:**
    - Move the entries under `[Unreleased]` into a new
@@ -44,27 +48,27 @@ docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.3.0.10514-kr
 3. **Commit** the changelog (and any doc updates):
 
    ```bash
-   git commit -am "docs: release v6.3.0.10514+krzw.1"
+   git commit -am "docs: release v6.4.4.10685+krzw.1"
    git push origin personal/all-features-master
    ```
 
 4. **Tag and push the tag.** The `+` is fine in a git tag:
 
    ```bash
-   git tag -a 'v6.3.0.10514+krzw.1' -m 'Fork release based on Radarr 6.3.0.10514'
-   git push origin 'v6.3.0.10514+krzw.1'
+   git tag -a 'v6.4.4.10685+krzw.1' -m 'Fork release based on Radarr 6.4.4.10685'
+   git push origin 'v6.4.4.10685+krzw.1'
    ```
 
    This triggers `docker-release.yml`, which builds and pushes the immutable image tag
-   `ghcr.io/krz-w/radarr:6.3.0.10514-krzw.1` (it maps `+` → `-` automatically).
+   `ghcr.io/krz-w/radarr:6.4.4.10685-krzw.1` (it maps `+` → `-` automatically).
 
 5. **Boot-test the release image before announcing it.** A green CI build is not
    proof the image runs — the Sonarr fork's `v4.0.19.2979+krzw.1` image built green
    but crash-looped in production:
 
    ```bash
-   docker pull ghcr.io/krz-w/radarr:6.3.0.10514-krzw.1
-   docker run -d --name radarr-boot-test -p 17878:7878 ghcr.io/krz-w/radarr:6.3.0.10514-krzw.1
+   docker pull ghcr.io/krz-w/radarr:6.4.4.10685-krzw.1
+   docker run -d --name radarr-boot-test -p 17878:7878 ghcr.io/krz-w/radarr:6.4.4.10685-krzw.1
    sleep 20
    curl -sf http://localhost:17878/ping    # expect {"status":"OK"}
    docker rm -f radarr-boot-test
@@ -76,10 +80,10 @@ docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.3.0.10514-kr
 6. **Create the GitHub release** from the tag, using the changelog section as the body:
 
    ```bash
-   gh release create 'v6.3.0.10514+krzw.1' \
+   gh release create 'v6.4.4.10685+krzw.1' \
      --repo KrZ-W/Radarr \
-     --title 'v6.3.0.10514+krzw.1' \
-     --notes-file <(sed -n '/## \[v6.3.0.10514+krzw.1\]/,/## \[/p' CHANGELOG.md | sed '$d')
+     --title 'v6.4.4.10685+krzw.1' \
+     --notes-file <(sed -n '/## \[v6.4.4.10685+krzw.1\]/,/## \[/p' CHANGELOG.md | sed '$d')
    ```
 
    (Or paste the changelog section into the web UI.)
@@ -87,9 +91,13 @@ docker image tag         :  <upstream-version>-krzw.<N>      e.g. 6.3.0.10514-kr
 ## After rebasing onto a newer upstream
 
 1. Fetch the new upstream release tag without adding a remote
-   (`git fetch https://github.com/Radarr/Radarr.git tag v6.3.0.10514`), rebase each
-   `feature/*` / `fix/*` branch onto it, re-merge into `personal/all-features-master`,
-   resolve conflicts.
+   (`git fetch https://github.com/Radarr/Radarr.git tag v6.4.4.10685`), rebase
+   `personal/all-features-master` onto it (`git rebase --rebase-merges --onto <tag> <old-tag>`
+   on a `feature/rebase-<ver>` working branch, resolving merge-replay conflicts from the
+   original merge commits), verify the result against
+   `git merge-tree --write-tree <tag> <old aggregate tip>`, then replace the aggregate.
+   Topic branches are intertwined and are left on their original base; cherry-picks still
+   apply.
 2. Re-confirm the new `<upstream-version>` with the `git describe` command above.
 3. Refresh the `## Source` commit hashes in `docs/features/*.md` — a rebase rewrites
    every fork commit, so the cited hashes go stale. Find the new ones with

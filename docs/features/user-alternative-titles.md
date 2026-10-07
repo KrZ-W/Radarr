@@ -197,21 +197,21 @@ Related upstream Radarr issues (state as of 2026-09-09):
 
 ## Source
 
-Commit: `86aa71646`. Key files:
+Commit: `f335dfcc4`. Key files:
 `Movies/AlternativeTitles/AlternativeTitleService.cs` (refresh preservation +
 `UpsertUserTitles`), `Radarr.Api.V3/Movies/AlternativeTitleController.cs` (endpoint),
 `Radarr.Api.V3/Movies/UserAlternativeTitleImportResource.cs` (DTOs).
 
-Phase 1b commits: `4f2c02074`, `76dc748a5`. Key files:
+Phase 1b commits: `371dcbd7d`, `7eacf457a`. Key files:
 `Movies/Translations/MovieTranslationService.cs` (preservation +
 `UpsertUserTranslations`), `Radarr.Api.V3/Movies/UserTranslationController.cs`
 (endpoint + `UserTranslationMapper`),
 `Datastore/Migration/244_add_source_type_to_movie_translations.cs`.
 
-Review fixes: `f2ec81c7e` (shared `UserTitleImportGuard` across both importers),
-`57350200f` (canonical language code in the stored tag).
+Review fixes: `aaced7dc8` (shared `UserTitleImportGuard` across both importers),
+`6724badb6` (canonical language code in the stored tag).
 
-Refactor: `4fd07d52d` moved the pipeline into Core. Key files:
+Refactor: `c93c0ed79` moved the pipeline into Core. Key files:
 `Movies/UserTitles/UserTitleImportService.cs`, `Movies/UserTitles/UserTitleGuard.cs`,
 `Movies/UserTitles/UserTranslationFactory.cs`, `Movies/UserTitles/RegionalLanguageTag.cs`,
 `Movies/UserTitles/UserTitleImportRequest.cs`, `Movies/UserTitles/UserTitleImportResult.cs`,

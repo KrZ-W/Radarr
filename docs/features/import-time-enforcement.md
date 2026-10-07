@@ -77,7 +77,7 @@ Adjacent upstream Radarr issues (state as of 2026-09-09):
 
 ## Source
 
-Commits: `8b80f198e` (language), `50cb4b801` (MinFormatScore), `28483baa8` (existing files skip
+Commits: `98a8b8160` (language), `59c283da2` (MinFormatScore), `c1c3e50f6` (existing files skip
 the language check on rescan). Key files:
 `MediaFiles/MovieImport/Specifications/LanguageSpecification.cs`,
 `MediaFiles/MovieImport/Specifications/MinimumCustomFormatScoreSpecification.cs`,

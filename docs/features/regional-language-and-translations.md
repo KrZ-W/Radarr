@@ -110,8 +110,8 @@ Related upstream Radarr issues (state as of 2026-09-09):
 
 ## Source
 
-Commits: `d6bf51274` (settings + migration 243 + enum), `cb54d996d` (RegionalLanguage
-fix + AllTitles incl. alternative titles), `c43445fc6` (IsoLanguages fallback).
+Commits: `a2af5cc99` (settings + migration 243 + enum), `278d306fd` (RegionalLanguage
+fix + AllTitles incl. alternative titles), `9fa018e09` (IsoLanguages fallback).
 Key files: `Configuration/RegionalTranslationSearchMode.cs`,
 `Datastore/Migration/243_add_regional_language_to_movie_translations.cs`,
 `IndexerSearch/ReleaseSearchService.cs`, `Parser/IsoLanguages.cs`,

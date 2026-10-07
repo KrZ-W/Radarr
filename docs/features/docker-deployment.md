@@ -45,7 +45,7 @@ docker run -d --name radarr \
   -v /path/to/config:/config \
   -v /path/to/movies:/movies \
   -v /path/to/downloads:/downloads \
-  ghcr.io/krz-w/radarr:6.3.0.10514-krzw.14
+  ghcr.io/krz-w/radarr:6.4.4.10685-krzw.1
 ```
 
 ### docker-compose
@@ -53,7 +53,7 @@ docker run -d --name radarr \
 ```yaml
 services:
   radarr:
-    image: ghcr.io/krz-w/radarr:6.3.0.10514-krzw.14
+    image: ghcr.io/krz-w/radarr:6.4.4.10685-krzw.1
     container_name: radarr
     environment:
       - PUID=1000
@@ -98,6 +98,6 @@ no pre-built artifacts.
 
 ## Source
 
-Commits: `987cd349c` (Dockerfile + workflow + entrypoint), `8d851eb8e` (ffprobe),
-`b95e4f90c` (`-o` GID/UID reuse). Key files: `Dockerfile`, `docker/entrypoint.sh`,
+Commits: `914d05a42` (Dockerfile + workflow + entrypoint), `3f3a67c23` (ffprobe),
+`7db011781` (`-o` GID/UID reuse). Key files: `Dockerfile`, `docker/entrypoint.sh`,
 `.dockerignore`, `.github/workflows/docker-image.yml`.

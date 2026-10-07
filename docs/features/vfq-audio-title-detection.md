@@ -103,7 +103,7 @@ discussion.
 
 ## Source
 
-Commit: `5bbc63204`. Key files:
+Commit: `f542329fd`. Key files:
 `CustomFormats/Specifications/AudioTitleSpecification.cs` (`ImplementationName = "Audio Title"`),
 `CustomFormats/CustomFormatInput.cs`, `CustomFormats/CustomFormatCalculationService.cs`,
 `MediaFiles/MediaInfo/MediaInfoModel.cs`, `MediaFiles/MediaInfo/VideoFileInfoReader.cs`.

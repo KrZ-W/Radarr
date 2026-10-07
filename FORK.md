@@ -5,10 +5,10 @@ handful of features focused on **language-aware grabbing/importing** (Quebec Fre
 VFQ in particular) and **self-hosted Docker deployment**. It is maintained by a single
 person for a private *arr stack; it is not affiliated with the Radarr team.
 
-- **Upstream base:** Radarr `6.3.0.10514` (the commit this fork is rebased onto)
+- **Upstream base:** Radarr `6.4.4.10685` (the commit this fork is rebased onto)
 - **Primary branch:** `personal/all-features-master` (all features merged together)
 - **Container image:** `ghcr.io/krz-w/radarr`
-- **Current fork version:** `v6.3.0.10514+krzw.14`
+- **Current fork version:** `v6.4.4.10685+krzw.1`
 
 > The stock upstream `README.md` is kept as-is apart from a short fork callout at the
 > top. Everything KrZ-W-specific lives in [`docs/`](docs/) and
@@ -78,7 +78,7 @@ See [docs/releasing.md](docs/releasing.md) for how to cut a release.
 
 ```bash
 # Pinned to a release (recommended for stability)
-docker pull ghcr.io/krz-w/radarr:6.3.0.10514-krzw.14
+docker pull ghcr.io/krz-w/radarr:6.4.4.10685-krzw.1
 
 # Bleeding edge — tip of personal/all-features-master
 docker pull ghcr.io/krz-w/radarr:latest
@@ -118,7 +118,9 @@ with details. This fork does not submit changes upstream.
   (`// krzw(atomic-upgrade): ...`), so fork hunks are identifiable at rebase time;
   `git grep -n 'krzw('` lists them. Files that cannot hold comments (`en.json`,
   generated `*.css.d.ts`) are the only unmarked ones.
-- Each feature lives on its own `feature/*` or `fix/*` branch cut from the upstream
-  release tag the fork is based on (`-master` suffix = master line, `-develop` =
-  develop line), and is merged into `personal/all-features-master`. Rebasing onto a newer upstream is done per-branch,
-  then re-merged. See [CHANGELOG.md](CHANGELOG.md) for the per-feature history.
+- Each feature lives on its own `feature/*` or `fix/*` branch, cut from the upstream
+  release tag that was current when work on it started (`-master` suffix = master line),
+  and is merged into `personal/all-features-master`. A rebase onto a newer upstream moves
+  only the aggregate; topic branches stay on their original base (see
+  [docs/releasing.md](docs/releasing.md)). See [CHANGELOG.md](CHANGELOG.md) for the
+  per-feature history.

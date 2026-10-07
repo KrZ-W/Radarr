@@ -116,7 +116,7 @@ the Radarr team and does not submit upstream):
 
 ## Source
 
-Commit: `053eb33b9`. Key files:
+Commit: `fccab4155`. Key files:
 `MediaFiles/UpgradeMediaFileService.cs` (park / finalize / rollback),
 `MediaFiles/PendingUpgradeFile.cs`, `MediaFiles/MovieFileMoveResult.cs`,
 `MediaFiles/MovieImport/ImportApprovedMovie.cs` (commit orchestration),

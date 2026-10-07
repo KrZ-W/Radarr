@@ -57,7 +57,7 @@ No open or declined upstream Radarr request for an editable back-off schedule wa
 
 ## Source
 
-Commits: `4bd509b39` (backend + UI), `767c8a8c1` (TS type). Key files:
+Commits: `a8ab1a270` (backend + UI), `c01ad0f97` (TS type). Key files:
 `Configuration/ConfigService.cs`, `Indexers/IndexerStatusService.cs`,
 `Indexers/IndexerCooldownPeriods.cs` (parser shared by service, housekeeper and validator),
 `Housekeeping/Housekeepers/FixFutureIndexerStatusTimes.cs`,

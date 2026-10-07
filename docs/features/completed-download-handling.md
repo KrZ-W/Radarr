@@ -51,7 +51,7 @@ No open or declined upstream Radarr request matches the stuck `ImportPending` se
 
 ## Source
 
-Commits: `f86cb016a` (fix in `Check`), `faeb8c6c3` (regression tests), `6475b4196` (same guard in
+Commits: `f86cb016a` (fix in `Check`), `faeb8c6c3` (regression tests), `30ab2be78` (same guard in
 `Import`, the path `ImportPending` items actually take). Key files:
 `Download/CompletedDownloadService.cs` (`Check()` early-return branch),
 `Download/TrackedDownloads/TrackedDownload.cs` (`ResetStatus()`).

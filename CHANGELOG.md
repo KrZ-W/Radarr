@@ -12,6 +12,46 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 _Nothing yet._
 
+## [v6.4.4.10685+krzw.1] — based on Radarr 6.4.4.10685
+
+### Changed
+
+- **Rebased onto Radarr 6.4.4.10685** (from 6.3.0.10514; 69 upstream commits). All fork
+  features are unchanged, the fork's database migrations (243-247) are unaffected, and
+  the fork commit hashes cited in `docs/features/*.md` were refreshed. Conflicts and
+  adaptations:
+  - `package.json` and `yarn.lock` now match upstream exactly (webpack 5.105.2,
+    webpack-cli 5.1.4). The webpack 5.104.1 / webpack-cli 6 bump and the `packageManager`
+    line that the regional-translations commit had carried are dropped.
+  - Manual Import keeps upstream's new language validation ahead of the fork's
+    grabbed-release-title custom format scoring, so language-based custom formats such as
+    VF/VFQ still see the final languages.
+  - The IMDb title dataset health check passes upstream's new `HealthCheckReason` (two fork
+    values with explicit numbers), and a fork test now hands `DelaySpecification` a
+    `ReleaseDecisionInformation`, which upstream started dereferencing.
+- **Upstream: Trusted Networks** (*Settings → General → Security*). Forwarded headers are
+  now honoured only from the configured networks; upstream no longer trusts every private
+  or link-local range as a proxy. **Behind a reverse proxy with Authentication Required set to "Disabled
+  for Local Addresses", add the proxy's network here, or LAN users get a login prompt.**
+  Restart after changing it.
+- **Upstream: Allowed Hosts** (opt-in hostname validation against DNS rebinding), plus a
+  health warning while it is unset and authentication is not fully enabled. If you set it,
+  list every name clients use, including the container name Prowlarr calls. Restart after
+  changing it.
+- **Upstream behaviour changes worth checking after deploy:**
+  - Download-client items that cannot be parsed now stay in the queue with a warning
+    instead of disappearing; check that no external queue cleaner treats them as failed.
+  - Pushed releases and automatic (not user-invoked) search results are held back while
+    a pending release already exists for the movie.
+- **Other upstream fixes:** already-imported seeding torrents are mapped from history,
+  and re-grabbing an imported torrent re-imports it; a warning is logged when hardlinking
+  fails and the import falls back to copying; bulk database updates run in a transaction;
+  invalid languages are ignored in Manual Import; zip-slip guard on archive extraction;
+  new RQBit download client, movie filter by file quality and page-header search by original title;
+  frontend dependency security bumps.
+
+Container image: `ghcr.io/krz-w/radarr:6.4.4.10685-krzw.1`.
+
 ## [v6.3.0.10514+krzw.14] — based on Radarr 6.3.0.10514
 
 ### Added
@@ -685,7 +725,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.3.0.10514+krzw.14...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.4.4.10685+krzw.1...HEAD
+[v6.4.4.10685+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.1
 [v6.3.0.10514+krzw.14]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.14
 [v6.3.0.10514+krzw.13]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.13
 [v6.3.0.10514+krzw.12]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.12
