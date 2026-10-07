@@ -36,6 +36,7 @@ namespace NzbDrone.Core.HealthCheck.Checks
             {
                 return new HealthCheck(GetType(),
                     HealthCheckResult.Warning,
+                    HealthCheckReason.ImdbTitleDatasetMissing,
                     _localizationService.GetLocalizedString("ImdbTitleDatasetMissingHealthCheckMessage"),
                     "#imdb-title-dataset-missing");
             }
@@ -47,6 +48,7 @@ namespace NzbDrone.Core.HealthCheck.Checks
             {
                 return new HealthCheck(GetType(),
                     HealthCheckResult.Warning,
+                    HealthCheckReason.ImdbTitleDatasetStale,
                     _localizationService.GetLocalizedString("ImdbTitleDatasetStaleHealthCheckMessage", new Dictionary<string, object>
                     {
                         { "days", (int)age.TotalDays },

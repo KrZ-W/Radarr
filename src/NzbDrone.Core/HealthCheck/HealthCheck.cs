@@ -120,5 +120,9 @@ namespace NzbDrone.Core.HealthCheck
         UpdateStartupNotWritable,
         UpdateStartupTranslocation,
         UpdateUiNotWritable,
+
+        // krzw(imdb-title-provider): explicit values so upstream additions cannot renumber them
+        ImdbTitleDatasetMissing = 1000,
+        ImdbTitleDatasetStale = 1001,
     }
 }

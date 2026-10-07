@@ -92,7 +92,7 @@ namespace NzbDrone.Core.Test.DecisionEngineTests.RssSync
 
             GivenExistingFile(new QualityModel(Quality.SDTV));
 
-            Subject.IsSatisfiedBy(_remoteMovie, null);
+            Subject.IsSatisfiedBy(_remoteMovie, new());
 
             Mocker.GetMock<ICustomFormatCalculationService>()
                   .Verify(s => s.ParseCustomFormatForScoring(It.Is<MovieFile>(f => f.Movie == _remoteMovie.Movie)), Times.Once());
