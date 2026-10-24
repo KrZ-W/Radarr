@@ -42,6 +42,10 @@ import {
 import InteractiveImportModal from 'InteractiveImport/InteractiveImportModal';
 import DeleteMovieModal from 'Movie/Delete/DeleteMovieModal';
 import EditMovieModal from 'Movie/Edit/EditMovieModal';
+import AddEditionModal from 'Movie/Edition/AddEditionModal'; // krzw(multi-edition)
+import EditionLabel from 'Movie/Edition/EditionLabel'; // krzw(multi-edition)
+import getMoviePath from 'Movie/Edition/getMoviePath'; // krzw(multi-edition)
+import MovieEditions from 'Movie/Edition/MovieEditions'; // krzw(multi-edition)
 import getMovieStatusDetails from 'Movie/getMovieStatusDetails';
 import MovieHistoryModal from 'Movie/History/MovieHistoryModal';
 import { Image, Statistics } from 'Movie/Movie';
@@ -244,10 +248,12 @@ function MovieDetails({ movieId }: MovieDetailsProps) {
       nextMovie: {
         title: nextMovie.title,
         titleSlug: nextMovie.titleSlug,
+        path: getMoviePath(nextMovie), // krzw(multi-edition)
       },
       previousMovie: {
         title: previousMovie.title,
         titleSlug: previousMovie.titleSlug,
+        path: getMoviePath(previousMovie), // krzw(multi-edition)
       },
     };
   }, [movieId, allMovies]);
@@ -260,6 +266,7 @@ function MovieDetails({ movieId }: MovieDetailsProps) {
   const [isEditMovieModalOpen, setIsEditMovieModalOpen] = useState(false);
   const [isDeleteMovieModalOpen, setIsDeleteMovieModalOpen] = useState(false);
   const [isMovieHistoryModalOpen, setIsMovieHistoryModalOpen] = useState(false);
+  const [isAddEditionModalOpen, setIsAddEditionModalOpen] = useState(false); // krzw(multi-edition)
   const [titleRef, { width: titleWidth }] = useMeasure();
   const [overviewRef, { height: overviewHeight }] = useMeasure();
   const wasRefreshing = usePrevious(isRefreshing);
@@ -313,6 +320,16 @@ function MovieDetails({ movieId }: MovieDetailsProps) {
   const handleMovieHistoryModalClose = useCallback(() => {
     setIsMovieHistoryModalOpen(false);
   }, []);
+
+  // krzw(multi-edition) begin
+  const handleAddEditionPress = useCallback(() => {
+    setIsAddEditionModalOpen(true);
+  }, []);
+
+  const handleAddEditionModalClose = useCallback(() => {
+    setIsAddEditionModalOpen(false);
+  }, []);
+  // krzw(multi-edition) end
 
   const handleMonitorTogglePress = useCallback(
     (value: boolean) => {
@@ -399,13 +416,13 @@ function MovieDetails({ movieId }: MovieDetailsProps) {
         currentTouch - touchStart.current > 100 &&
         previousMovie !== undefined
       ) {
-        history.push(getPathWithUrlBase(`/movie/${previousMovie.titleSlug}`));
+        history.push(getPathWithUrlBase(previousMovie.path)); // krzw(multi-edition)
       } else if (
         currentTouch < touchStart.current &&
         touchStart.current - currentTouch > 100 &&
         nextMovie !== undefined
       ) {
-        history.push(getPathWithUrlBase(`/movie/${nextMovie.titleSlug}`));
+        history.push(getPathWithUrlBase(nextMovie.path)); // krzw(multi-edition)
       }
 
       touchStart.current = null;
@@ -438,11 +455,11 @@ function MovieDetails({ movieId }: MovieDetailsProps) {
 
       if (event.composedPath && event.composedPath().length === 4) {
         if (event.key === 'ArrowLeft' && previousMovie !== undefined) {
-          history.push(getPathWithUrlBase(`/movie/${previousMovie.titleSlug}`));
+          history.push(getPathWithUrlBase(previousMovie.path)); // krzw(multi-edition)
         }
 
         if (event.key === 'ArrowRight' && nextMovie !== undefined) {
-          history.push(getPathWithUrlBase(`/movie/${nextMovie.titleSlug}`));
+          history.push(getPathWithUrlBase(nextMovie.path)); // krzw(multi-edition)
         }
       }
     },
@@ -545,6 +562,7 @@ function MovieDetails({ movieId }: MovieDetailsProps) {
     images,
     tags,
     isSaving = false,
+    edition = null, // krzw(multi-edition)
   } = movie;
 
   const { sizeOnDisk = 0 } = statistics;
@@ -557,7 +575,9 @@ function MovieDetails({ movieId }: MovieDetailsProps) {
 
   const marqueeWidth = isSmallScreen ? titleWidth : titleWidth - 150;
 
-  const titleWithYear = `${title}${year > 0 ? ` (${year})` : ''}`;
+  const titleWithYear = `${title}${year > 0 ? ` (${year})` : ''}${
+    edition ? ` [${edition.name}]` : '' // krzw(multi-edition)
+  }`;
 
   return (
     <PageContent title={titleWithYear}>
@@ -611,6 +631,16 @@ function MovieDetails({ movieId }: MovieDetailsProps) {
 
           <PageToolbarSeparator />
 
+          {/* krzw(multi-edition) begin: editions are added from the default row only */}
+          {edition ? null : (
+            <PageToolbarButton
+              label={translate('AddEdition')}
+              iconName={icons.ADD}
+              onPress={handleAddEditionPress}
+            />
+          )}
+          {/* krzw(multi-edition) end */}
+
           <PageToolbarButton
             label={translate('Edit')}
             iconName={icons.EDIT}
@@ -660,6 +690,14 @@ function MovieDetails({ movieId }: MovieDetailsProps) {
                   <div className={styles.title} style={{ width: marqueeWidth }}>
                     <Marquee text={title} title={originalTitle} />
                   </div>
+
+                  {/* krzw(multi-edition) begin */}
+                  {edition ? (
+                    <div className={styles.editionLabelContainer}>
+                      <EditionLabel edition={edition} size={sizes.LARGE} />
+                    </div>
+                  ) : null}
+                  {/* krzw(multi-edition) end */}
                 </div>
 
                 <div className={styles.movieNavigationButtons}>
@@ -671,7 +709,7 @@ function MovieDetails({ movieId }: MovieDetailsProps) {
                       title={translate('MovieDetailsGoTo', {
                         title: previousMovie.title,
                       })}
-                      to={`/movie/${previousMovie.titleSlug}`}
+                      to={previousMovie.path} // krzw(multi-edition)
                     />
                   ) : null}
 
@@ -683,7 +721,7 @@ function MovieDetails({ movieId }: MovieDetailsProps) {
                       title={translate('MovieDetailsGoTo', {
                         title: nextMovie.title,
                       })}
-                      to={`/movie/${nextMovie.titleSlug}`}
+                      to={nextMovie.path} // krzw(multi-edition)
                     />
                   ) : null}
                 </div>
@@ -906,6 +944,12 @@ function MovieDetails({ movieId }: MovieDetailsProps) {
             </Alert>
           ) : null}
 
+          {/* krzw(multi-edition): renders nothing when the movie has no editions */}
+          <MovieEditions
+            movieId={id}
+            onAddEditionPress={handleAddEditionPress}
+          />
+
           <FieldSet legend={translate('Files')}>
             <MovieFileEditorTable movieId={id} />
 
@@ -943,6 +987,16 @@ function MovieDetails({ movieId }: MovieDetailsProps) {
           movieId={id}
           onModalClose={handleMovieHistoryModalClose}
         />
+
+        {/* krzw(multi-edition) begin */}
+        {edition ? null : (
+          <AddEditionModal
+            isOpen={isAddEditionModalOpen}
+            movieId={id}
+            onModalClose={handleAddEditionModalClose}
+          />
+        )}
+        {/* krzw(multi-edition) end */}
 
         <DeleteMovieModal
           isOpen={isDeleteMovieModalOpen}

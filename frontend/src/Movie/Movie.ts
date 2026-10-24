@@ -57,6 +57,23 @@ export interface MovieAddOptions {
   searchForMovie: boolean;
 }
 
+// krzw(multi-edition) begin: edition rows share one MovieMetadata and folder with the default row
+export interface MovieEdition {
+  name: string;
+  aliases: string[];
+  acceptUntagged: boolean;
+}
+
+export interface MovieEditionSummary {
+  id: number;
+  name: string;
+  monitored: boolean;
+  hasFile: boolean;
+  qualityProfileId: number;
+  movieFileId: number;
+}
+// krzw(multi-edition) end
+
 interface Movie extends ModelBase {
   tmdbId: number;
   imdbId?: string;
@@ -99,6 +116,9 @@ interface Movie extends ModelBase {
   isAvailable: boolean;
   isSaving?: boolean;
   addOptions: MovieAddOptions;
+  edition?: MovieEdition | null; // krzw(multi-edition): null on the default row
+  editionParentId?: number | null; // krzw(multi-edition): id of the default row, null on default rows
+  editions?: MovieEditionSummary[]; // krzw(multi-edition): only populated on default rows
 }
 
 export default Movie;

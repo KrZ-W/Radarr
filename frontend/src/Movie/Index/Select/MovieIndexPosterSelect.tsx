@@ -8,11 +8,13 @@ import styles from './MovieIndexPosterSelect.css';
 interface MovieIndexPosterSelectProps {
   movieId: number;
   titleSlug: string;
+  link?: string; // krzw(multi-edition): edition rows link by id, see getMoviePath
 }
 
 function MovieIndexPosterSelect({
   movieId,
   titleSlug,
+  link = `/movie/${titleSlug}`, // krzw(multi-edition)
 }: MovieIndexPosterSelectProps) {
   const [selectState, selectDispatch] = useSelect();
   const isSelected = selectState.selectedState[movieId];
@@ -20,7 +22,7 @@ function MovieIndexPosterSelect({
   const onSelectPress = useCallback(
     (event: SyntheticEvent<HTMLElement, PointerEvent>) => {
       if (event.nativeEvent.ctrlKey || event.nativeEvent.metaKey) {
-        window.open(`${window.Radarr.urlBase}/movie/${titleSlug}`, '_blank');
+        window.open(`${window.Radarr.urlBase}${link}`, '_blank'); // krzw(multi-edition)
         return;
       }
 
@@ -33,7 +35,7 @@ function MovieIndexPosterSelect({
         shiftKey,
       });
     },
-    [movieId, titleSlug, isSelected, selectDispatch]
+    [movieId, link, isSelected, selectDispatch] // krzw(multi-edition)
   );
 
   return (

@@ -1,0 +1,27 @@
+.container {
+  border: 1px solid var(--borderColor);
+  border-radius: 4px;
+  background-color: var(--inputBackgroundColor);
+}
+
+.monitored {
+  composes: cell from '~Components/Table/Cells/TableRowCell.css';
+
+  width: 40px;
+}
+
+.actions {
+  composes: cell from '~Components/Table/Cells/TableRowCell.css';
+
+  width: 60px;
+  text-align: right;
+}
+
+.current {
+  font-weight: bold;
+}
+
+.addButtonContainer {
+  margin-top: 10px;
+  text-align: right;
+}

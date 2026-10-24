@@ -8,6 +8,9 @@ import getStatusStyle from 'Calendar/getStatusStyle';
 import Icon from 'Components/Icon';
 import Link from 'Components/Link/Link';
 import { icons, kinds } from 'Helpers/Props';
+import EditionLabel from 'Movie/Edition/EditionLabel'; // krzw(multi-edition)
+import getMoviePath from 'Movie/Edition/getMoviePath'; // krzw(multi-edition)
+import { MovieEdition } from 'Movie/Movie'; // krzw(multi-edition)
 import useMovieFile from 'MovieFile/useMovieFile';
 import { createQueueItemSelectorForHook } from 'Store/Selectors/createQueueItemSelector';
 import createUISettingsSelector from 'Store/Selectors/createUISettingsSelector';
@@ -19,6 +22,7 @@ interface AgendaEventProps {
   movieFileId: number;
   title: string;
   titleSlug: string;
+  edition?: MovieEdition | null; // krzw(multi-edition)
   genres: string[];
   inCinemas?: string;
   digitalRelease?: string;
@@ -36,6 +40,7 @@ function AgendaEvent({
   movieFileId,
   title,
   titleSlug,
+  edition, // krzw(multi-edition)
   genres = [],
   inCinemas,
   digitalRelease,
@@ -97,7 +102,7 @@ function AgendaEvent({
     isAvailable
   );
   const joinedGenres = genres.slice(0, 2).join(', ');
-  const link = `/movie/${titleSlug}`;
+  const link = getMoviePath({ titleSlug, id, edition }); // krzw(multi-edition)
 
   return (
     <div className={styles.event}>
@@ -123,7 +128,10 @@ function AgendaEvent({
             enableColorImpairedMode && 'colorImpaired'
           )}
         >
-          <div className={styles.movieTitle}>{title}</div>
+          <div className={styles.movieTitle}>
+            {title}
+            <EditionLabel edition={edition} /> {/* krzw(multi-edition) */}
+          </div>
 
           {showMovieInformation ? (
             <div className={styles.genres}>{joinedGenres}</div>

@@ -8,10 +8,12 @@ import Link from 'Components/Link/Link';
 import SpinnerIconButton from 'Components/Link/SpinnerIconButton';
 import MovieTagList from 'Components/MovieTagList';
 import Popover from 'Components/Tooltip/Popover';
-import { icons } from 'Helpers/Props';
+import { icons, sizes } from 'Helpers/Props'; // krzw(multi-edition): sizes
 import DeleteMovieModal from 'Movie/Delete/DeleteMovieModal';
 import MovieDetailsLinks from 'Movie/Details/MovieDetailsLinks';
 import EditMovieModal from 'Movie/Edit/EditMovieModal';
+import EditionLabel from 'Movie/Edition/EditionLabel'; // krzw(multi-edition)
+import getMoviePath from 'Movie/Edition/getMoviePath'; // krzw(multi-edition)
 import MovieIndexProgressBar from 'Movie/Index/ProgressBar/MovieIndexProgressBar';
 import MovieIndexPosterSelect from 'Movie/Index/Select/MovieIndexPosterSelect';
 import { Statistics } from 'Movie/Movie';
@@ -79,6 +81,7 @@ function MovieIndexOverview(props: MovieIndexOverviewProps) {
     studio,
     added,
     youTubeTrailerId,
+    edition, // krzw(multi-edition)
   } = movie;
 
   const { sizeOnDisk = 0 } = statistics;
@@ -122,7 +125,7 @@ function MovieIndexOverview(props: MovieIndexOverviewProps) {
     setIsDeleteMovieModalOpen(false);
   }, [setIsDeleteMovieModalOpen]);
 
-  const link = `/movie/${tmdbId}`;
+  const link = getMoviePath({ titleSlug, id: movieId, edition }); // krzw(multi-edition)
 
   const elementStyle = {
     width: `${posterWidth}px`,
@@ -143,7 +146,11 @@ function MovieIndexOverview(props: MovieIndexOverviewProps) {
         <div className={styles.poster}>
           <div className={styles.posterContainer}>
             {isSelectMode ? (
-              <MovieIndexPosterSelect movieId={movieId} titleSlug={titleSlug} />
+              <MovieIndexPosterSelect
+                movieId={movieId}
+                titleSlug={titleSlug}
+                link={link} // krzw(multi-edition)
+              />
             ) : null}
 
             {status === 'deleted' ? (
@@ -179,6 +186,8 @@ function MovieIndexOverview(props: MovieIndexOverviewProps) {
           <div className={styles.titleRow}>
             <Link className={styles.title} to={link}>
               {title}
+              <EditionLabel edition={edition} size={sizes.MEDIUM} />{' '}
+              {/* krzw(multi-edition) */}
             </Link>
 
             <div className={styles.actions}>

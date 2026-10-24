@@ -84,6 +84,7 @@ function MovieIndexRow(props: MovieIndexRowProps) {
     movieFile,
     youTubeTrailerId,
     isSaving = false,
+    edition, // krzw(multi-edition)
   } = movie;
 
   const {
@@ -180,7 +181,12 @@ function MovieIndexRow(props: MovieIndexRowProps) {
         if (name === 'sortTitle') {
           return (
             <VirtualTableRowCell key={name} className={styles[name]}>
-              <MovieTitleLink titleSlug={titleSlug} title={title} />
+              <MovieTitleLink
+                titleSlug={titleSlug}
+                title={title}
+                movieId={movieId} // krzw(multi-edition)
+                edition={edition} // krzw(multi-edition)
+              />
             </VirtualTableRowCell>
           );
         }

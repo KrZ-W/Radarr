@@ -24,6 +24,7 @@ import {
   tooltipPositions,
 } from 'Helpers/Props';
 import MoveMovieModal from 'Movie/MoveMovie/MoveMovieModal';
+import { MovieEdition } from 'Movie/Movie'; // krzw(multi-edition)
 import useMovie from 'Movie/useMovie';
 import { saveMovie, setMovieValue } from 'Store/Actions/movieActions';
 import selectSettings from 'Store/Selectors/selectSettings';
@@ -53,6 +54,7 @@ function EditMovieModalContent({
     path,
     tags,
     rootFolderPath: initialRootFolderPath,
+    edition = null, // krzw(multi-edition)
   } = useMovie(movieId)!;
 
   const { isSaving, saveError, pendingChanges } = useSelector(
@@ -77,6 +79,7 @@ function EditMovieModalContent({
         qualityProfileId,
         path,
         tags,
+        edition, // krzw(multi-edition)
       },
       pendingChanges,
       saveError
@@ -87,9 +90,15 @@ function EditMovieModalContent({
     qualityProfileId,
     path,
     tags,
+    edition, // krzw(multi-edition)
     pendingChanges,
     saveError,
   ]);
+
+  // krzw(multi-edition) begin: edition fields are stored as one pending `edition` object
+  const isEdition = !!edition;
+  const editionValue: MovieEdition | null = settings.edition.value ?? edition;
+  // krzw(multi-edition) end
 
   const handleInputChange = useCallback(
     ({ name, value }: InputChanged) => {
@@ -98,6 +107,22 @@ function EditMovieModalContent({
     },
     [dispatch]
   );
+
+  // krzw(multi-edition) begin
+  const handleEditionChange = useCallback(
+    ({ name, value }: InputChanged) => {
+      if (!editionValue) {
+        return;
+      }
+
+      handleInputChange({
+        name: 'edition',
+        value: { ...editionValue, [name]: value },
+      });
+    },
+    [editionValue, handleInputChange]
+  );
+  // krzw(multi-edition) end
 
   const handleRootFolderPress = useCallback(() => {
     setIsRootFolderModalOpen(true);
@@ -204,27 +229,83 @@ function EditMovieModalContent({
             />
           </FormGroup>
 
-          <FormGroup size={sizes.MEDIUM}>
-            <FormLabel>{translate('Path')}</FormLabel>
+          {/* krzw(multi-edition) begin: edition rows expose their edition settings and a read-only shared path */}
+          {isEdition && editionValue ? (
+            <>
+              <FormGroup size={sizes.MEDIUM}>
+                <FormLabel>{translate('EditionName')}</FormLabel>
 
-            <FormInputGroup
-              type={inputTypes.PATH}
-              name="path"
-              {...settings.path}
-              buttons={[
-                <FormInputButton
-                  key="fileBrowser"
-                  kind={kinds.DEFAULT}
-                  title={translate('RootFolder')}
-                  onPress={handleRootFolderPress}
-                >
-                  <Icon name={icons.ROOT_FOLDER} />
-                </FormInputButton>,
-              ]}
-              includeFiles={false}
-              onChange={handleInputChange}
-            />
-          </FormGroup>
+                <FormInputGroup
+                  type={inputTypes.TEXT}
+                  name="name"
+                  value={editionValue.name}
+                  helpText={translate('EditionNameHelpText')}
+                  pending={settings.edition.pending}
+                  onChange={handleEditionChange}
+                />
+              </FormGroup>
+
+              <FormGroup size={sizes.MEDIUM}>
+                <FormLabel>{translate('EditionAliases')}</FormLabel>
+
+                <FormInputGroup
+                  type={inputTypes.TEXT_TAG}
+                  name="aliases"
+                  value={editionValue.aliases}
+                  helpText={translate('EditionAliasesHelpText')}
+                  onChange={handleEditionChange}
+                />
+              </FormGroup>
+
+              <FormGroup size={sizes.MEDIUM}>
+                <FormLabel>{translate('AcceptUntaggedReleases')}</FormLabel>
+
+                <FormInputGroup
+                  type={inputTypes.CHECK}
+                  name="acceptUntagged"
+                  value={editionValue.acceptUntagged}
+                  helpText={translate('AcceptUntaggedReleasesHelpText')}
+                  onChange={handleEditionChange}
+                />
+              </FormGroup>
+
+              <FormGroup size={sizes.MEDIUM}>
+                <FormLabel>{translate('Path')}</FormLabel>
+
+                <FormInputGroup
+                  type={inputTypes.TEXT}
+                  name="path"
+                  value={path}
+                  readOnly={true}
+                  helpText={translate('EditionPathReadOnlyHelpText')}
+                  onChange={handleInputChange}
+                />
+              </FormGroup>
+            </>
+          ) : (
+            <FormGroup size={sizes.MEDIUM}>
+              <FormLabel>{translate('Path')}</FormLabel>
+
+              <FormInputGroup
+                type={inputTypes.PATH}
+                name="path"
+                {...settings.path}
+                buttons={[
+                  <FormInputButton
+                    key="fileBrowser"
+                    kind={kinds.DEFAULT}
+                    title={translate('RootFolder')}
+                    onPress={handleRootFolderPress}
+                  >
+                    <Icon name={icons.ROOT_FOLDER} />
+                  </FormInputButton>,
+                ]}
+                includeFiles={false}
+                onChange={handleInputChange}
+              />
+            </FormGroup>
+          )}
+          {/* krzw(multi-edition) end */}
 
           <FormGroup size={sizes.MEDIUM}>
             <FormLabel>{translate('Tags')}</FormLabel>
@@ -259,22 +340,27 @@ function EditMovieModalContent({
         </SpinnerErrorButton>
       </ModalFooter>
 
-      <RootFolderModal
-        isOpen={isRootFolderModalOpen}
-        movieId={movieId}
-        rootFolderPath={rootFolderPath}
-        onSavePress={handleRootFolderChange}
-        onModalClose={handleRootFolderModalClose}
-      />
+      {/* krzw(multi-edition): edition rows never move files, the folder belongs to the default row */}
+      {isEdition ? null : (
+        <>
+          <RootFolderModal
+            isOpen={isRootFolderModalOpen}
+            movieId={movieId}
+            rootFolderPath={rootFolderPath}
+            onSavePress={handleRootFolderChange}
+            onModalClose={handleRootFolderModalClose}
+          />
 
-      <MoveMovieModal
-        originalPath={path}
-        destinationPath={pendingChanges.path}
-        isOpen={isConfirmMoveModalOpen}
-        onModalClose={handleCancelPress}
-        onSavePress={handleSavePress}
-        onMoveMoviePress={handleMoveMoviePress}
-      />
+          <MoveMovieModal
+            originalPath={path}
+            destinationPath={pendingChanges.path}
+            isOpen={isConfirmMoveModalOpen}
+            onModalClose={handleCancelPress}
+            onSavePress={handleSavePress}
+            onMoveMoviePress={handleMoveMoviePress}
+          />
+        </>
+      )}
     </ModalContent>
   );
 }

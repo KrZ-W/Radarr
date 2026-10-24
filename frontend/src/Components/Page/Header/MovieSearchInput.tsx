@@ -19,6 +19,7 @@ import Icon from 'Components/Icon';
 import LoadingIndicator from 'Components/Loading/LoadingIndicator';
 import useKeyboardShortcuts from 'Helpers/Hooks/useKeyboardShortcuts';
 import { icons } from 'Helpers/Props';
+import getMoviePath from 'Movie/Edition/getMoviePath'; // krzw(multi-edition)
 import Movie from 'Movie/Movie';
 import createAllMoviesSelector from 'Store/Selectors/createAllMoviesSelector';
 import createDeepEqualSelector from 'Store/Selectors/createDeepEqualSelector';
@@ -42,6 +43,8 @@ interface AddNewMovieSuggestion {
 export interface SuggestedMovie
   extends Pick<
     Movie,
+    | 'id' // krzw(multi-edition)
+    | 'edition' // krzw(multi-edition)
     | 'title'
     | 'originalTitle'
     | 'year'
@@ -77,6 +80,8 @@ function createUnoptimizedSelector() {
     (allMovies, allTags) => {
       return allMovies.map((movie): SuggestedMovie => {
         const {
+          id, // krzw(multi-edition)
+          edition, // krzw(multi-edition)
           title,
           originalTitle,
           year,
@@ -90,6 +95,8 @@ function createUnoptimizedSelector() {
         } = movie;
 
         return {
+          id, // krzw(multi-edition)
+          edition, // krzw(multi-edition)
           title,
           originalTitle,
           year,
@@ -326,7 +333,7 @@ function MovieSearchInput() {
 
       dispatch(
         push(
-          `${window.Radarr.urlBase}/movie/${selectedSuggestion.item.titleSlug}`
+          `${window.Radarr.urlBase}${getMoviePath(selectedSuggestion.item)}` // krzw(multi-edition)
         )
       );
 
@@ -368,7 +375,7 @@ function MovieSearchInput() {
       } else {
         setValue('');
         dispatch(
-          push(`${window.Radarr.urlBase}/movie/${suggestion.item.titleSlug}`)
+          push(`${window.Radarr.urlBase}${getMoviePath(suggestion.item)}`) // krzw(multi-edition)
         );
       }
     },

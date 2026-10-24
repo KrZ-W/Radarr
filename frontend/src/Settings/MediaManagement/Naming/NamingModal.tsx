@@ -169,6 +169,7 @@ const releaseGroupTokens = [
 
 const editionTokens = [
   { token: '{Edition Tags}', example: 'IMAX', footNotes: '1' },
+  { token: '{Edition Name}', example: 'Extended', footNotes: '2' }, // krzw(multi-edition)
 ];
 
 const customFormatTokens = [
@@ -434,6 +435,13 @@ function NamingModal(props: NamingModalProps) {
                   <sup className={styles.identifier}>1</sup>
                   <InlineMarkdown data={translate('EditionFootNote')} />
                 </div>
+
+                {/* krzw(multi-edition) begin */}
+                <div className={styles.footNote}>
+                  <sup className={styles.identifier}>2</sup>
+                  <InlineMarkdown data={translate('EditionNameFootNote')} />
+                </div>
+                {/* krzw(multi-edition) end */}
               </FieldSet>
 
               <FieldSet legend={translate('CustomFormats')}>
