@@ -97,9 +97,18 @@ namespace NzbDrone.Core.ImportLists.ImportExclusions
                 return;
             }
 
-            _logger.Debug("Adding {0} deleted movies to import list exclusions.", message.Movies.Count);
+            // krzw(multi-edition) begin: deleting an edition row leaves the title in the library, only the default row excludes it
+            var deletedTitles = message.Movies.Where(m => m.IsDefaultEdition).ToList();
 
-            var exclusionsToAdd = DeDupeExclusions(message.Movies.Select(m => new ImportListExclusion
+            if (deletedTitles.Count == 0)
+            {
+                return;
+            }
+
+            // krzw(multi-edition) end
+            _logger.Debug("Adding {0} deleted movies to import list exclusions.", deletedTitles.Count);  // krzw(multi-edition)
+
+            var exclusionsToAdd = DeDupeExclusions(deletedTitles.Select(m => new ImportListExclusion  // krzw(multi-edition)
             {
                 TmdbId = m.TmdbId,
                 MovieTitle = m.Title,

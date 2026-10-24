@@ -51,5 +51,41 @@ namespace NzbDrone.Core.Test.Housekeeping.Housekeepers
             AllStoredModels.Should().HaveCount(1);
             Db.All<Movie>().Should().Contain(e => e.MovieFileId == movieFiles.First().Id);
         }
+
+        // krzw(multi-edition) begin
+        [Test]
+        public void should_only_reset_the_edition_row_whose_file_is_gone()
+        {
+            var movieFile = Builder<MovieFile>.CreateNew()
+                                              .With(h => h.Quality = new QualityModel())
+                                              .With(h => h.Languages = new List<Language> { Language.English })
+                                              .BuildNew();
+
+            Db.Insert(movieFile);
+
+            var defaultRow = Builder<Movie>.CreateNew()
+                                           .With(e => e.MovieMetadataId = 7)
+                                           .With(e => e.Edition = "")
+                                           .With(e => e.MovieFileId = movieFile.Id)
+                                           .BuildNew();
+
+            var editionRow = Builder<Movie>.CreateNew()
+                                           .With(e => e.MovieMetadataId = 7)
+                                           .With(e => e.Edition = "Extended")
+                                           .With(e => e.MovieFileId = movieFile.Id + 100)
+                                           .BuildNew();
+
+            Db.Insert(defaultRow);
+            Db.Insert(editionRow);
+
+            Subject.Clean();
+
+            var rows = Db.All<Movie>().ToList();
+
+            rows.Single(r => r.Id == defaultRow.Id).MovieFileId.Should().Be(movieFile.Id);
+            rows.Single(r => r.Id == editionRow.Id).MovieFileId.Should().Be(0);
+        }
+
+        // krzw(multi-edition) end
     }
 }

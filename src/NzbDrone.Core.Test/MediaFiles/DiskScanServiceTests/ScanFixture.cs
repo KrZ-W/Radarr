@@ -51,6 +51,13 @@ namespace NzbDrone.Core.Test.MediaFiles.DiskScanServiceTests
             Mocker.GetMock<IMediaFileService>()
                   .Setup(s => s.GetFilesByMovie(It.IsAny<int>()))
                   .Returns(new List<MovieFile>());
+
+            // krzw(multi-edition) begin
+            Mocker.GetMock<IMediaFileService>()
+                  .Setup(s => s.GetSiblingEditionFiles(It.IsAny<Movie>()))
+                  .Returns(new List<MovieFile>());
+
+            // krzw(multi-edition) end
         }
 
         private void GivenRootFolder(params string[] subfolders)
@@ -190,6 +197,37 @@ namespace NzbDrone.Core.Test.MediaFiles.DiskScanServiceTests
                   .Verify(v => v.GetImportDecisions(It.Is<List<string>>(l => l.Count == 1), _movie, false), Times.Once());
         }
 
+        // krzw(multi-edition) begin
+        [Test]
+        public void should_not_treat_files_of_sibling_edition_rows_as_unmapped()
+        {
+            GivenMovieFolder();
+
+            var ownFile = Path.Combine(_movie.Path, "Movie (2010).mkv").AsOsAgnostic();
+            var siblingFile = Path.Combine(_movie.Path, "Movie (2010) {edition-Extended}.mkv").AsOsAgnostic();
+            var newFile = Path.Combine(_movie.Path, "Movie (2010) {edition-Unrated}.mkv").AsOsAgnostic();
+
+            GivenFiles(new List<string> { ownFile, siblingFile, newFile });
+
+            Mocker.GetMock<IMediaFileService>()
+                  .Setup(s => s.GetFilesByMovie(_movie.Id))
+                  .Returns(new List<MovieFile> { new MovieFile { MovieId = _movie.Id, RelativePath = "Movie (2010).mkv" } });
+
+            Mocker.GetMock<IMediaFileService>()
+                  .Setup(s => s.GetSiblingEditionFiles(_movie))
+                  .Returns(new List<MovieFile> { new MovieFile { MovieId = _movie.Id + 1, RelativePath = "Movie (2010) {edition-Extended}.mkv" } });
+
+            Subject.Scan(_movie);
+
+            Mocker.GetMock<IMakeImportDecision>()
+                  .Verify(v => v.GetImportDecisions(It.Is<List<string>>(l => l.Count == 1 && l[0] == newFile), _movie, false), Times.Once());
+
+            // the table cleanup still sees every file on disk and only touches this row's own files
+            Mocker.GetMock<IMediaFileTableCleanupService>()
+                  .Verify(v => v.Clean(_movie, It.Is<List<string>>(l => l.Count == 3)), Times.Once());
+        }
+
+        // krzw(multi-edition) end
         [Test]
         public void should_not_scan_featurettes_subfolders()
         {

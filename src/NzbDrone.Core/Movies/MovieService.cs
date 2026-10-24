@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;  // krzw(multi-edition)
 using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.AutoTagging;
 using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Datastore;
+using NzbDrone.Core.Exceptions;  // krzw(multi-edition)
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
@@ -282,6 +284,8 @@ namespace NzbDrone.Core.Movies
         {
             var movie = _movieRepository.Get(movieId);
 
+            EnsureEditionsGoFirst(movie, new HashSet<int> { movieId });  // krzw(multi-edition)
+
             _movieRepository.Delete(movieId);
             _eventAggregator.PublishEvent(new MoviesDeletedEvent(new List<Movie> { movie }, deleteFiles, addImportListExclusion));
             _logger.Info("Deleted movie {0}", movie);
@@ -291,6 +295,15 @@ namespace NzbDrone.Core.Movies
         {
             var moviesToDelete = _movieRepository.Get(movieIds).ToList();
 
+            // krzw(multi-edition) begin
+            var batch = movieIds.ToHashSet();
+
+            foreach (var movie in moviesToDelete)
+            {
+                EnsureEditionsGoFirst(movie, batch);
+            }
+
+            // krzw(multi-edition) end
             _movieRepository.DeleteMany(movieIds);
 
             _eventAggregator.PublishEvent(new MoviesDeletedEvent(moviesToDelete, deleteFiles, addImportListExclusion));
@@ -315,11 +328,27 @@ namespace NzbDrone.Core.Movies
         {
             var storedMovie = GetMovie(movie.Id);
 
+            // krzw(multi-edition) begin: the rows of one title share the folder and the default row owns the path
+            var pathChanged = storedMovie != null && PathDiffers(storedMovie.Path, movie.Path);
+
+            if (pathChanged && storedMovie.IsEdition)
+            {
+                throw new NzbDroneClientException(HttpStatusCode.BadRequest, "The path of the {0} edition of {1} follows its default edition and cannot be changed on its own", storedMovie.Edition, storedMovie.Title);
+            }
+
+            // krzw(multi-edition) end
             UpdateTags(movie);
 
             var updatedMovie = _movieRepository.Update(movie);
             _eventAggregator.PublishEvent(new MovieEditedEvent(updatedMovie, storedMovie));
 
+            // krzw(multi-edition) begin
+            if (pathChanged)
+            {
+                PropagatePathToEditions(updatedMovie, new HashSet<int> { updatedMovie.Id });
+            }
+
+            // krzw(multi-edition) end
             return updatedMovie;
         }
 
@@ -327,15 +356,28 @@ namespace NzbDrone.Core.Movies
         {
             _logger.Debug("Updating {0} movies", movies.Count);
 
+            var movedDefaultRows = new List<Movie>();  // krzw(multi-edition)
+
             foreach (var m in movies)
             {
                 _logger.Trace("Updating: {0}", m.Title);
 
-                if (!m.RootFolderPath.IsNullOrWhiteSpace())
+                if (!m.RootFolderPath.IsNullOrWhiteSpace() && m.IsDefaultEdition)
                 {
+                    // krzw(multi-edition): the condition above skips edition rows, they follow their default row (AlignEditionPaths)
+                    var previousPath = m.Path;  // krzw(multi-edition)
+
                     m.Path = _moviePathBuilder.BuildPath(m, useExistingRelativeFolder);
 
                     _logger.Trace("Changing path for {0} to {1}", m.Title, m.Path);
+
+                    // krzw(multi-edition) begin
+                    if (PathDiffers(previousPath, m.Path))
+                    {
+                        movedDefaultRows.Add(m);
+                    }
+
+                    // krzw(multi-edition) end
                 }
                 else
                 {
@@ -345,12 +387,135 @@ namespace NzbDrone.Core.Movies
                 UpdateTags(m);
             }
 
+            var followers = AlignEditionPaths(movies, movedDefaultRows, useExistingRelativeFolder);  // krzw(multi-edition)
+
             _movieRepository.UpdateMany(movies);
             _logger.Debug("{0} movies updated", movies.Count);
             _eventAggregator.PublishEvent(new MoviesBulkEditedEvent(movies));
 
+            // krzw(multi-edition) begin
+            if (followers.Any())
+            {
+                _movieRepository.SetFields(followers, s => s.Path);
+                _logger.Debug("{0} edition rows followed their default row's path", followers.Count);
+                _eventAggregator.PublishEvent(new MoviesBulkEditedEvent(followers));
+            }
+
+            // krzw(multi-edition) end
             return movies;
         }
+
+        // krzw(multi-edition) begin
+        // A default row cannot go while edition rows still hang off it: they would lose the row that owns their path
+        // and the title would have no default row for legacy lookups. Edition rows deleted in the same batch do not count.
+        private void EnsureEditionsGoFirst(Movie movie, ISet<int> batch)
+        {
+            if (movie == null || movie.IsEdition)
+            {
+                return;
+            }
+
+            var remaining = (_movieRepository.GetEditionSiblings(movie.Id) ?? new List<Movie>())
+                            .Where(s => s.IsEdition && !batch.Contains(s.Id))
+                            .Select(s => s.Edition)
+                            .ToList();
+
+            if (remaining.Empty())
+            {
+                return;
+            }
+
+            throw new NzbDroneClientException(HttpStatusCode.BadRequest, "Cannot delete {0}: its {1} edition(s) must be deleted first", movie, string.Join(", ", remaining));
+        }
+
+        // Edition rows in a bulk edit take the path of their default row when it is in the batch too. An edition row
+        // whose default row is not in the batch may not end up on a path of its own (the API rejects such edits before
+        // a folder move is queued; this guards callers that bypass it). Default rows whose path changed drag their
+        // edition rows outside the batch along; those are returned for a separate path-only update.
+        private List<Movie> AlignEditionPaths(List<Movie> movies, List<Movie> movedDefaultRows, bool useExistingRelativeFolder)
+        {
+            var batchIds = movies.Select(m => m.Id).ToHashSet();
+            var defaultRows = movies.Where(m => m.IsDefaultEdition && m.MovieMetadataId > 0)
+                                    .GroupBy(m => m.MovieMetadataId)
+                                    .ToDictionary(g => g.Key, g => g.First());
+
+            foreach (var edition in movies.Where(m => m.IsEdition && !m.RootFolderPath.IsNullOrWhiteSpace()))
+            {
+                if (defaultRows.TryGetValue(edition.MovieMetadataId, out var defaultRow))
+                {
+                    edition.Path = defaultRow.Path;
+                    continue;
+                }
+
+                var ownPath = _moviePathBuilder.BuildPath(edition, useExistingRelativeFolder);
+
+                if (PathDiffers(edition.Path, ownPath))
+                {
+                    throw new NzbDroneClientException(HttpStatusCode.BadRequest, "The path of the {0} edition of {1} follows its default edition and cannot be changed on its own", edition.Edition, edition.Title);
+                }
+            }
+
+            var followers = new List<Movie>();
+
+            foreach (var defaultRow in movedDefaultRows)
+            {
+                followers.AddRange(EditionsToFollow(defaultRow, batchIds));
+            }
+
+            return followers;
+        }
+
+        private void PropagatePathToEditions(Movie defaultRow, ISet<int> alreadyUpdated)
+        {
+            var followers = EditionsToFollow(defaultRow, alreadyUpdated);
+
+            if (followers.Empty())
+            {
+                return;
+            }
+
+            _movieRepository.SetFields(followers, s => s.Path);
+            _logger.Debug("{0} edition rows of {1} followed its path to '{2}'", followers.Count, defaultRow, defaultRow.Path);
+            _eventAggregator.PublishEvent(new MoviesBulkEditedEvent(followers));
+        }
+
+        // The edition rows of defaultRow that are not on its path yet, with their Path set to it (not persisted here).
+        private List<Movie> EditionsToFollow(Movie defaultRow, ISet<int> excludedIds)
+        {
+            if (defaultRow == null || defaultRow.IsEdition || defaultRow.Path.IsNullOrWhiteSpace())
+            {
+                return new List<Movie>();
+            }
+
+            var followers = (_movieRepository.GetEditionSiblings(defaultRow.Id) ?? new List<Movie>())
+                            .Where(s => s.IsEdition && !excludedIds.Contains(s.Id) && PathDiffers(s.Path, defaultRow.Path))
+                            .ToList();
+
+            foreach (var follower in followers)
+            {
+                _logger.Trace("Changing path for the {0} edition of {1} to {2}", follower.Edition, follower.Title, defaultRow.Path);
+                follower.Path = defaultRow.Path;
+            }
+
+            return followers;
+        }
+
+        private static bool PathDiffers(string before, string after)
+        {
+            if (after.IsNullOrWhiteSpace())
+            {
+                return false;
+            }
+
+            if (before.IsNullOrWhiteSpace())
+            {
+                return true;
+            }
+
+            return !before.PathEquals(after);
+        }
+
+        // krzw(multi-edition) end
 
         public void UpdateLastSearchTime(Movie movie)
         {

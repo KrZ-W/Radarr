@@ -16,18 +16,23 @@ namespace NzbDrone.Core.Extras
     public class ExistingExtraFileService : IExistingExtraFiles, IHandle<MovieScannedEvent>
     {
         private readonly List<IImportExistingExtraFiles> _existingExtraFileImporters;
+        private readonly IEditionExtraFileFilter _editionExtraFileFilter;  // krzw(multi-edition)
         private readonly Logger _logger;
 
         public ExistingExtraFileService(IEnumerable<IImportExistingExtraFiles> existingExtraFileImporters,
+                                        IEditionExtraFileFilter editionExtraFileFilter,  // krzw(multi-edition)
                                         Logger logger)
         {
             _existingExtraFileImporters = existingExtraFileImporters.OrderBy(e => e.Order).ToList();
+            _editionExtraFileFilter = editionExtraFileFilter;  // krzw(multi-edition)
             _logger = logger;
         }
 
         public List<string> ImportExtraFiles(Movie movie, List<string> possibleExtraFiles, string fileNameBeforeRename)
         {
             _logger.Debug("Looking for existing extra files in {0}", movie.Path);
+
+            possibleExtraFiles = _editionExtraFileFilter.FilterClaimable(movie, possibleExtraFiles);  // krzw(multi-edition): rows sharing the folder only claim their own file's extras
 
             var importedFiles = new List<string>();
 

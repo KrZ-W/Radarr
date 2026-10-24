@@ -96,6 +96,8 @@ namespace NzbDrone.Core.MediaFiles
 
                 foreach (var movie in message.Movies)
                 {
+                    var sharedWithEditions = false;  // krzw(multi-edition): the title's other rows keep the folder
+
                     foreach (var s in allMovies)
                     {
                         if (s.Key == movie.Id)
@@ -111,11 +113,27 @@ namespace NzbDrone.Core.MediaFiles
 
                         if (movie.Path.PathEquals(s.Value))
                         {
+                            // krzw(multi-edition) begin
+                            if (IsEditionSibling(movie, s.Key))
+                            {
+                                sharedWithEditions = true;
+                                continue;
+                            }
+
+                            // krzw(multi-edition) end
                             _logger.Error("Movie path: '{0}' is the same as another movie, not deleting files.", movie.Path);
                             return;
                         }
                     }
 
+                    // krzw(multi-edition) begin
+                    if (sharedWithEditions)
+                    {
+                        DeleteOwnMovieFile(movie);
+                        continue;
+                    }
+
+                    // krzw(multi-edition) end
                     if (_diskProvider.FolderExists(movie.Path))
                     {
                         _recycleBinProvider.DeleteFolder(movie.Path);
@@ -125,6 +143,56 @@ namespace NzbDrone.Core.MediaFiles
                 _eventAggregator.PublishEvent(new DeleteCompletedEvent());
             }
         }
+
+        // krzw(multi-edition) begin
+        // The other row at the same path is one of this title's editions (same metadata), not a foreign movie.
+        private bool IsEditionSibling(Movie movie, int otherMovieId)
+        {
+            if (movie.MovieMetadataId <= 0)
+            {
+                return false;
+            }
+
+            var other = _movieService.GetMovie(otherMovieId);
+
+            return other != null && other.MovieMetadataId == movie.MovieMetadataId;
+        }
+
+        // Only this row's own file goes to the recycle bin; the folder stays with the title's other editions. No
+        // error is logged: sharing the folder is by design.
+        private void DeleteOwnMovieFile(Movie movie)
+        {
+            var movieFile = movie.MovieFile;
+
+            if (movieFile == null || movieFile.RelativePath.IsNullOrWhiteSpace())
+            {
+                _logger.Debug("{0} has no file of its own, leaving the shared folder '{1}' to its other editions", movie, movie.Path);
+                return;
+            }
+
+            var fullPath = Path.Combine(movie.Path, movieFile.RelativePath);
+
+            if (!_diskProvider.FileExists(fullPath))
+            {
+                _logger.Debug("Movie file '{0}' no longer exists, leaving the shared folder to the other editions", fullPath);
+                return;
+            }
+
+            _logger.Info("Deleting movie file '{0}'; the folder stays with the other editions of {1}", fullPath, movie);
+
+            var subfolder = _diskProvider.GetParentFolder(movie.Path).GetRelativePath(_diskProvider.GetParentFolder(fullPath));
+
+            try
+            {
+                _recycleBinProvider.DeleteFile(fullPath, subfolder);
+            }
+            catch (Exception e)
+            {
+                _logger.Error(e, "Unable to delete movie file '{0}'", fullPath);
+            }
+        }
+
+        // krzw(multi-edition) end
 
         [EventHandleOrder(EventHandleOrder.Last)]
         public void Handle(MovieFileDeletedEvent message)

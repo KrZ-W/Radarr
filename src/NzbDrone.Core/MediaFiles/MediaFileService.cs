@@ -19,6 +19,7 @@ namespace NzbDrone.Core.MediaFiles
         List<MovieFile> GetFilesByMovies(IEnumerable<int> movieIds);
         List<MovieFile> GetFilesWithoutMediaInfo();
         List<string> FilterExistingFiles(List<string> files, Movie movie);
+        List<MovieFile> GetSiblingEditionFiles(Movie movie);  // krzw(multi-edition)
         MovieFile GetMovie(int id);
         List<MovieFile> GetMovies(IEnumerable<int> ids);
         List<MovieFile> GetFilesWithRelativePath(int movieIds, string relativePath);
@@ -95,6 +96,8 @@ namespace NzbDrone.Core.MediaFiles
         {
             var movieFiles = GetFilesByMovie(movie.Id).Select(f => Path.Combine(movie.Path, f.RelativePath)).ToList();
 
+            movieFiles.AddRange(GetSiblingEditionFiles(movie).Select(f => Path.Combine(movie.Path, f.RelativePath)));  // krzw(multi-edition): the other edition rows' files share this folder and are not unmapped
+
             if (!movieFiles.Any())
             {
                 return files;
@@ -102,6 +105,21 @@ namespace NzbDrone.Core.MediaFiles
 
             return files.Except(movieFiles, PathEqualityComparer.Instance).ToList();
         }
+
+        // krzw(multi-edition) begin
+        // Files owned by the other rows of movie's title (they share its folder). One indexed query, empty for a
+        // title without edition rows; rows that are not persisted yet have no siblings.
+        public List<MovieFile> GetSiblingEditionFiles(Movie movie)
+        {
+            if (movie == null || movie.Id <= 0 || movie.MovieMetadataId <= 0)
+            {
+                return new List<MovieFile>();
+            }
+
+            return _mediaFileRepository.GetFilesBySiblingEditions(movie.MovieMetadataId, movie.Id) ?? new List<MovieFile>();
+        }
+
+        // krzw(multi-edition) end
 
         public List<MovieFile> GetMovies(IEnumerable<int> ids)
         {

@@ -134,7 +134,8 @@ namespace NzbDrone.Core.MediaFiles
             CleanMediaFiles(movie, mediaFileList);
 
             var movieFiles = _mediaFileService.GetFilesByMovie(movie.Id);
-            var unmappedFiles = MediaFileService.FilterExistingFiles(mediaFileList, movieFiles, movie);
+            var siblingFiles = _mediaFileService.GetSiblingEditionFiles(movie);  // krzw(multi-edition): the other edition rows' files share this folder
+            var unmappedFiles = MediaFileService.FilterExistingFiles(mediaFileList, movieFiles.Concat(siblingFiles).ToList(), movie);  // krzw(multi-edition)
 
             var decisionsStopwatch = Stopwatch.StartNew();
             var decisions = _importDecisionMaker.GetImportDecisions(unmappedFiles, movie, false);

@@ -49,5 +49,38 @@ namespace NzbDrone.Core.Test.Housekeeping.Housekeepers
             AllStoredModels.Should().HaveCount(1);
             Db.All<Movie>().Should().Contain(e => e.MovieFileId == AllStoredModels.First().Id);
         }
+
+        // krzw(multi-edition) begin
+        [Test]
+        public void should_keep_the_files_of_every_edition_row_of_a_title()
+        {
+            var movieFiles = Builder<MovieFile>.CreateListOfSize(2)
+                                                   .All()
+                                                   .With(h => h.Quality = new QualityModel())
+                                                   .With(h => h.Languages = new List<Language> { Language.English })
+                                                   .BuildListOfNew();
+
+            Db.InsertMany(movieFiles);
+
+            var defaultRow = Builder<Movie>.CreateNew()
+                                           .With(e => e.MovieMetadataId = 7)
+                                           .With(e => e.Edition = "")
+                                           .With(e => e.MovieFileId = movieFiles[0].Id)
+                                           .BuildNew();
+
+            var editionRow = Builder<Movie>.CreateNew()
+                                           .With(e => e.MovieMetadataId = 7)
+                                           .With(e => e.Edition = "Extended")
+                                           .With(e => e.MovieFileId = movieFiles[1].Id)
+                                           .BuildNew();
+
+            Db.Insert(defaultRow);
+            Db.Insert(editionRow);
+
+            Subject.Clean();
+            AllStoredModels.Should().HaveCount(2);
+        }
+
+        // krzw(multi-edition) end
     }
 }
