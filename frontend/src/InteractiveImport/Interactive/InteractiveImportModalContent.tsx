@@ -594,6 +594,7 @@ function InteractiveImportModalContent(
         updateInteractiveImportItems({
           ids: selectedIds,
           movie,
+          editionOverride: true, // krzw(multi-edition): a movie pick is the only edit the edition gate trusts
         })
       );
 

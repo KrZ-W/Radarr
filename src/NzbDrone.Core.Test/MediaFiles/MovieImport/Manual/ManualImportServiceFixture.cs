@@ -204,18 +204,35 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Manual
         }
 
         [Test]
-        public void reprocess_item_should_flag_the_row_as_the_users_pick()
+        public void reprocess_item_should_flag_the_row_as_the_users_pick_when_the_user_picked_the_movie()
         {
             GivenEditionRows();
 
             var path = @"C:\Test\Downloads\Movie (2010)\Movie (2010).mkv".AsOsAgnostic();
 
-            var item = Subject.ReprocessItem(path, null, _extended.Id, null, new QualityModel(Quality.Bluray1080p), new List<Language> { Language.English }, 0);
+            var item = Subject.ReprocessItem(path, null, _extended.Id, null, new QualityModel(Quality.Bluray1080p), new List<Language> { Language.English }, 0, true);
 
             item.Movie.Should().BeSameAs(_extended);
 
             Mocker.GetMock<IMakeImportDecision>()
                   .Verify(v => v.GetDecision(It.Is<LocalMovie>(l => l.EditionOverride && l.Movie == _extended), It.IsAny<DownloadClientItem>()), Times.Once());
+        }
+
+        // A quality/language/release-group/flag edit reprocesses the row with the movie the listing preselected; that is
+        // not a pick, so the edition gate must judge the row again instead of being skipped.
+        [Test]
+        public void reprocess_item_without_a_user_pick_should_keep_the_edition_gate_on()
+        {
+            GivenEditionRows();
+
+            var path = @"C:\Test\Downloads\Movie (2010)\Movie (2010).mkv".AsOsAgnostic();
+
+            var item = Subject.ReprocessItem(path, null, _extended.Id, null, new QualityModel(Quality.Bluray1080p), new List<Language> { Language.English }, 0, false);
+
+            item.Movie.Should().BeSameAs(_extended);
+
+            Mocker.GetMock<IMakeImportDecision>()
+                  .Verify(v => v.GetDecision(It.Is<LocalMovie>(l => !l.EditionOverride && l.Movie == _extended), It.IsAny<DownloadClientItem>()), Times.Once());
         }
 
         [Test]

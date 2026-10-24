@@ -25,7 +25,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
     {
         List<ManualImportItem> GetMediaFiles(int movieId);
         List<ManualImportItem> GetMediaFiles(string path, string downloadId, int? movieId, bool filterExistingFiles);
-        ManualImportItem ReprocessItem(string path, string downloadId, int movieId, string releaseGroup, QualityModel quality, List<Language> languages, int indexerFlags);
+        ManualImportItem ReprocessItem(string path, string downloadId, int movieId, string releaseGroup, QualityModel quality, List<Language> languages, int indexerFlags, bool editionOverride);  // krzw(multi-edition): editionOverride = the user picked the movie row
     }
 
     public class ManualImportService : IExecute<ManualImportCommand>, IManualImportService
@@ -130,7 +130,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
             return ProcessFolder(path, path, downloadId, movieId, filterExistingFiles);
         }
 
-        public ManualImportItem ReprocessItem(string path, string downloadId, int movieId, string releaseGroup, QualityModel quality, List<Language> languages, int indexerFlags)
+        public ManualImportItem ReprocessItem(string path, string downloadId, int movieId, string releaseGroup, QualityModel quality, List<Language> languages, int indexerFlags, bool editionOverride)  // krzw(multi-edition)
         {
             var rootFolder = Path.GetDirectoryName(path);
             var movie = _movieService.GetMovie(movieId);
@@ -172,7 +172,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
 
             // Reapply the user-chosen values.
             localMovie.Movie = movie;
-            localMovie.EditionOverride = true;  // krzw(multi-edition): the row shown in the listing is the user's pick
+            localMovie.EditionOverride = editionOverride;  // krzw(multi-edition): only an explicit movie pick skips the edition gate; a quality/language/group/flag edit keeps the listing's verdict
             localMovie.ReleaseGroup = finalReleaseGroup;
             localMovie.Quality = finalQuality;
             localMovie.Languages = finalLanguages;

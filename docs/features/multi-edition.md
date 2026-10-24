@@ -90,7 +90,9 @@ deleted first`); delete the editions first, or select the whole family in the bu
 6. **Manual import.** The row you pick wins (the edition gate trusts a user pick). Without a
    pick, folders and files route by their names; a folder holding both cuts is split per file
    by the `{edition-X}` tag or edition words; an untagged folder of a tracked download goes to
-   the row it was grabbed for.
+   the row it was grabbed for. Only changing the movie counts as a pick: editing a row's
+   quality, languages, release group or flags re-evaluates it with the preselected row and
+   keeps its edition verdict (the reprocess request carries `editionOverride`).
 
 ### Shared folder
 
@@ -146,8 +148,6 @@ calendar.
 - An edition cannot be promoted to default, and a default row cannot become an edition.
 - One torrent containing two cuts: the file matching the grabbing row imports; the other is
   left for manual import, where it routes to its row.
-- In manual import, re-evaluating a row (changing its quality, language, ...) trusts the
-  movie shown in that row, so a wrong preselection loses its edition rejection after an edit.
 - Deleting an edition with *delete files* recycles its movie file; its subtitles and other
   extras stay on disk until the default edition's next scan claims them.
 - Migration 248 replaces the unique index on `Movies.MovieMetadataId` by one on

@@ -164,6 +164,7 @@ function InteractiveImportRow(props: InteractiveImportRowProps) {
         updateInteractiveImportItem({
           id,
           movie,
+          editionOverride: true, // krzw(multi-edition): a movie pick is the only edit the edition gate trusts
         })
       );
 

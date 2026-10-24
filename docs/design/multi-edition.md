@@ -170,7 +170,7 @@ Backward compatibility rule: **any call that does not opt in sees exactly what i
 | `/api/v3/wanted/*` | Include edition rows by default. |
 | `/api/v3/calendar` | Edition rows excluded unless `includeEditions=true`. |
 | `/api/v3/command` MoviesSearch etc. | Unchanged. |
-| `/api/v3/release?movieId=`, `/manualimport` | Unchanged shape; manual-import movie picker lists edition rows with a badge. |
+| `/api/v3/release?movieId=`, `/manualimport` | Unchanged shape (the reprocess `POST /manualimport` items gain an optional `editionOverride`, true once the user picked the movie row); manual-import movie picker lists edition rows with a badge. |
 | `/api/v3/moviefile?movieId=` | Unchanged. |
 | Webhook / Plex Connect payloads | `movie.edition` string added; `movieFile.edition` already present; Plex partial scan of the folder unchanged. |
 
