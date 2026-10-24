@@ -54,6 +54,14 @@ namespace Radarr.Api.V3.Calendar
                     continue;
                 }
 
+                // krzw(multi-edition) begin: one event per title; edition rows would repeat it
+                if (movie.IsEdition)
+                {
+                    continue;
+                }
+
+                // krzw(multi-edition) end
+
                 if (releaseTypes is not { Count: not 0 } || releaseTypes.Contains(CalendarReleaseType.CinemaRelease))
                 {
                     CreateEvent(calendar, movie.MovieMetadata, "cinematic");

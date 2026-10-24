@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using FluentValidation;
+using FluentValidation.Results;  // krzw(multi-edition)
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Configuration;
@@ -68,6 +69,7 @@ namespace Radarr.Api.V3.Movies
 
                 if (resource.RootFolderPath.IsNotNullOrWhiteSpace())
                 {
+                    EnsureDefaultRowInBatch(movie, moviesToUpdate);  // krzw(multi-edition)
                     movie.RootFolderPath = resource.RootFolderPath;
                     moviesToMove.Add(new BulkMoveMovie
                     {
@@ -143,6 +145,24 @@ namespace Radarr.Api.V3.Movies
             return new { };
         }
 
+        // krzw(multi-edition) begin
+        // An edition row follows its default row's folder: a root-folder change is applied to the default row (whose
+        // move carries the shared folder once; MovieService.UpdateMovie gives the edition rows its path) and is
+        // rejected here, before any move command is queued, when that row is not part of the batch.
+        private static void EnsureDefaultRowInBatch(Movie movie, List<Movie> batch)
+        {
+            if (movie.IsDefaultEdition || batch.Any(m => m.IsDefaultEdition && m.MovieMetadataId == movie.MovieMetadataId))
+            {
+                return;
+            }
+
+            throw new ValidationException(new List<ValidationFailure>
+            {
+                new ValidationFailure("RootFolderPath", $"The {movie.Edition} edition of {movie.Title} follows its default edition; include the default edition to move the folder", movie.Id)
+            });
+        }
+
+        // krzw(multi-edition) end
         private MovieTranslation GetTranslationFromDict(Dictionary<int, MovieTranslation> translations, MovieMetadata movie, Language configLanguage)
         {
             if (configLanguage == Language.Original)

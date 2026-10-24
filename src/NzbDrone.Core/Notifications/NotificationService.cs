@@ -52,11 +52,14 @@ namespace NzbDrone.Core.Notifications
                 qualityString += " Proper";
             }
 
-            return string.Format("{0} ({1}) [{2}] {3}",
+            var editionString = movie.IsEdition ? $" [{movie.Edition}]" : "";  // krzw(multi-edition)
+
+            return string.Format("{0} ({1}){4} [{2}] {3}",  // krzw(multi-edition): {4} names the edition on edition rows, "" on default rows
                                     movie.Title,
                                     movie.Year,
                                     qualityString,
-                                    imdbUrl);
+                                    imdbUrl,  // krzw(multi-edition)
+                                    editionString);  // krzw(multi-edition)
         }
 
         private bool ShouldHandleMovie(ProviderDefinition definition, Movie movie)

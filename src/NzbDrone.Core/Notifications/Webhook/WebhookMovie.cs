@@ -22,6 +22,7 @@ namespace NzbDrone.Core.Notifications.Webhook
         public List<WebhookImage> Images { get; set; }
         public List<string> Tags { get; set; }
         public Language OriginalLanguage { get; set; }
+        public string Edition { get; set; }  // krzw(multi-edition): the row's canonical edition name, "" for the default row
 
         public WebhookMovie()
         {
@@ -41,6 +42,7 @@ namespace NzbDrone.Core.Notifications.Webhook
             Images = movie.MovieMetadata.Value.Images.Select(i => new WebhookImage(i)).ToList();
             Tags = tags;
             OriginalLanguage = movie.MovieMetadata.Value.OriginalLanguage;
+            Edition = movie.Edition;  // krzw(multi-edition)
         }
 
         public WebhookMovie(Movie movie, MovieFile movieFile, List<string> tags)

@@ -646,6 +646,13 @@ namespace NzbDrone.Core.Notifications.Discord
 
             var title = (movie.MovieMetadata.Value.Year > 0 ? $"{movie.MovieMetadata.Value.Title} ({movie.MovieMetadata.Value.Year})" : movie.MovieMetadata.Value.Title).Replace("`", "\\`");
 
+            // krzw(multi-edition) begin: edition rows name their edition, default rows read as before
+            if (movie.IsEdition)
+            {
+                title = $"{title} [{movie.Edition.Replace("`", "\\`")}]";
+            }
+
+            // krzw(multi-edition) end
             return title.Length > 256 ? $"{title.AsSpan(0, 253).TrimEnd('\\')}..." : title;
         }
 

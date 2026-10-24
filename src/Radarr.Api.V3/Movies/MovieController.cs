@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentValidation;
+using FluentValidation.Results;  // krzw(multi-edition)
 using Microsoft.AspNetCore.Mvc;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Configuration;
@@ -14,6 +15,7 @@ using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Movies.Commands;
+using NzbDrone.Core.Movies.Editions;  // krzw(multi-edition)
 using NzbDrone.Core.Movies.Events;
 using NzbDrone.Core.Movies.Translations;
 using NzbDrone.Core.MovieStats;
@@ -39,6 +41,7 @@ namespace Radarr.Api.V3.Movies
         private readonly IMovieService _moviesService;
         private readonly IMovieTranslationService _movieTranslationService;
         private readonly IAddMovieService _addMovieService;
+        private readonly IAddMovieEditionService _addMovieEditionService;  // krzw(multi-edition)
         private readonly IMovieStatisticsService _movieStatisticsService;
         private readonly IMapCoversToLocal _coverMapper;
         private readonly IManageCommandQueue _commandQueueManager;
@@ -50,6 +53,7 @@ namespace Radarr.Api.V3.Movies
                            IMovieService moviesService,
                            IMovieTranslationService movieTranslationService,
                            IAddMovieService addMovieService,
+                           IAddMovieEditionService addMovieEditionService,  // krzw(multi-edition)
                            IMovieStatisticsService movieStatisticsService,
                            IMapCoversToLocal coverMapper,
                            IManageCommandQueue commandQueueManager,
@@ -71,6 +75,7 @@ namespace Radarr.Api.V3.Movies
             _moviesService = moviesService;
             _movieTranslationService = movieTranslationService;
             _addMovieService = addMovieService;
+            _addMovieEditionService = addMovieEditionService;  // krzw(multi-edition)
             _movieStatisticsService = movieStatisticsService;
             _qualityUpgradableSpecification = qualityUpgradableSpecification;
             _configService = configService;
@@ -86,18 +91,18 @@ namespace Radarr.Api.V3.Movies
                 .SetValidator(moviesAncestorValidator)
                 .SetValidator(recycleBinValidator)
                 .SetValidator(systemFolderValidator)
-                .When(s => s.Path.IsNotNullOrWhiteSpace());
+                .When(s => s.Path.IsNotNullOrWhiteSpace() && s.Edition == null);  // krzw(multi-edition): edition rows share the default row's folder (AddEdition copies it, UpdateMovie keeps it)
 
             PostValidator.RuleFor(s => s.Path).Cascade(CascadeMode.Stop)
                 .NotEmpty()
                 .IsValidPath()
-                .When(s => s.RootFolderPath.IsNullOrWhiteSpace());
+                .When(s => s.RootFolderPath.IsNullOrWhiteSpace() && s.Edition == null);  // krzw(multi-edition)
             PostValidator.RuleFor(s => s.RootFolderPath).Cascade(CascadeMode.Stop)
                 .NotEmpty()
                 .IsValidPath()
                 .SetValidator(rootFolderExistsValidator)
                 .SetValidator(movieFolderAsRootFolderValidator)
-                .When(s => s.Path.IsNullOrWhiteSpace());
+                .When(s => s.Path.IsNullOrWhiteSpace() && s.Edition == null);  // krzw(multi-edition)
 
             PutValidator.RuleFor(s => s.Path).Cascade(CascadeMode.Stop)
                 .NotEmpty()
@@ -109,10 +114,18 @@ namespace Radarr.Api.V3.Movies
 
             PostValidator.RuleFor(s => s.Title).NotEmpty().When(s => s.TmdbId <= 0);
             PostValidator.RuleFor(s => s.TmdbId).NotNull().NotEmpty().SetValidator(moviesExistsValidator);
+
+            // krzw(multi-edition) begin: the edition object (POST adds an edition row, PUT edits one; MovieExistsValidator keeps POSTed names unique)
+            SharedValidator.RuleFor(s => s.Edition.Name).Cascade(CascadeMode.Stop)
+                .NotEmpty().WithMessage(EditionValidation.NameRequiredMessage)
+                .Must(name => name.Trim().Length <= EditionValidation.MaxNameLength).WithMessage(string.Format(EditionValidation.NameTooLongMessage, EditionValidation.MaxNameLength))
+                .When(s => s.Edition != null);
+
+            // krzw(multi-edition) end
         }
 
         [HttpGet]
-        public List<MovieResource> AllMovie(int? tmdbId, bool excludeLocalCovers = false, int? languageId = null)
+        public List<MovieResource> AllMovie(int? tmdbId, bool excludeLocalCovers = false, int? languageId = null, bool includeEditions = false)  // krzw(multi-edition): edition rows are hidden unless asked for
         {
             var moviesResources = new List<MovieResource>();
 
@@ -122,12 +135,15 @@ namespace Radarr.Api.V3.Movies
 
             if (tmdbId.HasValue)
             {
-                var movie = _moviesService.FindByTmdbId(tmdbId.Value);
+                // krzw(multi-edition) begin: one query for the title's rows; the default row lists its editions either way
+                var rows = _moviesService.FindAllByTmdbId(tmdbId.Value);
 
-                if (movie != null)
+                foreach (var movie in rows.Where(m => includeEditions || m.IsDefaultEdition))
                 {
-                    moviesResources.AddIfNotNull(MapToResource(movie, translationLanguage));
+                    moviesResources.AddIfNotNull(MapToResource(movie, translationLanguage, rows));
                 }
+
+                // krzw(multi-edition) end
             }
             else
             {
@@ -145,12 +161,22 @@ namespace Radarr.Api.V3.Movies
 
                 var movies = movieTask.GetAwaiter().GetResult();
 
+                // krzw(multi-edition) begin: group the rows once so every default row can list its editions without a query per movie
+                var rowsByMetadata = movies.GroupBy(m => m.MovieMetadataId).ToDictionary(g => g.Key, g => g.ToList());
+
+                if (!includeEditions)
+                {
+                    movies = movies.Where(m => m.IsDefaultEdition).ToList();
+                }
+
+                // krzw(multi-edition) end
                 moviesResources = new List<MovieResource>(movies.Count);
 
                 foreach (var movie in movies)
                 {
                     var translation = GetTranslationFromDict(tdict, movie.MovieMetadata, translationLanguage);
-                    moviesResources.Add(movie.ToResource(availDelay, translation, _qualityUpgradableSpecification));
+                    var resource = movie.ToResource(availDelay, translation, _qualityUpgradableSpecification);  // krzw(multi-edition)
+                    moviesResources.Add(resource.LinkEditions(movie, rowsByMetadata[movie.MovieMetadataId]));  // krzw(multi-edition)
                 }
 
                 if (!excludeLocalCovers)
@@ -175,7 +201,7 @@ namespace Radarr.Api.V3.Movies
             return MapToResource(movie);
         }
 
-        protected MovieResource MapToResource(Movie movie, Language translationLanguage = null)
+        protected MovieResource MapToResource(Movie movie, Language translationLanguage = null, List<Movie> titleRows = null)  // krzw(multi-edition): titleRows = the title's rows when the caller has them
         {
             if (movie == null)
             {
@@ -189,6 +215,7 @@ namespace Radarr.Api.V3.Movies
             var translation = GetMovieTranslation(translations, movie.MovieMetadata, translationLanguage);
 
             var resource = movie.ToResource(availDelay, translation, _qualityUpgradableSpecification);
+            resource.LinkEditions(movie, titleRows ?? _moviesService.FindAllByTmdbId(movie.TmdbId));  // krzw(multi-edition): one query, like the statistics lookup below
             MapCoversToLocal(resource);
             FetchAndLinkMovieStatistics(resource);
 
@@ -242,6 +269,15 @@ namespace Radarr.Api.V3.Movies
         [Produces("application/json")]
         public ActionResult<MovieResource> AddMovie([FromBody] MovieResource moviesResource)
         {
+            // krzw(multi-edition) begin: an edition object adds an edition row to the title's existing default row (path and root folder come from it)
+            if (moviesResource.Edition != null)
+            {
+                var edition = _addMovieEditionService.AddEdition(moviesResource.ToModel(), moviesResource.TmdbId);
+
+                return Created(edition.Id);
+            }
+
+            // krzw(multi-edition) end
             var movie = _addMovieService.AddMovie(moviesResource.ToModel());
 
             return Created(movie.Id);
@@ -253,6 +289,8 @@ namespace Radarr.Api.V3.Movies
         public ActionResult<MovieResource> UpdateMovie([FromBody] MovieResource moviesResource, [FromQuery] bool moveFiles = false)
         {
             var movie = _moviesService.GetMovie(moviesResource.Id);
+
+            ValidateEditionUpdate(movie, moviesResource);  // krzw(multi-edition): before a move command is queued
 
             if (moveFiles)
             {
@@ -282,6 +320,59 @@ namespace Radarr.Api.V3.Movies
         {
             _moviesService.DeleteMovie(id, deleteFiles, addImportExclusion);
         }
+
+        // krzw(multi-edition) begin
+        // Edition rows follow their default row's folder (the path is read-only) and keep their edition when a client
+        // that does not know the field sends none. A default row cannot be turned into an edition row (its title would
+        // lose the row legacy lookups resolve to), and a renamed edition must stay unique among the title's rows.
+        private void ValidateEditionUpdate(Movie storedMovie, MovieResource resource)
+        {
+            var failures = new List<ValidationFailure>();
+
+            if (storedMovie.IsDefaultEdition)
+            {
+                if (resource.Edition != null)
+                {
+                    failures.Add(new ValidationFailure("Edition", "The default edition of a movie cannot be turned into an edition; add an edition instead", resource.Edition.Name));
+                }
+            }
+            else
+            {
+                if (resource.Path.IsNotNullOrWhiteSpace() && !resource.Path.PathEquals(storedMovie.Path))
+                {
+                    failures.Add(new ValidationFailure("Path", $"The path of the {storedMovie.Edition} edition follows its default edition and cannot be changed on its own", resource.Path));
+                }
+
+                if (resource.Edition == null)
+                {
+                    resource.Edition = storedMovie.ToEditionResource();
+                }
+                else
+                {
+                    var problem = EditionValidation.NameProblem(resource.Edition.Name);
+
+                    if (problem != null)
+                    {
+                        failures.Add(new ValidationFailure("Edition", problem, resource.Edition.Name));
+                    }
+                    else if (EditionValidation.NameCollides(_moviesService.FindAllByTmdbId(storedMovie.TmdbId), resource.Edition.Name, storedMovie.Id))
+                    {
+                        failures.Add(new ValidationFailure("Edition", string.Format(EditionValidation.AlreadyAddedMessage, resource.Edition.Name.Trim()), resource.Edition.Name));
+                    }
+                    else
+                    {
+                        resource.Edition.Aliases = EditionValidation.BuildAliases(resource.Edition.Name, resource.Edition.Aliases);
+                    }
+                }
+            }
+
+            if (failures.Any())
+            {
+                throw new ValidationException(failures);
+            }
+        }
+
+        // krzw(multi-edition) end
 
         private void MapCoversToLocal(params MovieResource[] movies)
         {

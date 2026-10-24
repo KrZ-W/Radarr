@@ -129,5 +129,31 @@ namespace NzbDrone.Core.Test.MovieTests
 
             ExceptionVerification.ExpectedErrors(1);
         }
+
+        // krzw(multi-edition) begin
+        [Test]
+        public void should_always_add_a_default_row_even_when_edition_fields_are_set()
+        {
+            var newMovie = new Movie
+            {
+                TmdbId = 1,
+                RootFolderPath = @"C:\Test\Movies",
+                Edition = "Extended",
+                EditionAliases = new List<string> { "extended" },
+                EditionAcceptUntagged = true
+            };
+
+            GivenValidMovie(newMovie.TmdbId);
+            GivenValidPath();
+
+            var movie = Subject.AddMovie(newMovie);
+
+            movie.IsDefaultEdition.Should().BeTrue();
+            movie.Edition.Should().BeEmpty();
+            movie.EditionAliases.Should().BeEmpty();
+            movie.EditionAcceptUntagged.Should().BeFalse();
+        }
+
+        // krzw(multi-edition) end
     }
 }
