@@ -5,6 +5,7 @@ using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.IndexerSearch.Definitions;
 using NzbDrone.Core.Movies;
+using NzbDrone.Core.Movies.Editions;  // krzw(multi-edition)
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Parser.RomanNumerals;
 
@@ -130,12 +131,12 @@ namespace NzbDrone.Core.Parser
 
             if (!string.IsNullOrWhiteSpace(imdbId) && imdbId != "0")
             {
-                result = TryGetMovieByImDbId(parsedMovieInfo, imdbId);
+                result = TryGetMovieByImDbId(parsedMovieInfo, imdbId, searchCriteria);  // krzw(multi-edition)
             }
 
             if (result == null && tmdbId > 0)
             {
-                result = TryGetMovieByTmdbId(parsedMovieInfo, tmdbId);
+                result = TryGetMovieByTmdbId(parsedMovieInfo, tmdbId, searchCriteria);  // krzw(multi-edition)
             }
 
             if (result == null)
@@ -158,9 +159,10 @@ namespace NzbDrone.Core.Parser
             return result;
         }
 
-        private FindMovieResult TryGetMovieByImDbId(ParsedMovieInfo parsedMovieInfo, string imdbId)
+        private FindMovieResult TryGetMovieByImDbId(ParsedMovieInfo parsedMovieInfo, string imdbId, SearchCriteriaBase searchCriteria)  // krzw(multi-edition)
         {
-            var movie = _movieService.FindByImdbId(imdbId);
+            var defaultRow = _movieService.FindByImdbId(imdbId);  // krzw(multi-edition): the default row; edition rows are routed below
+            var movie = SelectEditionRow(EditionRows(defaultRow, parsedMovieInfo, searchCriteria), parsedMovieInfo, searchCriteria);  // krzw(multi-edition)
 
             // Should fix practically all problems, where indexer is shite at adding correct imdbids to movies.
             if (movie != null && (parsedMovieInfo.Year < 1800 || movie.MovieMetadata.Value.Year == parsedMovieInfo.Year || movie.MovieMetadata.Value.SecondaryYear == parsedMovieInfo.Year))
@@ -171,9 +173,9 @@ namespace NzbDrone.Core.Parser
             return null;
         }
 
-        private FindMovieResult TryGetMovieByTmdbId(ParsedMovieInfo parsedMovieInfo, int tmdbId)
+        private FindMovieResult TryGetMovieByTmdbId(ParsedMovieInfo parsedMovieInfo, int tmdbId, SearchCriteriaBase searchCriteria)  // krzw(multi-edition)
         {
-            var movie = _movieService.FindByTmdbId(tmdbId);
+            var movie = SelectEditionRow(_movieService.FindAllByTmdbId(tmdbId), parsedMovieInfo, searchCriteria);  // krzw(multi-edition): every row of the title, routed by the release edition
 
             // Should fix practically all problems, where indexer is shite at adding correct imdbids to movies.
             if (movie != null && (parsedMovieInfo.Year < 1800 || movie.MovieMetadata.Value.Year == parsedMovieInfo.Year || movie.MovieMetadata.Value.SecondaryYear == parsedMovieInfo.Year))
@@ -191,7 +193,7 @@ namespace NzbDrone.Core.Parser
             Movie movieByTitleAndOrYear;
             if (parsedMovieInfo.Year > 1800)
             {
-                movieByTitleAndOrYear = _movieService.FindByTitle(parsedMovieInfo.MovieTitles, parsedMovieInfo.Year, otherTitles, candidates);
+                movieByTitleAndOrYear = _movieService.FindByTitle(parsedMovieInfo.MovieTitles, parsedMovieInfo.Year, otherTitles, candidates, parsedMovieInfo.Edition);  // krzw(multi-edition)
                 if (movieByTitleAndOrYear != null)
                 {
                     return new FindMovieResult(movieByTitleAndOrYear, MovieMatchType.Title);
@@ -200,7 +202,7 @@ namespace NzbDrone.Core.Parser
                 return null;
             }
 
-            movieByTitleAndOrYear = _movieService.FindByTitle(parsedMovieInfo.MovieTitles, null, otherTitles, candidates);
+            movieByTitleAndOrYear = _movieService.FindByTitle(parsedMovieInfo.MovieTitles, null, otherTitles, candidates, parsedMovieInfo.Edition);  // krzw(multi-edition)
             if (movieByTitleAndOrYear != null)
             {
                 return new FindMovieResult(movieByTitleAndOrYear, MovieMatchType.Title);
@@ -208,6 +210,53 @@ namespace NzbDrone.Core.Parser
 
             return null;
         }
+
+        // krzw(multi-edition) begin
+        // Picks the Movie row of one title (default + edition rows) a release belongs to. A search maps every
+        // release of the searched title onto the searched row: a search for the Extended row must never grab for
+        // the default row, and the edition gate decides acceptance there. Otherwise the parsed edition routes:
+        // the edition row it names (monitored or not), else the default row.
+        private static Movie SelectEditionRow(List<Movie> rows, ParsedMovieInfo parsedMovieInfo, SearchCriteriaBase searchCriteria)
+        {
+            if (rows == null || rows.Count == 0)
+            {
+                return null;
+            }
+
+            var searchedMovie = searchCriteria?.Movie;
+
+            if (searchedMovie != null && rows.Any(r => r.Id == searchedMovie.Id))
+            {
+                return searchedMovie;
+            }
+
+            return EditionMatcher.SelectRow(rows, parsedMovieInfo.Edition);
+        }
+
+        // The default row plus its edition rows. The sibling lookup is skipped when it could not change the
+        // outcome: an untagged release outside a search, or a search for the default row itself.
+        private List<Movie> EditionRows(Movie defaultRow, ParsedMovieInfo parsedMovieInfo, SearchCriteriaBase searchCriteria)
+        {
+            var rows = new List<Movie>();
+
+            if (defaultRow == null)
+            {
+                return rows;
+            }
+
+            rows.Add(defaultRow);
+
+            var searchedMovie = searchCriteria?.Movie;
+
+            if (parsedMovieInfo.Edition.IsNotNullOrWhiteSpace() || (searchedMovie != null && searchedMovie.Id != defaultRow.Id))
+            {
+                rows.AddRange(_movieService.GetEditionSiblings(defaultRow.Id));
+            }
+
+            return rows;
+        }
+
+        // krzw(multi-edition) end
 
         private FindMovieResult TryGetMovieBySearchCriteria(ParsedMovieInfo parsedMovieInfo, string imdbId, int tmdbId, SearchCriteriaBase searchCriteria)
         {

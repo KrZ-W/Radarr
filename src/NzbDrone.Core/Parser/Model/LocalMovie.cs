@@ -52,6 +52,11 @@ namespace NzbDrone.Core.Parser.Model
         // krzw(audio-track-retag): how the file actually reached the library (hardlink hint for the retag)
         public TransferMode? TransferMode { get; set; }
 
+        // krzw(multi-edition): true when the user picked this movie row in manual import (reprocess, import, or a
+        // listing opened for one row); the edition gate then trusts the row instead of comparing it with the
+        // parsed edition. Rows resolved by title, tag or grab history leave it false.
+        public bool EditionOverride { get; set; }
+
         // krzw(grabbed-release-title): sanitised title of the release this file was grabbed as.
         // CustomFormats above is the scoring ladder's result - the formats CustomFormatScore is computed
         // from - so the list and the score reported to notifications, scripts and history always agree.

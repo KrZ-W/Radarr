@@ -19,6 +19,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
         List<ImportDecision> GetImportDecisions(List<string> videoFiles, Movie movie, bool filterExistingFiles);
         List<ImportDecision> GetImportDecisions(List<string> videoFiles, Movie movie, DownloadClientItem downloadClientItem, ParsedMovieInfo folderInfo, bool sceneSource);
         List<ImportDecision> GetImportDecisions(List<string> videoFiles, Movie movie, DownloadClientItem downloadClientItem, ParsedMovieInfo folderInfo, bool sceneSource, bool filterExistingFiles);
+        List<ImportDecision> GetImportDecisions(List<string> videoFiles, Movie movie, DownloadClientItem downloadClientItem, ParsedMovieInfo folderInfo, bool sceneSource, bool filterExistingFiles, bool editionOverride, Func<string, Movie> editionRouter);  // krzw(multi-edition)
         ImportDecision GetDecision(LocalMovie localMovie, DownloadClientItem downloadClientItem);
     }
 
@@ -69,6 +70,13 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
 
         public List<ImportDecision> GetImportDecisions(List<string> videoFiles, Movie movie, DownloadClientItem downloadClientItem, ParsedMovieInfo folderInfo, bool sceneSource, bool filterExistingFiles)
         {
+            return GetImportDecisions(videoFiles, movie, downloadClientItem, folderInfo, sceneSource, filterExistingFiles, false, null);  // krzw(multi-edition)
+        }
+
+        // krzw(multi-edition): editionOverride marks a row the user picked (the edition gate trusts it); editionRouter
+        // may send single files of a folder holding several cuts to a sibling edition row (null: every file to movie)
+        public List<ImportDecision> GetImportDecisions(List<string> videoFiles, Movie movie, DownloadClientItem downloadClientItem, ParsedMovieInfo folderInfo, bool sceneSource, bool filterExistingFiles, bool editionOverride, Func<string, Movie> editionRouter)
+        {
             var newFiles = filterExistingFiles ? _mediaFileService.FilterExistingFiles(videoFiles.ToList(), movie) : videoFiles.ToList();
 
             _logger.Debug("Analyzing {0}/{1} files.", newFiles.Count, videoFiles.Count);
@@ -86,16 +94,18 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
 
             foreach (var file in newFiles)
             {
+                var fileMovie = editionRouter?.Invoke(file) ?? movie;  // krzw(multi-edition)
                 var localMovie = new LocalMovie
                 {
-                    Movie = movie,
+                    Movie = fileMovie,  // krzw(multi-edition)
                     DownloadClientMovieInfo = downloadClientItemInfo,
                     DownloadItem = downloadClientItem,
                     FolderMovieInfo = folderInfo,
                     Path = file,
                     SceneSource = sceneSource,
-                    ExistingFile = movie.Path.IsParentPath(file),
-                    OtherVideoFiles = nonSampleVideoFileCount > 1
+                    ExistingFile = fileMovie.Path.IsParentPath(file),  // krzw(multi-edition)
+                    OtherVideoFiles = nonSampleVideoFileCount > 1,
+                    EditionOverride = editionOverride  // krzw(multi-edition)
                 };
 
                 decisions.AddIfNotNull(GetDecision(localMovie, downloadClientItem, nonSampleVideoFileCount > 1));

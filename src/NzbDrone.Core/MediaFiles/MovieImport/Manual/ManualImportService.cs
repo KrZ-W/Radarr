@@ -14,6 +14,7 @@ using NzbDrone.Core.MediaFiles.MovieImport.Aggregation;
 using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Movies;
+using NzbDrone.Core.Movies.Editions;  // krzw(multi-edition)
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.Qualities;
@@ -171,6 +172,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
 
             // Reapply the user-chosen values.
             localMovie.Movie = movie;
+            localMovie.EditionOverride = true;  // krzw(multi-edition): the row shown in the listing is the user's pick
             localMovie.ReleaseGroup = finalReleaseGroup;
             localMovie.Quality = finalQuality;
             localMovie.Languages = finalLanguages;
@@ -218,6 +220,11 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
                 {
                     movie = trackedDownload.RemoteMovie?.Movie;
                 }
+                else if (!movieId.HasValue)
+                {
+                    // krzw(multi-edition): an untagged folder of a multi-edition title stays on the row it was grabbed for
+                    movie = PreferGrabbedEditionRow(movie, trackedDownload.RemoteMovie?.Movie, Parser.Parser.ParseMovieTitle(directoryInfo.Name)?.Edition);
+                }
             }
 
             if (movie == null)
@@ -245,7 +252,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
 
             var folderInfo = Parser.Parser.ParseMovieTitle(directoryInfo.Name);
             var movieFiles = _diskScanService.FilterPaths(rootFolder, _diskScanService.GetVideoFiles(baseFolder).ToList());
-            var decisions = _importDecisionMaker.GetImportDecisions(movieFiles, movie, downloadClientItem, folderInfo, SceneSource(movie, baseFolder), filterExistingFiles);
+            var decisions = _importDecisionMaker.GetImportDecisions(movieFiles, movie, downloadClientItem, folderInfo, SceneSource(movie, baseFolder), filterExistingFiles, movieId.HasValue, EditionRouter(movie, folderInfo, movieId.HasValue));  // krzw(multi-edition)
 
             return decisions.Select(decision => MapItem(decision, rootFolder, downloadId, directoryInfo.Name)).ToList();
         }
@@ -271,6 +278,11 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
                 {
                     movie = trackedDownload?.RemoteMovie?.Movie;
                 }
+                else if (trackedDownload != null)
+                {
+                    // krzw(multi-edition): an untagged file of a multi-edition title stays on the row it was grabbed for
+                    movie = PreferGrabbedEditionRow(movie, trackedDownload.RemoteMovie?.Movie, Parser.Parser.ParseMoviePath(relativeFile)?.Edition);
+                }
 
                 if (movie == null)
                 {
@@ -278,7 +290,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
 
                     if (relativeParseInfo != null)
                     {
-                        movie = _movieService.FindByTitle(relativeParseInfo.PrimaryMovieTitle, relativeParseInfo.Year);
+                        movie = _movieService.FindByTitle(relativeParseInfo.PrimaryMovieTitle, relativeParseInfo.Year, relativeParseInfo.Edition);  // krzw(multi-edition)
                     }
                 }
 
@@ -344,6 +356,67 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
         {
             return !(movie.Path.PathEquals(folder) || movie.Path.IsParentPath(folder));
         }
+
+        // krzw(multi-edition) begin
+        // An untagged name of a title with edition rows resolves to the default row; when the download was grabbed
+        // for a sibling edition row (accept-untagged editions do that), the file belongs to that row. A name that
+        // carries an edition keeps the row the selector chose for it.
+        private static Movie PreferGrabbedEditionRow(Movie resolved, Movie grabbed, string parsedEdition)
+        {
+            if (resolved == null || grabbed == null || parsedEdition.IsNotNullOrWhiteSpace())
+            {
+                return resolved;
+            }
+
+            if (grabbed.Id == resolved.Id || grabbed.MovieMetadataId != resolved.MovieMetadataId)
+            {
+                return resolved;
+            }
+
+            return grabbed;
+        }
+
+        // Per-file routing for a folder of a title that has edition rows (a pack, or a library folder holding both
+        // cuts). The user's pick and a folder name that itself carries an edition settle every file; otherwise a
+        // file whose own name carries an edition (Plex tag or words) goes to the row that edition names, the
+        // default row when no edition row matches, and an untagged file stays on the folder's row.
+        private Func<string, Movie> EditionRouter(Movie folderRow, ParsedMovieInfo folderInfo, bool editionOverride)
+        {
+            if (editionOverride || folderInfo?.Edition.IsNotNullOrWhiteSpace() == true)
+            {
+                return null;
+            }
+
+            var rows = _movieService.GetEditionSiblings(folderRow.Id);
+
+            if (rows == null || rows.Count == 0)
+            {
+                return null;
+            }
+
+            rows.Insert(0, folderRow);
+
+            return file =>
+            {
+                var edition = Parser.Parser.ParseMoviePath(file)?.Edition;
+
+                if (edition.IsNullOrWhiteSpace())
+                {
+                    return folderRow;
+                }
+
+                var routed = EditionMatcher.SelectRow(rows, edition) ?? folderRow;
+
+                if (routed.Id != folderRow.Id)
+                {
+                    _logger.Debug("Routing {0} to the {1} row of {2} by its edition '{3}'", file, routed.IsEdition ? routed.Edition : "default", folderRow.Title, edition);
+                }
+
+                return routed;
+            };
+        }
+
+        // krzw(multi-edition) end
 
         private TrackedDownload GetTrackedDownload(string downloadId)
         {
@@ -468,6 +541,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
 
                 // Apply the user-chosen values.
                 localMovie.Movie = movie;
+                localMovie.EditionOverride = true;  // krzw(multi-edition): the row the user imports into
                 localMovie.ReleaseGroup = file.ReleaseGroup;
                 localMovie.Quality = file.Quality;
                 localMovie.IndexerFlags = (IndexerFlags)file.IndexerFlags;

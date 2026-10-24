@@ -9,6 +9,7 @@ using NzbDrone.Core.Datastore;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.Movies.Editions;  // krzw(multi-edition)
 using NzbDrone.Core.Movies.Events;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.RomanNumerals;
@@ -27,6 +28,9 @@ namespace NzbDrone.Core.Movies
         Movie FindByTitle(string title);
         Movie FindByTitle(string title, int year);
         Movie FindByTitle(List<string> titles, int? year, List<string> otherTitles, List<Movie> candidates);
+        Movie FindByTitle(string title, int year, string edition);  // krzw(multi-edition)
+        Movie FindByTitle(List<string> titles, int? year, List<string> otherTitles, List<Movie> candidates, string edition);  // krzw(multi-edition)
+        Movie FindByImdbId(string imdbid, string edition);  // krzw(multi-edition)
         List<Movie> FindByTitleCandidates(List<string> titles, out List<string> otherTitles);
         Movie FindByPath(string path);
         Dictionary<int, string> AllMoviePaths();
@@ -127,7 +131,23 @@ namespace NzbDrone.Core.Movies
             return FindByTitle(new List<string> { title }, year, otherTitles, candidates);
         }
 
+        // krzw(multi-edition) begin
+        public Movie FindByTitle(string title, int year, string edition)
+        {
+            var candidates = FindByTitleCandidates(new List<string> { title }, out var otherTitles);
+
+            return FindByTitle(new List<string> { title }, year, otherTitles, candidates, edition);
+        }
+
+        // krzw(multi-edition) end
+
         public Movie FindByTitle(List<string> titles, int? year, List<string> otherTitles, List<Movie> candidates)
+        {
+            return FindByTitle(titles, year, otherTitles, candidates, null);  // krzw(multi-edition): legacy callers resolve to the default row
+        }
+
+        // krzw(multi-edition): the parsed edition picks the row when the title has default + edition rows
+        public Movie FindByTitle(List<string> titles, int? year, List<string> otherTitles, List<Movie> candidates, string edition)
         {
             var cleanTitles = titles.Select(t => t.CleanMovieTitle().ToLowerInvariant());
 
@@ -157,7 +177,7 @@ namespace NzbDrone.Core.Movies
                     .AllWithYear(year).ToList();
             }
 
-            return ReturnSingleMovieOrThrow(result.ToList());
+            return ReturnSingleMovieOrThrow(result.ToList(), edition);  // krzw(multi-edition)
         }
 
         public List<Movie> FindByTitleCandidates(List<string> titles, out List<string> otherTitles)
@@ -193,6 +213,27 @@ namespace NzbDrone.Core.Movies
         {
             return _movieRepository.FindByImdbId(imdbid);
         }
+
+        // krzw(multi-edition) begin
+        // The row of the title the parsed edition names: the default row (what FindByImdbId returns) when the
+        // edition is blank or names no edition row of that title.
+        public Movie FindByImdbId(string imdbid, string edition)
+        {
+            var defaultRow = _movieRepository.FindByImdbId(imdbid);
+
+            if (defaultRow == null || edition.IsNullOrWhiteSpace())
+            {
+                return defaultRow;
+            }
+
+            var rows = new List<Movie> { defaultRow };
+
+            rows.AddRange(_movieRepository.GetEditionSiblings(defaultRow.Id));
+
+            return EditionMatcher.SelectRow(rows, edition) ?? defaultRow;
+        }
+
+        // krzw(multi-edition) end
 
         public Movie FindByTmdbId(int tmdbid)
         {
@@ -448,7 +489,7 @@ namespace NzbDrone.Core.Movies
             return _movieRepository.AllMovieWithCollectionsTmdbIds();
         }
 
-        private Movie ReturnSingleMovieOrThrow(List<Movie> movies)
+        private Movie ReturnSingleMovieOrThrow(List<Movie> movies, string edition = null)  // krzw(multi-edition): edition routes among one title's rows
         {
             if (movies.Count == 0)
             {
@@ -460,10 +501,11 @@ namespace NzbDrone.Core.Movies
                 return movies.First();
             }
 
-            // krzw(multi-edition) begin: default + edition rows of one title are one movie for legacy title lookups
+            // krzw(multi-edition) begin: default + edition rows of one title are one movie; the parsed edition picks
+            // the edition row it names, legacy callers (no edition) and unknown editions get the default row
             if (movies.All(m => m.MovieMetadataId > 0 && m.MovieMetadataId == movies[0].MovieMetadataId))
             {
-                return movies.FirstOrDefault(m => m.IsDefaultEdition) ?? movies.First();
+                return EditionMatcher.SelectRow(movies, edition) ?? movies.First();
             }
 
             // krzw(multi-edition) end

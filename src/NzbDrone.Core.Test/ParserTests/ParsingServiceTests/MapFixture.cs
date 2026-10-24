@@ -132,7 +132,7 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
             Subject.Map(_parsedMovieInfo, "", 0, null);
 
             Mocker.GetMock<IMovieService>()
-                .Verify(v => v.FindByTitle(It.IsAny<List<string>>(), It.IsAny<int>(), It.IsAny<List<string>>(), null), Times.Once());
+                .Verify(v => v.FindByTitle(It.IsAny<List<string>>(), It.IsAny<int>(), It.IsAny<List<string>>(), null, It.IsAny<string>()), Times.Once());  // krzw(multi-edition): edition-aware overload
         }
 
         [Test]
