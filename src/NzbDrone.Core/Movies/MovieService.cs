@@ -49,6 +49,10 @@ namespace NzbDrone.Core.Movies
         bool UpdateTags(Movie movie);
         bool ExistsByMetadataId(int metadataId);
         HashSet<int> AllMovieWithCollectionsTmdbIds();
+        List<Movie> FindAllByTmdbId(int tmdbId);  // krzw(multi-edition)
+        List<Movie> GetEditionSiblings(int movieId);  // krzw(multi-edition)
+        Movie GetDefaultEdition(int movieMetadataId);  // krzw(multi-edition)
+        bool EditionExists(int tmdbId, string editionName);  // krzw(multi-edition)
     }
 
     public class MovieService : IMovieService, IHandle<MovieFileAddedEvent>,
@@ -194,6 +198,29 @@ namespace NzbDrone.Core.Movies
         {
             return _movieRepository.FindByTmdbId(tmdbid);
         }
+
+        // krzw(multi-edition) begin
+        public List<Movie> FindAllByTmdbId(int tmdbId)
+        {
+            return _movieRepository.FindAllByTmdbId(tmdbId);
+        }
+
+        public List<Movie> GetEditionSiblings(int movieId)
+        {
+            return _movieRepository.GetEditionSiblings(movieId);
+        }
+
+        public Movie GetDefaultEdition(int movieMetadataId)
+        {
+            return _movieRepository.GetDefaultEdition(movieMetadataId);
+        }
+
+        public bool EditionExists(int tmdbId, string editionName)
+        {
+            return _movieRepository.EditionExists(tmdbId, editionName);
+        }
+
+        // krzw(multi-edition) end
 
         public Movie FindByPath(string path)
         {
@@ -367,7 +394,7 @@ namespace NzbDrone.Core.Movies
 
             if (movie.TmdbId != 0)
             {
-                result = _movieRepository.FindByTmdbId(movie.TmdbId);
+                result = _movieRepository.FindAllByTmdbId(movie.TmdbId).FirstOrDefault();  // krzw(multi-edition): any row (default or edition) counts as existing
                 if (result != null)
                 {
                     return true;
@@ -433,6 +460,13 @@ namespace NzbDrone.Core.Movies
                 return movies.First();
             }
 
+            // krzw(multi-edition) begin: default + edition rows of one title are one movie for legacy title lookups
+            if (movies.All(m => m.MovieMetadataId > 0 && m.MovieMetadataId == movies[0].MovieMetadataId))
+            {
+                return movies.FirstOrDefault(m => m.IsDefaultEdition) ?? movies.First();
+            }
+
+            // krzw(multi-edition) end
             throw new MultipleMoviesFoundException(movies, "Expected one movie, but found {0}. Matching movies: {1}", movies.Count, string.Join(",", movies));
         }
 

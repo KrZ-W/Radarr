@@ -37,6 +37,30 @@ namespace NzbDrone.Core.Movies
 
         public bool HasFile => MovieFileId > 0;
 
+        // krzw(multi-edition) begin: edition rows share one MovieMetadata and Path with the default row ("" = default)
+        private string _edition = "";
+        private List<string> _editionAliases = new List<string>();
+
+        public string Edition
+        {
+            get => _edition;
+            set => _edition = value?.Trim() ?? "";
+        }
+
+        public List<string> EditionAliases
+        {
+            get => _editionAliases;
+            set => _editionAliases = value ?? new List<string>();
+        }
+
+        public bool EditionAcceptUntagged { get; set; }
+
+        public bool IsEdition => _edition.IsNotNullOrWhiteSpace();
+
+        public bool IsDefaultEdition => !IsEdition;
+
+        // krzw(multi-edition) end
+
         // compatibility properties
         public string Title
         {
@@ -158,6 +182,13 @@ namespace NzbDrone.Core.Movies
             RootFolderPath = otherMovie.RootFolderPath;
             Tags = otherMovie.Tags;
             AddOptions = otherMovie.AddOptions;
+
+            // krzw(multi-edition) begin
+            Edition = otherMovie.Edition;
+            EditionAliases = otherMovie.EditionAliases;
+            EditionAcceptUntagged = otherMovie.EditionAcceptUntagged;
+
+            // krzw(multi-edition) end
         }
     }
 }
