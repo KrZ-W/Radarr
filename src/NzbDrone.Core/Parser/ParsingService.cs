@@ -107,6 +107,7 @@ namespace NzbDrone.Core.Parser
                 {
                     movie = movieMatch.Movie;
                     remoteMovie.MovieMatchType = movieMatch.MatchType;
+                    remoteMovie.EditionSiblings = movieMatch.EditionSiblings;  // krzw(multi-edition): the gate reuses the rows routing loaded
                 }
             }
 
@@ -162,12 +163,13 @@ namespace NzbDrone.Core.Parser
         private FindMovieResult TryGetMovieByImDbId(ParsedMovieInfo parsedMovieInfo, string imdbId, SearchCriteriaBase searchCriteria)  // krzw(multi-edition)
         {
             var defaultRow = _movieService.FindByImdbId(imdbId);  // krzw(multi-edition): the default row; edition rows are routed below
-            var movie = SelectEditionRow(EditionRows(defaultRow, parsedMovieInfo, searchCriteria), parsedMovieInfo, searchCriteria);  // krzw(multi-edition)
+            var rows = EditionRows(defaultRow, parsedMovieInfo, searchCriteria, out var allRowsLoaded);  // krzw(multi-edition)
+            var movie = SelectEditionRow(rows, parsedMovieInfo, searchCriteria);  // krzw(multi-edition)
 
             // Should fix practically all problems, where indexer is shite at adding correct imdbids to movies.
             if (movie != null && (parsedMovieInfo.Year < 1800 || movie.MovieMetadata.Value.Year == parsedMovieInfo.Year || movie.MovieMetadata.Value.SecondaryYear == parsedMovieInfo.Year))
             {
-                return new FindMovieResult(movie, MovieMatchType.Id);
+                return new FindMovieResult(movie, MovieMatchType.Id) { EditionSiblings = allRowsLoaded ? SiblingsOf(movie, rows) : null };  // krzw(multi-edition)
             }
 
             return null;
@@ -175,12 +177,13 @@ namespace NzbDrone.Core.Parser
 
         private FindMovieResult TryGetMovieByTmdbId(ParsedMovieInfo parsedMovieInfo, int tmdbId, SearchCriteriaBase searchCriteria)  // krzw(multi-edition)
         {
-            var movie = SelectEditionRow(_movieService.FindAllByTmdbId(tmdbId), parsedMovieInfo, searchCriteria);  // krzw(multi-edition): every row of the title, routed by the release edition
+            var rows = _movieService.FindAllByTmdbId(tmdbId);  // krzw(multi-edition): every row of the title
+            var movie = SelectEditionRow(rows, parsedMovieInfo, searchCriteria);  // krzw(multi-edition): routed by the release edition
 
             // Should fix practically all problems, where indexer is shite at adding correct imdbids to movies.
             if (movie != null && (parsedMovieInfo.Year < 1800 || movie.MovieMetadata.Value.Year == parsedMovieInfo.Year || movie.MovieMetadata.Value.SecondaryYear == parsedMovieInfo.Year))
             {
-                return new FindMovieResult(movie, MovieMatchType.Id);
+                return new FindMovieResult(movie, MovieMatchType.Id) { EditionSiblings = SiblingsOf(movie, rows) };  // krzw(multi-edition)
             }
 
             return null;
@@ -196,7 +199,7 @@ namespace NzbDrone.Core.Parser
                 movieByTitleAndOrYear = _movieService.FindByTitle(parsedMovieInfo.MovieTitles, parsedMovieInfo.Year, otherTitles, candidates, parsedMovieInfo.Edition);  // krzw(multi-edition)
                 if (movieByTitleAndOrYear != null)
                 {
-                    return new FindMovieResult(movieByTitleAndOrYear, MovieMatchType.Title);
+                    return new FindMovieResult(movieByTitleAndOrYear, MovieMatchType.Title) { EditionSiblings = SiblingsOf(movieByTitleAndOrYear, candidates) };  // krzw(multi-edition)
                 }
 
                 return null;
@@ -205,7 +208,7 @@ namespace NzbDrone.Core.Parser
             movieByTitleAndOrYear = _movieService.FindByTitle(parsedMovieInfo.MovieTitles, null, otherTitles, candidates, parsedMovieInfo.Edition);  // krzw(multi-edition)
             if (movieByTitleAndOrYear != null)
             {
-                return new FindMovieResult(movieByTitleAndOrYear, MovieMatchType.Title);
+                return new FindMovieResult(movieByTitleAndOrYear, MovieMatchType.Title) { EditionSiblings = SiblingsOf(movieByTitleAndOrYear, candidates) };  // krzw(multi-edition)
             }
 
             return null;
@@ -234,10 +237,12 @@ namespace NzbDrone.Core.Parser
         }
 
         // The default row plus its edition rows. The sibling lookup is skipped when it could not change the
-        // outcome: a search for a row of this title (that row is the answer), or an untagged release.
-        private List<Movie> EditionRows(Movie defaultRow, ParsedMovieInfo parsedMovieInfo, SearchCriteriaBase searchCriteria)
+        // outcome: a search for a row of this title (that row is the answer), or an untagged release. allRowsLoaded
+        // says whether the result is the title's full row set (only then may the edition gate reuse it).
+        private List<Movie> EditionRows(Movie defaultRow, ParsedMovieInfo parsedMovieInfo, SearchCriteriaBase searchCriteria, out bool allRowsLoaded)
         {
             var rows = new List<Movie>();
+            allRowsLoaded = false;
 
             if (defaultRow == null)
             {
@@ -261,9 +266,22 @@ namespace NzbDrone.Core.Parser
             if (parsedMovieInfo.Edition.IsNotNullOrWhiteSpace())
             {
                 rows.AddRange(_movieService.GetEditionSiblings(defaultRow.Id));
+                allRowsLoaded = true;
             }
 
             return rows;
+        }
+
+        // The other rows of movie's title among rows (which may hold rows of other titles, as the title candidates do).
+        // Routing already materialised them, so the edition gate need not query them again.
+        private static List<Movie> SiblingsOf(Movie movie, IEnumerable<Movie> rows)
+        {
+            if (movie == null || movie.MovieMetadataId <= 0 || rows == null)
+            {
+                return null;
+            }
+
+            return rows.Where(r => r != null && r.Id != movie.Id && r.MovieMetadataId == movie.MovieMetadataId).ToList();
         }
 
         // krzw(multi-edition) end

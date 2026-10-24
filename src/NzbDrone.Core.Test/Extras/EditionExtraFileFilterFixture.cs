@@ -59,10 +59,11 @@ namespace NzbDrone.Core.Test.Extras
             GivenOwnFiles(_extended, _extendedFile);
         }
 
+        // the filter holds the row, so it uses the overload that needs no scalar read of the metadata id
         private void GivenSiblings(Movie row, params Movie[] siblings)
         {
             Mocker.GetMock<IMovieService>()
-                  .Setup(s => s.GetEditionSiblings(row.Id))
+                  .Setup(s => s.GetEditionSiblings(It.Is<Movie>(m => m != null && m.Id == row.Id)))
                   .Returns(siblings.ToList());
         }
 
@@ -198,6 +199,7 @@ namespace NzbDrone.Core.Test.Extras
             Subject.FilterClaimable(new Movie { Id = 0 }, new List<string> { InFolder("poster.jpg") }).Should().HaveCount(1);
 
             Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<Movie>()), Times.Never());
         }
     }
 }

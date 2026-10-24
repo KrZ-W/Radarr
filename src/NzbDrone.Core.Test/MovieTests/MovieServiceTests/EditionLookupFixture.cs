@@ -107,7 +107,10 @@ namespace NzbDrone.Core.Test.MovieTests.MovieServiceTests
             Mocker.GetMock<IMovieRepository>().Setup(s => s.FindAllByTmdbId(603)).Returns(new List<Movie> { _default, _extended });
             Mocker.GetMock<IMovieRepository>().Setup(s => s.FindByTmdbId(It.Is<List<int>>(l => l.SequenceEqual(new[] { 603, 604 })))).Returns(new List<Movie> { _default, _extended });
 
+            Mocker.GetMock<IMovieRepository>().Setup(s => s.GetEditionSiblings(_default)).Returns(new List<Movie> { _extended });
+
             Subject.GetEditionSiblings(1).Should().BeEquivalentTo(new List<Movie> { _extended });
+            Subject.GetEditionSiblings(_default).Should().BeEquivalentTo(new List<Movie> { _extended });
             Subject.GetDefaultEdition(7).Should().BeSameAs(_default);
             Subject.EditionExists(603, "Extended").Should().BeTrue();
             Subject.FindAllByTmdbId(603).Should().HaveCount(2);

@@ -58,6 +58,7 @@ namespace NzbDrone.Core.Movies
         List<Movie> FindAllByTmdbId(int tmdbId);  // krzw(multi-edition)
         List<Movie> FindAllByTmdbIds(List<int> tmdbIds);  // krzw(multi-edition)
         List<Movie> GetEditionSiblings(int movieId);  // krzw(multi-edition)
+        List<Movie> GetEditionSiblings(Movie movie);  // krzw(multi-edition): one query when the caller holds the row
         Movie GetDefaultEdition(int movieMetadataId);  // krzw(multi-edition)
         bool EditionExists(int tmdbId, string editionName);  // krzw(multi-edition)
     }
@@ -263,6 +264,11 @@ namespace NzbDrone.Core.Movies
         public List<Movie> GetEditionSiblings(int movieId)
         {
             return _movieRepository.GetEditionSiblings(movieId);
+        }
+
+        public List<Movie> GetEditionSiblings(Movie movie)
+        {
+            return _movieRepository.GetEditionSiblings(movie);
         }
 
         public Movie GetDefaultEdition(int movieMetadataId)

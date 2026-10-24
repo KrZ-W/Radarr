@@ -45,7 +45,7 @@ namespace NzbDrone.Core.Extras
                 return filesOnDisk;
             }
 
-            var siblings = (_movieService.GetEditionSiblings(movie.Id) ?? new List<Movie>()).Where(s => s != null).ToList();
+            var siblings = (_movieService.GetEditionSiblings(movie) ?? new List<Movie>()).Where(s => s != null).ToList();
 
             if (siblings.Empty())
             {

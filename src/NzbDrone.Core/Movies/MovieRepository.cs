@@ -34,6 +34,7 @@ namespace NzbDrone.Core.Movies
         HashSet<int> AllMovieWithCollectionsTmdbIds();
         List<Movie> FindAllByTmdbId(int tmdbId);  // krzw(multi-edition)
         List<Movie> GetEditionSiblings(int movieId);  // krzw(multi-edition)
+        List<Movie> GetEditionSiblings(Movie movie);  // krzw(multi-edition): no scalar read when the caller holds the row
         Movie GetDefaultEdition(int movieMetadataId);  // krzw(multi-edition)
         bool EditionExists(int tmdbId, string editionName);  // krzw(multi-edition)
     }
@@ -248,6 +249,23 @@ namespace NzbDrone.Core.Movies
             }
 
             var movieMetadataId = metadataId.Value;
+
+            return Query(x => x.MovieMetadataId == movieMetadataId && x.Id != movieId)
+                .OrderBy(x => x.IsEdition ? 1 : 0)
+                .ThenBy(x => x.Id)
+                .ToList();
+        }
+
+        // The caller holds the row, so the metadata id needs no read of its own: one joined query for the siblings.
+        public List<Movie> GetEditionSiblings(Movie movie)
+        {
+            if (movie == null || movie.MovieMetadataId <= 0)
+            {
+                return new List<Movie>();
+            }
+
+            var movieMetadataId = movie.MovieMetadataId;
+            var movieId = movie.Id;
 
             return Query(x => x.MovieMetadataId == movieMetadataId && x.Id != movieId)
                 .OrderBy(x => x.IsEdition ? 1 : 0)

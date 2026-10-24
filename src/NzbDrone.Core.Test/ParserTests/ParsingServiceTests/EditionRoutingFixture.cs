@@ -241,6 +241,82 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
                   .Verify(v => v.FindByTitle(It.IsAny<List<string>>(), It.IsAny<int?>(), It.IsAny<List<string>>(), It.IsAny<List<Movie>>()), Times.Never());
         }
 
+        // the routed row set travels on RemoteMovie.EditionSiblings so the edition gate does not load it again
+
+        [Test]
+        public void tmdb_lookup_should_carry_the_other_rows_of_the_title()
+        {
+            Subject.Map(Parsed("Extended"), "", TmdbId).EditionSiblings.Should().BeEquivalentTo(new List<Movie> { _default });
+            Subject.Map(Parsed(""), "", TmdbId).EditionSiblings.Should().BeEquivalentTo(new List<Movie> { _extended });
+        }
+
+        [Test]
+        public void tmdb_lookup_should_carry_an_empty_set_when_the_title_has_one_row()
+        {
+            Mocker.GetMock<IMovieService>()
+                  .Setup(s => s.FindAllByTmdbId(TmdbId))
+                  .Returns(new List<Movie> { _default });
+
+            var remoteMovie = Subject.Map(Parsed("Extended"), "", TmdbId);
+
+            remoteMovie.EditionSiblings.Should().NotBeNull();
+            remoteMovie.EditionSiblings.Should().BeEmpty();
+        }
+
+        [Test]
+        public void tmdb_search_should_carry_the_other_rows_of_the_title()
+        {
+            Subject.Map(Parsed("Extended"), "", TmdbId, SearchFor(_default)).EditionSiblings.Should().BeEquivalentTo(new List<Movie> { _extended });
+        }
+
+        [Test]
+        public void imdb_lookup_should_carry_the_siblings_it_loaded_for_a_tagged_release()
+        {
+            var remoteMovie = Subject.Map(Parsed("Extended"), ImdbId, 0);
+
+            remoteMovie.Movie.Should().BeSameAs(_extended);
+            remoteMovie.EditionSiblings.Should().BeEquivalentTo(new List<Movie> { _default });
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(_default.Id), Times.Once());
+        }
+
+        [Test]
+        public void imdb_lookup_should_carry_nothing_when_siblings_were_not_loaded()
+        {
+            // untagged release: the sibling lookup is skipped, so the set is unknown
+            Subject.Map(Parsed(""), ImdbId, 0).EditionSiblings.Should().BeNull();
+
+            // search for a row of the title: only the default and the searched row are known
+            Subject.Map(Parsed("Extended"), ImdbId, 0, SearchFor(_extended)).EditionSiblings.Should().BeNull();
+
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<int>()), Times.Never());
+        }
+
+        [Test]
+        public void title_lookup_should_carry_the_candidates_of_the_same_title_only()
+        {
+            var otherMovie = new Movie { Id = 99, MovieMetadataId = 8, MovieMetadata = new MovieMetadata { Id = 8, TmdbId = 604, Title = "The Matrix Reloaded", CleanTitle = "thematrixreloaded", Year = 2003 } };
+            var candidates = new List<Movie> { _default, _extended, otherMovie };
+
+            Mocker.GetMock<IMovieService>()
+                  .Setup(s => s.FindByTitleCandidates(It.IsAny<List<string>>(), out _otherTitles))
+                  .Returns(candidates);
+
+            Mocker.GetMock<IMovieService>()
+                  .Setup(s => s.FindByTitle(It.IsAny<List<string>>(), 1999, It.IsAny<List<string>>(), candidates, "Extended"))
+                  .Returns(_extended);
+
+            var remoteMovie = Subject.Map(Parsed("Extended"), "", 0);
+
+            remoteMovie.Movie.Should().BeSameAs(_extended);
+            remoteMovie.EditionSiblings.Should().BeEquivalentTo(new List<Movie> { _default });
+        }
+
+        [Test]
+        public void mapping_a_given_movie_should_carry_no_siblings()
+        {
+            Subject.Map(Parsed("Extended"), "", TmdbId, _default, null).EditionSiblings.Should().BeNull();
+        }
+
         [Test]
         public void get_movie_should_route_a_tagged_title_by_its_edition()
         {

@@ -30,7 +30,9 @@ namespace NzbDrone.Core.DecisionEngine.Specifications
             }
 
             var parsedEdition = subject.ParsedMovieInfo?.Edition;
-            var rejection = EditionGate.Evaluate(movie, parsedEdition, () => _movieService.GetEditionSiblings(movie.Id));
+
+            // routing (ParsingService) hands over the rows it loaded; only a release that arrived without them costs a query
+            var rejection = EditionGate.Evaluate(movie, parsedEdition, () => subject.EditionSiblings ?? _movieService.GetEditionSiblings(movie));
 
             if (rejection != null)
             {

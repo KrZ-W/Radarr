@@ -194,6 +194,34 @@ namespace NzbDrone.Core.Test.MovieTests.MovieRepositoryTests
         }
 
         [Test]
+        public void get_edition_siblings_by_row_should_return_the_other_rows_only()
+        {
+            var ofDefault = Subject.GetEditionSiblings(_default);
+            var ofExtended = Subject.GetEditionSiblings(_extended);
+
+            ofDefault.Select(r => r.Id).Should().BeEquivalentTo(new[] { _extended.Id });
+            ofExtended.Select(r => r.Id).Should().BeEquivalentTo(new[] { _default.Id });
+            ofExtended.Should().OnlyContain(r => r.MovieMetadata.Value != null && r.QualityProfile != null);
+        }
+
+        [Test]
+        public void get_edition_siblings_by_row_should_still_work_for_a_row_that_was_just_deleted()
+        {
+            // the MoviesDeletedEvent handlers hold the deleted row and ask for the rows that remain
+            Subject.Delete(_extended.Id);
+
+            Subject.GetEditionSiblings(_extended).Select(r => r.Id).Should().BeEquivalentTo(new[] { _default.Id });
+        }
+
+        [Test]
+        public void get_edition_siblings_by_row_should_be_empty_for_unsaved_rows_or_rows_without_metadata()
+        {
+            Subject.GetEditionSiblings((Movie)null).Should().BeEmpty();
+            Subject.GetEditionSiblings(new Movie { Id = 0, MovieMetadataId = 0 }).Should().BeEmpty();
+            Subject.GetEditionSiblings(new Movie { Id = _default.Id, MovieMetadataId = _metadata.Id + 100 }).Should().BeEmpty();
+        }
+
+        [Test]
         public void get_default_edition_should_return_the_default_row()
         {
             Subject.GetDefaultEdition(_metadata.Id).Id.Should().Be(_default.Id);

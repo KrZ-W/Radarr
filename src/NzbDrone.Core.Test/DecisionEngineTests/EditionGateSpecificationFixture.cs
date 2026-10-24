@@ -56,25 +56,28 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
             GivenSiblings(_directorsCut, _default, _extended);
         }
 
+        // the spec holds the row, so it must use the overload that needs no scalar read of the metadata id
         private void GivenSiblings(Movie row, params Movie[] siblings)
         {
             Mocker.GetMock<IMovieService>()
-                  .Setup(s => s.GetEditionSiblings(row.Id))
+                  .Setup(s => s.GetEditionSiblings(It.Is<Movie>(m => m != null && m.Id == row.Id)))
                   .Returns(siblings.ToList());
         }
 
-        private static RemoteMovie GivenRelease(Movie movie, string edition)
+        private static RemoteMovie GivenRelease(Movie movie, string edition, List<Movie> carriedSiblings = null)
         {
             return new RemoteMovie
             {
                 Movie = movie,
-                ParsedMovieInfo = new ParsedMovieInfo { Edition = edition }
+                ParsedMovieInfo = new ParsedMovieInfo { Edition = edition },
+                EditionSiblings = carriedSiblings
             };
         }
 
         private void VerifySiblingQueries(Times times)
         {
-            Mocker.GetMock<IMovieService>().Verify(s => s.GetEditionSiblings(It.IsAny<int>()), times);
+            Mocker.GetMock<IMovieService>().Verify(s => s.GetEditionSiblings(It.IsAny<Movie>()), times);
+            Mocker.GetMock<IMovieService>().Verify(s => s.GetEditionSiblings(It.IsAny<int>()), Times.Never());
         }
 
         [Test]
@@ -158,12 +161,42 @@ namespace NzbDrone.Core.Test.DecisionEngineTests
         }
 
         [Test]
-        public void should_query_siblings_once_for_tagged_release_on_default_row()
+        public void should_query_siblings_once_for_tagged_release_on_default_row_that_carries_none()
         {
-            Subject.IsSatisfiedBy(GivenRelease(_default, "Extended"), new());
+            Subject.IsSatisfiedBy(GivenRelease(_default, "Extended", null), new());
 
-            Mocker.GetMock<IMovieService>().Verify(s => s.GetEditionSiblings(_default.Id), Times.Once());
+            Mocker.GetMock<IMovieService>().Verify(s => s.GetEditionSiblings(_default), Times.Once());
             VerifySiblingQueries(Times.Once());
+        }
+
+        // routing (ParsingService) already loaded the title's rows for a tagged release: the gate reuses them
+
+        [Test]
+        public void should_judge_with_the_carried_siblings_without_querying()
+        {
+            var decision = Subject.IsSatisfiedBy(GivenRelease(_default, "Extended", new List<Movie> { _extended, _directorsCut }), new());
+
+            decision.Accepted.Should().BeFalse();
+            decision.Message.Should().Be("Release edition 'Extended' belongs to the Extended edition of this movie");
+
+            VerifySiblingQueries(Times.Never());
+        }
+
+        [Test]
+        public void should_trust_carried_empty_siblings_over_the_database()
+        {
+            // the mock would return claiming siblings; an empty carried set means routing saw the title has no other rows
+            Subject.IsSatisfiedBy(GivenRelease(_default, "Extended", new List<Movie>()), new()).Accepted.Should().BeTrue();
+
+            VerifySiblingQueries(Times.Never());
+        }
+
+        [Test]
+        public void should_accept_carried_siblings_that_do_not_claim_the_edition()
+        {
+            Subject.IsSatisfiedBy(GivenRelease(_default, "Extended", new List<Movie> { _directorsCut }), new()).Accepted.Should().BeTrue();
+
+            VerifySiblingQueries(Times.Never());
         }
 
         // edition rows
