@@ -45,6 +45,8 @@ namespace NzbDrone.Core.Organizer
 
         public static readonly Regex ReleaseYearRegex = new Regex(@"\{[-{ ._\[(]*Release[- ._]Year[-} ._)\]]*\}", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
+        public static readonly Regex EditionNameRegex = new Regex(@"\{[-{ ._\[(]*Edition[- ._]*Name(?::[^}]*)?[-} ._)\]]*\}", RegexOptions.Compiled | RegexOptions.IgnoreCase);  // krzw(multi-edition)
+
         public static readonly Regex MovieTitleRegex = new Regex(@"(?<token>\{(?:Movie)(?<separator>[- ._])(?:Clean)?(?:OriginalTitle|Title(?:The)?)(?::(?<customFormat>[a-z0-9|-]+))?\})",
                                                                             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
@@ -137,6 +139,7 @@ namespace NzbDrone.Core.Organizer
             AddMediaInfoTokens(tokenHandlers, movieFile);
             AddMovieFileTokens(tokenHandlers, movieFile, multipleTokens);
             AddEditionTagsTokens(tokenHandlers, movieFile);
+            AddEditionNameTokens(tokenHandlers, movie);  // krzw(multi-edition)
             AddCustomFormats(tokenHandlers, movie, movieFile, customFormats);
 
             var splitPatterns = pattern.Split(new char[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries);
@@ -321,6 +324,19 @@ namespace NzbDrone.Core.Organizer
                 tokenHandlers["{Edition Tags}"] = m => Truncate(GetEditionToken(movieFile), m.CustomFormat);
             }
         }
+
+        // krzw(multi-edition) begin: {Edition Name} is the row's canonical edition, rendered verbatim (no title-casing,
+        // unlike {Edition Tags} which carries the release's spelling). It is empty on the default row, so
+        // {edition-{Edition Name}} collapses to nothing there and adopting the token renames no existing file.
+        private void AddEditionNameTokens(Dictionary<string, Func<TokenMatch, string>> tokenHandlers, Movie movie)
+        {
+            if (movie.IsEdition)
+            {
+                tokenHandlers["{Edition Name}"] = m => Truncate(movie.Edition, m.CustomFormat);
+            }
+        }
+
+        // krzw(multi-edition) end
 
         private void AddReleaseDateTokens(Dictionary<string, Func<TokenMatch, string>> tokenHandlers, int releaseYear)
         {

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using NzbDrone.Common.Extensions;  // krzw(multi-edition)
 using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.MediaInfo;
@@ -19,6 +20,7 @@ namespace NzbDrone.Core.Organizer
 
         private static MovieFile _movieFile;
         private static Movie _movie;
+        private static Movie _editionMovie;  // krzw(multi-edition)
         private static List<CustomFormat> _customFormats;
 
         public FileNameSampleService(IBuildFileNames buildFileNames)
@@ -65,6 +67,16 @@ namespace NzbDrone.Core.Organizer
                 MovieMetadataId = 1
             };
 
+            // krzw(multi-edition) begin: an edition row of the same sample title, used only when the format names {Edition Name}
+            _editionMovie = new Movie
+            {
+                MovieMetadata = _movie.MovieMetadata,
+                MovieMetadataId = 1,
+                Edition = "Director's Cut",
+                EditionAliases = new List<string> { "director's cut", "directors cut", "director's edition" }
+            };
+
+            // krzw(multi-edition) end
             _customFormats = new List<CustomFormat>
             {
                 new CustomFormat
@@ -82,10 +94,12 @@ namespace NzbDrone.Core.Organizer
 
         public SampleResult GetMovieSample(NamingConfig nameSpec)
         {
+            var movie = GetSampleMovie(nameSpec);  // krzw(multi-edition)
+
             var result = new SampleResult
             {
-                FileName = BuildSample(_movie, _movieFile, nameSpec),
-                Movie = _movie,
+                FileName = BuildSample(movie, _movieFile, nameSpec),  // krzw(multi-edition)
+                Movie = movie,  // krzw(multi-edition)
                 MovieFile = _movieFile
             };
 
@@ -97,6 +111,21 @@ namespace NzbDrone.Core.Organizer
             return _buildFileNames.GetMovieFolder(_movie, nameSpec);
         }
 
+        // krzw(multi-edition) begin: show an edition in the preview only when the format uses {Edition Name},
+        // so the default sample (and the examples of users who never adopt the token) stay exactly as before
+        private static Movie GetSampleMovie(NamingConfig nameSpec)
+        {
+            var format = nameSpec?.StandardMovieFormat;
+
+            if (format.IsNotNullOrWhiteSpace() && FileNameBuilder.EditionNameRegex.IsMatch(format))
+            {
+                return _editionMovie;
+            }
+
+            return _movie;
+        }
+
+        // krzw(multi-edition) end
         private string BuildSample(Movie movie, MovieFile movieFile, NamingConfig nameSpec)
         {
             try
