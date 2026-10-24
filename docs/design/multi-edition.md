@@ -133,6 +133,8 @@ Routing picks which Movie row a release or file belongs to; the decision engine 
 
 New code: `EditionGateSpecification` (IDownloadDecisionEngineSpecification, permanent rejection with reason text) and `EditionGateImportSpecification` (IImportDecisionEngineSpecification). Both additive files plus DI registration.
 
+Slice 1 note (2026-10-24): Radarr maps one release to exactly one Movie row, so the "untagged release, accept-untagged edition" row above holds for per-row searches (missing / cutoff-unmet / interactive, where the searched row is the candidate) but not for RSS, which routes an untagged release to the default row only. Accept-untagged editions are filled by their own searches; a DownloadDecisionMaker fan-out is deliberately not part of slice 1. Also in slice 1: the grab history binds a download to the row it was grabbed for (tracked-download mapping and the import gate honour it before the edition selector), and the import gate also runs for files already inside the shared folder (section 9's second line of defence).
+
 ## 8. Search, RSS, wanted
 
 - `MoviesSearch {movieIds}`, `MissingMoviesSearch`, `CutoffUnmetMoviesSearch` and interactive search already operate per Movie row: per-edition search is free. Search titles come from the shared metadata (and the fork's regional/user titles), so an Extended search issues the same queries and the gate keeps only Extended results.
