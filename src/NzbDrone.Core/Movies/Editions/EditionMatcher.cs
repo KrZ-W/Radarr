@@ -27,8 +27,10 @@ namespace NzbDrone.Core.Movies.Editions
             return Candidates(row).Any(candidate => Matches(parsed, candidate));
         }
 
-        // rows share one MovieMetadataId. Returns the first edition row the parsed edition names (monitored or
-        // not, so it can be rejected there instead of leaking to the default row), else the default row, else null.
+        // rows share one MovieMetadataId. Returns the edition row the parsed edition names (monitored or not, so it
+        // can be rejected there instead of leaking to the default row): a row named exactly (name or alias) wins over
+        // one matched by containment, so "Extended Remastered" reaches its own row next to an Extended row whatever
+        // the insertion order; else the default row, else null.
         public static Movie SelectRow(IEnumerable<Movie> rows, string parsedEdition)
         {
             var candidates = rows?.Where(r => r != null).ToList() ?? new List<Movie>();
@@ -38,7 +40,7 @@ namespace NzbDrone.Core.Movies.Editions
                 return null;
             }
 
-            var editionRow = candidates.FirstOrDefault(r => RowMatchesEdition(r, parsedEdition));
+            var editionRow = FirstMatch(candidates, parsedEdition);
 
             if (editionRow != null)
             {
@@ -51,14 +53,34 @@ namespace NzbDrone.Core.Movies.Editions
         // True iff a sibling edition row of defaultRow names the parsed edition (the default row must then reject it).
         public static bool IsClaimedBySibling(Movie defaultRow, IEnumerable<Movie> siblings, string parsedEdition)
         {
+            return FindClaimingSibling(defaultRow, siblings, parsedEdition) != null;
+        }
+
+        // The sibling edition row of row that names the parsed edition (exact match preferred, as in SelectRow), or
+        // null. row itself and null entries are ignored; null siblings give null.
+        public static Movie FindClaimingSibling(Movie row, IEnumerable<Movie> siblings, string parsedEdition)
+        {
             if (siblings == null)
             {
-                return false;
+                return null;
             }
 
-            return siblings
-                .Where(s => s != null && (defaultRow == null || s.Id != defaultRow.Id))
-                .Any(s => RowMatchesEdition(s, parsedEdition));
+            var others = siblings.Where(s => s != null && (row == null || s.Id != row.Id)).ToList();
+
+            return FirstMatch(others, parsedEdition);
+        }
+
+        private static Movie FirstMatch(List<Movie> rows, string parsedEdition)
+        {
+            var parsed = EditionNormalizer.Normalize(parsedEdition);
+
+            if (parsed.IsNullOrWhiteSpace())
+            {
+                return null;
+            }
+
+            return rows.FirstOrDefault(r => r.IsEdition && Candidates(r).Contains(parsed))
+                   ?? rows.FirstOrDefault(r => RowMatchesEdition(r, parsedEdition));
         }
 
         private static IEnumerable<string> Candidates(Movie row)

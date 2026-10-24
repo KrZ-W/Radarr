@@ -54,6 +54,11 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Manual
                   .Setup(s => s.GetFilesByMovie(_movie.Id))
                   .Returns(new List<MovieFile> { _movieFile });
 
+            // krzw(multi-edition): no sibling edition rows unless a test says so
+            Mocker.GetMock<IMediaFileService>()
+                  .Setup(s => s.GetSiblingEditionFiles(It.IsAny<Movie>()))
+                  .Returns(new List<MovieFile>());
+
             // krzw(grabbed-release-title): the listing scores existing files through the scoring ladder
             Mocker.GetMock<ICustomFormatCalculationService>()
                   .Setup(s => s.ParseCustomFormatForScoring(It.IsAny<MovieFile>(), It.IsAny<Movie>()))
@@ -353,6 +358,39 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Manual
             items.Single().Movie.Should().BeSameAs(_extended);
 
             Mocker.GetMock<IMovieService>().Verify(v => v.FindByTitle(It.IsAny<string>(), It.IsAny<int>()), Times.Never());
+        }
+
+        [Test]
+        public void movie_listing_should_not_offer_a_sibling_editions_file_as_unmapped()
+        {
+            GivenEditionRows();
+
+            var ownFile = new MovieFile { Id = 5, MovieId = _default.Id, RelativePath = "Movie (2010).mkv", Size = 1, Quality = new QualityModel(Quality.Bluray1080p), Languages = new List<Language>() };
+            var siblingFile = new MovieFile { Id = 6, MovieId = _extended.Id, RelativePath = "Movie (2010) {edition-Extended}.mkv", Size = 2 };
+            var ownPath = Path.Combine(_default.Path, ownFile.RelativePath);
+            var siblingPath = Path.Combine(_default.Path, siblingFile.RelativePath);
+            var unmappedPath = Path.Combine(_default.Path, "Movie (2010) Bonus.mkv");
+
+            Mocker.GetMock<IMediaFileService>()
+                  .Setup(s => s.GetFilesByMovie(_default.Id))
+                  .Returns(new List<MovieFile> { ownFile });
+
+            Mocker.GetMock<IMediaFileService>()
+                  .Setup(s => s.GetSiblingEditionFiles(_default))
+                  .Returns(new List<MovieFile> { siblingFile });
+
+            Mocker.GetMock<IDiskScanService>()
+                  .Setup(s => s.GetVideoFiles(_default.Path, It.IsAny<bool>()))
+                  .Returns(new[] { ownPath, siblingPath, unmappedPath });
+
+            Mocker.GetMock<IDiskProvider>()
+                  .Setup(s => s.FileExists(It.IsAny<string>()))
+                  .Returns(true);
+
+            var items = Subject.GetMediaFiles(_default.Id);
+
+            items.Select(i => i.Path).Should().BeEquivalentTo(new[] { ownPath, unmappedPath });
+            items.Should().OnlyContain(i => i.Movie == _default);
         }
 
         // krzw(multi-edition) end

@@ -82,7 +82,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
             var items = movieFiles.Select(movieFile => MapItem(movieFile, movie, directoryInfo.Name)).ToList();
 
             var mediaFiles = _diskScanService.FilterPaths(movie.Path, _diskScanService.GetVideoFiles(movie.Path)).ToList();
-            var unmappedFiles = MediaFileService.FilterExistingFiles(mediaFiles, movieFiles, movie);
+            var unmappedFiles = MediaFileService.FilterExistingFiles(mediaFiles, movieFiles.Concat(_mediaFileService.GetSiblingEditionFiles(movie)).ToList(), movie);  // krzw(multi-edition): the other edition rows' files share this folder
 
             items.AddRange(unmappedFiles.Select(file =>
                 new ManualImportItem

@@ -1,14 +1,18 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;  // krzw(multi-edition)
 using FizzWare.NBuilder;
+using FluentAssertions;  // krzw(multi-edition)
 using Moq;
 using NUnit.Framework;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Exceptions;  // krzw(multi-edition)
 using NzbDrone.Core.ImportLists;
 using NzbDrone.Core.ImportLists.ImportExclusions;
 using NzbDrone.Core.ImportLists.ImportListMovies;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Test.Framework;
+using NzbDrone.Test.Common;  // krzw(multi-edition)
 
 namespace NzbDrone.Core.Test.ImportList
 {
@@ -458,5 +462,80 @@ namespace NzbDrone.Core.Test.ImportList
             Mocker.GetMock<IAddMovieService>()
                   .Verify(v => v.AddMovies(It.Is<List<Movie>>(s => s.Count == 7 && s.All(m => m.TmdbId != _existingMovies[0].TmdbId)), true), Times.Once());
         }
+
+        // krzw(multi-edition) begin
+        private static Movie GivenRow(int id, int tmdbId, int movieMetadataId, string edition)
+        {
+            return Builder<Movie>.CreateNew()
+                                 .With(m => m.Id = id)
+                                 .With(m => m.TmdbId = tmdbId)
+                                 .With(m => m.ImdbId = tmdbId.ToString())
+                                 .With(m => m.MovieMetadataId = movieMetadataId)
+                                 .With(m => m.Edition = edition)
+                                 .Build();
+        }
+
+        [Test]
+        public void should_delete_edition_rows_before_their_default_row_on_clean_library()
+        {
+            _importListFetch.Movies.ForEach(m => m.ListId = 1);
+            GivenList(1, true);
+            GivenCleanLevel("removeAndDelete");
+
+            var defaultRow = GivenRow(20, 9, 5, "");
+            var editionRow = GivenRow(21, 9, 5, "Extended");
+            var deleted = new List<int>();
+
+            Mocker.GetMock<IMovieService>()
+                  .Setup(v => v.GetAllMovies())
+                  .Returns(new List<Movie> { defaultRow, editionRow });
+
+            Mocker.GetMock<IMovieService>()
+                  .Setup(v => v.DeleteMovie(It.IsAny<int>(), It.IsAny<bool>(), It.IsAny<bool>()))
+                  .Callback<int, bool, bool>((id, deleteFiles, exclusion) => deleted.Add(id));
+
+            Mocker.GetMock<IImportListMovieService>()
+                  .Setup(v => v.GetAllListMovies())
+                  .Returns(_list1Movies);
+
+            Subject.Execute(_commandAll);
+
+            deleted.Should().Equal(editionRow.Id, defaultRow.Id);
+        }
+
+        [Test]
+        public void should_skip_a_default_row_whose_editions_block_its_deletion_on_clean_library()
+        {
+            _importListFetch.Movies.ForEach(m => m.ListId = 1);
+            GivenList(1, true);
+            GivenCleanLevel("removeAndKeep");
+
+            var blockedDefaultRow = GivenRow(20, 9, 5, "");
+            var plainMovie = GivenRow(22, 10, 6, "");
+
+            Mocker.GetMock<IMovieService>()
+                  .Setup(v => v.GetAllMovies())
+                  .Returns(new List<Movie> { blockedDefaultRow, plainMovie });
+
+            Mocker.GetMock<IMovieService>()
+                  .Setup(v => v.DeleteMovie(blockedDefaultRow.Id, It.IsAny<bool>(), It.IsAny<bool>()))
+                  .Throws(new NzbDroneClientException(HttpStatusCode.BadRequest, "Cannot delete {0}: its Extended edition(s) must be deleted first", blockedDefaultRow));
+
+            Mocker.GetMock<IImportListMovieService>()
+                  .Setup(v => v.GetAllListMovies())
+                  .Returns(_list1Movies);
+
+            Subject.Execute(_commandAll);
+
+            Mocker.GetMock<IMovieService>()
+                  .Verify(v => v.DeleteMovie(plainMovie.Id, false, It.IsAny<bool>()), Times.Once());
+
+            Mocker.GetMock<IMovieService>()
+                  .Verify(v => v.UpdateMovie(It.IsAny<List<Movie>>(), true), Times.Once());
+
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        // krzw(multi-edition) end
     }
 }

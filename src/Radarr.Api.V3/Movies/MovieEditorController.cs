@@ -121,6 +121,7 @@ namespace Radarr.Api.V3.Movies
             var tdict = translations.ToDictionaryIgnoreDuplicates(x => x.MovieMetadataId);
 
             var updatedMovies = _movieService.UpdateMovie(moviesToUpdate, !resource.MoveFiles);
+            var titleRows = _movieService.FindAllByTmdbIds(updatedMovies.Select(m => m.TmdbId).Distinct().ToList());  // krzw(multi-edition): one query for the editions[]/editionParentId of the rows sent back
 
             var moviesResources = new List<MovieResource>(updatedMovies.Count);
 
@@ -130,6 +131,7 @@ namespace Radarr.Api.V3.Movies
                 var movieResource = movie.ToResource(availabilityDelay, translation, _upgradableSpecification);
 
                 MapCoversToLocal(movieResource);
+                movieResource.LinkEditions(movie, titleRows);  // krzw(multi-edition)
 
                 moviesResources.Add(movieResource);
             }

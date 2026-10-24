@@ -1,7 +1,6 @@
 // krzw(multi-edition): the accept/reject rule shared by EditionGateSpecification (grabs) and EditionGateImportSpecification (imports), spec section 7
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using NzbDrone.Common.Extensions;
 
 namespace NzbDrone.Core.Movies.Editions
@@ -15,9 +14,12 @@ namespace NzbDrone.Core.Movies.Editions
         // Returns null when the row may take a release or file carrying parsedEdition, else the rejection message.
         // Edition rows accept iff the edition names the row (name or alias), or it is empty and the row accepts
         // untagged releases. Default rows accept unless a sibling edition row claims the edition (legacy
-        // behaviour otherwise). getSiblings is invoked only for a default row facing a tagged release, the one
-        // case that needs the other rows, so untagged releases and edition rows cost no query.
-        public static string Evaluate(Movie movie, string parsedEdition, Func<List<Movie>> getSiblings)
+        // behaviour otherwise). A row the download was grabbed for (grabbedForRow: the grab history names it) is
+        // judged like a default row: the download is its whatever the client, folder or file names say, unless the
+        // edition names a sibling row outright (spec section 7, "imports never cross rows"). getSiblings is invoked
+        // only for a tagged release on a default or grabbed-for row that the row itself does not match, so untagged
+        // releases and edition rows cost no query.
+        public static string Evaluate(Movie movie, string parsedEdition, Func<List<Movie>> getSiblings, bool grabbedForRow = false)
         {
             if (movie == null)
             {
@@ -26,7 +28,7 @@ namespace NzbDrone.Core.Movies.Editions
 
             var edition = parsedEdition?.Trim() ?? string.Empty;
 
-            if (movie.IsEdition)
+            if (movie.IsEdition && !grabbedForRow)
             {
                 if (edition.IsNullOrWhiteSpace())
                 {
@@ -36,19 +38,17 @@ namespace NzbDrone.Core.Movies.Editions
                 return EditionMatcher.RowMatchesEdition(movie, edition) ? null : string.Format(DoesNotMatchMessage, edition, movie.Edition);
             }
 
-            if (edition.IsNullOrWhiteSpace())
+            if (edition.IsNullOrWhiteSpace() || EditionMatcher.RowMatchesEdition(movie, edition))
             {
                 return null;
             }
 
-            var siblings = getSiblings?.Invoke() ?? new List<Movie>();
+            var claimant = EditionMatcher.FindClaimingSibling(movie, getSiblings?.Invoke(), edition);
 
-            if (!EditionMatcher.IsClaimedBySibling(movie, siblings, edition))
+            if (claimant == null)
             {
                 return null;
             }
-
-            var claimant = siblings.First(s => s != null && s.Id != movie.Id && EditionMatcher.RowMatchesEdition(s, edition));
 
             return string.Format(BelongsToSiblingMessage, edition, claimant.Edition);
         }

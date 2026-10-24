@@ -28,6 +28,9 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests
         [TestCase("", EditionValidation.NameRequiredMessage)]
         [TestCase("  ", EditionValidation.NameRequiredMessage)]
         [TestCase("123456789012345678901234567890123", "Edition name must be at most 32 characters")]
+        [TestCase("...", EditionValidation.NameInvalidMessage)]
+        [TestCase("- - -", EditionValidation.NameInvalidMessage)]
+        [TestCase("()", EditionValidation.NameInvalidMessage)]
         public void should_report_name_problems(string name, string expected)
         {
             EditionValidation.NameProblem(name).Should().Be(expected);

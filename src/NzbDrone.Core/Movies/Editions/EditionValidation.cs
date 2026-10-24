@@ -11,6 +11,7 @@ namespace NzbDrone.Core.Movies.Editions
         public const int MaxNameLength = 32;
 
         public const string NameRequiredMessage = "Edition name is required";
+        public const string NameInvalidMessage = "Edition name must contain letters or digits";
         public const string NameTooLongMessage = "Edition name must be at most {0} characters";
         public const string AlreadyAddedMessage = "This movie edition '{0}' has already been added";
 
@@ -29,13 +30,19 @@ namespace NzbDrone.Core.Movies.Editions
                 return string.Format(NameTooLongMessage, MaxNameLength);
             }
 
+            // "...", "---" or "()" normalize to nothing: such a row could never match a release
+            if (EditionNormalizer.Normalize(trimmed).IsNullOrWhiteSpace())
+            {
+                return NameInvalidMessage;
+            }
+
             return null;
         }
 
         // True iff another edition row of the title (rows share one TMDb id) already carries the name, as its
         // canonical name or as an alias, after normalization. Exact equality only: "Extended Remastered" may live
-        // next to "Extended" (the matcher's containment rule then routes "Extended Remastered" releases to whichever
-        // row comes first; that is the user's call). excludeMovieId leaves the row being renamed out.
+        // next to "Extended" (EditionMatcher.SelectRow prefers the exactly named row, so each gets its own
+        // releases). excludeMovieId leaves the row being renamed out.
         public static bool NameCollides(IEnumerable<Movie> rows, string name, int excludeMovieId = 0)
         {
             var normalized = EditionNormalizer.Normalize(name);

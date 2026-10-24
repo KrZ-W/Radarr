@@ -173,6 +173,23 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
 
             remoteMovie.Movie.Should().BeSameAs(_extended);
             remoteMovie.MovieRequested.Should().BeTrue();
+
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<int>()), Times.Never());
+        }
+
+        [Test]
+        public void search_for_an_edition_row_should_not_load_siblings_for_an_untagged_imdb_release_of_another_title()
+        {
+            var otherMovie = new Movie { Id = 99, MovieMetadataId = 8, MovieMetadata = new MovieMetadata { Id = 8, TmdbId = 604, Title = "Other", CleanTitle = "other", Year = 2003 } };
+
+            var untagged = Subject.Map(Parsed(""), ImdbId, 0, SearchFor(otherMovie));
+            untagged.Movie.Should().BeSameAs(_default);
+            untagged.MovieRequested.Should().BeFalse();
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<int>()), Times.Never());
+
+            var tagged = Subject.Map(Parsed("Extended"), ImdbId, 0, SearchFor(otherMovie));
+            tagged.Movie.Should().BeSameAs(_extended);
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(_default.Id), Times.Once());
         }
 
         [TestCase("")]

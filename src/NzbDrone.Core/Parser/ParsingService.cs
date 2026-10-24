@@ -234,7 +234,7 @@ namespace NzbDrone.Core.Parser
         }
 
         // The default row plus its edition rows. The sibling lookup is skipped when it could not change the
-        // outcome: an untagged release outside a search, or a search for the default row itself.
+        // outcome: a search for a row of this title (that row is the answer), or an untagged release.
         private List<Movie> EditionRows(Movie defaultRow, ParsedMovieInfo parsedMovieInfo, SearchCriteriaBase searchCriteria)
         {
             var rows = new List<Movie>();
@@ -248,7 +248,17 @@ namespace NzbDrone.Core.Parser
 
             var searchedMovie = searchCriteria?.Movie;
 
-            if (parsedMovieInfo.Edition.IsNotNullOrWhiteSpace() || (searchedMovie != null && searchedMovie.Id != defaultRow.Id))
+            if (searchedMovie != null && searchedMovie.MovieMetadataId > 0 && searchedMovie.MovieMetadataId == defaultRow.MovieMetadataId)
+            {
+                if (searchedMovie.Id != defaultRow.Id)
+                {
+                    rows.Add(searchedMovie);
+                }
+
+                return rows;
+            }
+
+            if (parsedMovieInfo.Edition.IsNotNullOrWhiteSpace())
             {
                 rows.AddRange(_movieService.GetEditionSiblings(defaultRow.Id));
             }

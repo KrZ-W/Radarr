@@ -83,10 +83,12 @@ namespace Radarr.Api.V3.Calendar
 
             var resources = MapToResource(results);
 
-            // krzw(multi-edition) begin: EditionParentId/Editions from the rows already in hand (edition rows of a title fall in the same date range)
+            // krzw(multi-edition) begin: EditionParentId/Editions from every row of the kept titles (the monitored filter may have dropped some)
+            var titleRows = unmonitored || results.Empty() ? movies : _moviesService.FindAllByTmdbIds(results.Select(m => m.TmdbId).Distinct().ToList());
+
             for (var i = 0; i < results.Count; i++)
             {
-                resources[i].LinkEditions(results[i], movies);
+                resources[i].LinkEditions(results[i], titleRows);
             }
 
             // krzw(multi-edition) end

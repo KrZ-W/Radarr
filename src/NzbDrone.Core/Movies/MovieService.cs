@@ -56,6 +56,7 @@ namespace NzbDrone.Core.Movies
         bool ExistsByMetadataId(int metadataId);
         HashSet<int> AllMovieWithCollectionsTmdbIds();
         List<Movie> FindAllByTmdbId(int tmdbId);  // krzw(multi-edition)
+        List<Movie> FindAllByTmdbIds(List<int> tmdbIds);  // krzw(multi-edition)
         List<Movie> GetEditionSiblings(int movieId);  // krzw(multi-edition)
         Movie GetDefaultEdition(int movieMetadataId);  // krzw(multi-edition)
         bool EditionExists(int tmdbId, string editionName);  // krzw(multi-edition)
@@ -246,6 +247,17 @@ namespace NzbDrone.Core.Movies
         public List<Movie> FindAllByTmdbId(int tmdbId)
         {
             return _movieRepository.FindAllByTmdbId(tmdbId);
+        }
+
+        // every row (default and edition) of the given titles, for callers that link several resources at once
+        public List<Movie> FindAllByTmdbIds(List<int> tmdbIds)
+        {
+            if (tmdbIds == null || tmdbIds.Count == 0)
+            {
+                return new List<Movie>();
+            }
+
+            return _movieRepository.FindByTmdbId(tmdbIds);
         }
 
         public List<Movie> GetEditionSiblings(int movieId)

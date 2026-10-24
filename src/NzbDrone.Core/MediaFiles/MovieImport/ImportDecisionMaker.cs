@@ -104,8 +104,8 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                     Path = file,
                     SceneSource = sceneSource,
                     ExistingFile = fileMovie.Path.IsParentPath(file),  // krzw(multi-edition)
-                    OtherVideoFiles = nonSampleVideoFileCount > 1,
-                    EditionOverride = editionOverride  // krzw(multi-edition)
+                    EditionOverride = editionOverride,  // krzw(multi-edition)
+                    OtherVideoFiles = nonSampleVideoFileCount > 1
                 };
 
                 decisions.AddIfNotNull(GetDecision(localMovie, downloadClientItem, nonSampleVideoFileCount > 1));

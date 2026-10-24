@@ -1,4 +1,4 @@
-// krzw(multi-edition): edition gate for imports - the EditionGate rule applied to the aggregated file edition; skipped for rows the user picked in manual import and for files already inside the library folder (spec section 7)
+// krzw(multi-edition): edition gate for imports - the EditionGate rule applied to the aggregated file edition; skipped for rows the user picked in manual import, applied to files already inside the library folder too (spec sections 7 and 9), and a download's grab history makes the grabbed-for row keep its files
 using NLog;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Movies;
@@ -26,12 +26,6 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
                 return ImportSpecDecision.Accept();
             }
 
-            if (localMovie.ExistingFile)
-            {
-                _logger.Debug("{0} is in movie folder, skipping edition gate", localMovie.Path);
-                return ImportSpecDecision.Accept();
-            }
-
             var movie = localMovie.Movie;
 
             if (movie == null)
@@ -39,7 +33,11 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
                 return ImportSpecDecision.Accept();
             }
 
-            var rejection = EditionGate.Evaluate(movie, localMovie.Edition, () => _movieService.GetEditionSiblings(movie.Id));
+            // The grab history (AggregateReleaseInfo) names the rows a download was grabbed for; its files belong to
+            // this row even when neither the client title nor the file name carries the edition.
+            var grabbedForRow = localMovie.Release?.MovieIds?.Contains(movie.Id) == true;
+
+            var rejection = EditionGate.Evaluate(movie, localMovie.Edition, () => _movieService.GetEditionSiblings(movie.Id), grabbedForRow);
 
             if (rejection != null)
             {

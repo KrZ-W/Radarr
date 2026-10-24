@@ -3,6 +3,7 @@ using System.Linq;
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
+using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles.MovieImport;
 using NzbDrone.Core.MediaFiles.MovieImport.Specifications;
 using NzbDrone.Core.Movies;
@@ -77,6 +78,20 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
             };
         }
 
+        // The grab history as AggregateReleaseInfo attaches it: the rows the download was grabbed for.
+        private static LocalMovie GivenGrabbedFile(Movie movie, string edition, params int[] grabbedForMovieIds)
+        {
+            var localMovie = GivenFile(movie, edition);
+
+            localMovie.Release = new GrabbedReleaseInfo(grabbedForMovieIds.Select(id => new MovieHistory
+            {
+                MovieId = id,
+                SourceTitle = "Movie.Title.2010.1080p.BluRay.x264-GROUP"
+            }).ToList());
+
+            return localMovie;
+        }
+
         private void VerifySiblingQueries(Times times)
         {
             Mocker.GetMock<IMovieService>().Verify(s => s.GetEditionSiblings(It.IsAny<int>()), times);
@@ -103,8 +118,9 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
             VerifySiblingQueries(Times.Never());
         }
 
+        // spec section 9: the gate is the second line of defence for files already inside the shared folder
         [Test]
-        public void should_skip_gate_for_existing_files()
+        public void should_gate_existing_files_too()
         {
             var claimedBySibling = GivenFile(_default, "Extended");
             claimedBySibling.ExistingFile = true;
@@ -112,10 +128,63 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
             var untaggedForEdition = GivenFile(_extended, "");
             untaggedForEdition.ExistingFile = true;
 
-            Subject.IsSatisfiedBy(claimedBySibling, null).Accepted.Should().BeTrue();
-            Subject.IsSatisfiedBy(untaggedForEdition, null).Accepted.Should().BeTrue();
+            var namingTheEdition = GivenFile(_extended, "Extended");
+            namingTheEdition.ExistingFile = true;
+
+            Subject.IsSatisfiedBy(claimedBySibling, null).Accepted.Should().BeFalse();
+            Subject.IsSatisfiedBy(untaggedForEdition, null).Accepted.Should().BeFalse();
+            Subject.IsSatisfiedBy(namingTheEdition, null).Accepted.Should().BeTrue();
+        }
+
+        // own grab: a download is tied to the row it was grabbed for (spec section 7)
+
+        [Test]
+        public void should_accept_untagged_file_for_edition_row_when_the_download_was_grabbed_for_it()
+        {
+            _extended.EditionAcceptUntagged.Should().BeFalse();
+
+            Subject.IsSatisfiedBy(GivenGrabbedFile(_extended, "", _extended.Id), null).Accepted.Should().BeTrue();
 
             VerifySiblingQueries(Times.Never());
+        }
+
+        [Test]
+        public void should_accept_file_naming_the_edition_row_it_was_grabbed_for_without_querying_siblings()
+        {
+            Subject.IsSatisfiedBy(GivenGrabbedFile(_extended, "Extended Cut", _extended.Id), null).Accepted.Should().BeTrue();
+
+            VerifySiblingQueries(Times.Never());
+        }
+
+        [Test]
+        public void should_accept_file_naming_no_known_edition_when_grabbed_for_the_edition_row()
+        {
+            Subject.IsSatisfiedBy(GivenGrabbedFile(_extended, "Ulysses Cut", _extended.Id), null).Accepted.Should().BeTrue();
+
+            VerifySiblingQueries(Times.Once());
+        }
+
+        [Test]
+        public void should_still_reject_file_claimed_by_a_sibling_when_grabbed_for_the_edition_row()
+        {
+            var decision = Subject.IsSatisfiedBy(GivenGrabbedFile(_extended, "Director's Cut", _extended.Id), null);
+
+            decision.Accepted.Should().BeFalse();
+            decision.Reason.Should().Be(ImportRejectionReason.EditionMismatch);
+            decision.Message.Should().Be("Release edition 'Director's Cut' belongs to the Director's Cut edition of this movie");
+        }
+
+        [Test]
+        public void should_still_reject_file_claimed_by_a_sibling_when_grabbed_for_the_default_row()
+        {
+            Subject.IsSatisfiedBy(GivenGrabbedFile(_default, "Extended", _default.Id), null).Accepted.Should().BeFalse();
+        }
+
+        [Test]
+        public void should_not_trust_a_grab_made_for_another_row()
+        {
+            Subject.IsSatisfiedBy(GivenGrabbedFile(_extended, "", _default.Id), null).Accepted.Should().BeFalse();
+            Subject.IsSatisfiedBy(GivenGrabbedFile(_extended, "Ulysses Cut", _default.Id), null).Accepted.Should().BeFalse();
         }
 
         // default row

@@ -234,14 +234,20 @@ namespace NzbDrone.Core.Movies
 
         public List<Movie> GetEditionSiblings(int movieId)
         {
-            var movie = Query(x => x.Id == movieId).FirstOrDefault();
+            int? metadataId;
 
-            if (movie == null)
+            // a scalar read; the joined Movie query is spent on the siblings only
+            using (var conn = _database.OpenConnection())
+            {
+                metadataId = conn.ExecuteScalar<int?>("SELECT \"MovieMetadataId\" FROM \"Movies\" WHERE \"Id\" = @movieId", new { movieId });
+            }
+
+            if (metadataId == null || metadataId <= 0)
             {
                 return new List<Movie>();
             }
 
-            var movieMetadataId = movie.MovieMetadataId;
+            var movieMetadataId = metadataId.Value;
 
             return Query(x => x.MovieMetadataId == movieMetadataId && x.Id != movieId)
                 .OrderBy(x => x.IsEdition ? 1 : 0)

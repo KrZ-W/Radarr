@@ -5,6 +5,7 @@ using NLog;
 using NzbDrone.Common.Cache;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.CustomFormats;
+using NzbDrone.Core.Datastore;  // krzw(multi-edition)
 using NzbDrone.Core.Download.Aggregation;
 using NzbDrone.Core.Download.History;
 using NzbDrone.Core.History;
@@ -157,6 +158,10 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                         }
                     }
 
+                    // krzw(multi-edition) begin
+                    RemapToGrabbedEditionRow(trackedDownload, grabbedEvent, parsedMovieInfo);
+
+                    // krzw(multi-edition) end
                     if (trackedDownload.RemoteMovie != null)
                     {
                         trackedDownload.RemoteMovie.Release ??= new ReleaseInfo();
@@ -345,5 +350,39 @@ namespace NzbDrone.Core.Download.TrackedDownloads
                 _eventAggregator.PublishEvent(new TrackedDownloadRefreshedEvent(GetTrackedDownloads()));
             }
         }
+
+        // krzw(multi-edition) begin
+        // The client title maps a download through the edition selector, so an untagged title lands on the default
+        // row even when an accept-untagged edition row grabbed it, and a tracker may drop the edition word the
+        // indexer title carried. The grab history names the row the download was grabbed for; when that row is a
+        // sibling edition of the mapped one (same metadata), the download belongs to it (spec section 7).
+        private void RemapToGrabbedEditionRow(TrackedDownload trackedDownload, MovieHistory grabbedEvent, ParsedMovieInfo parsedMovieInfo)
+        {
+            var mappedMovie = trackedDownload.RemoteMovie?.Movie;
+
+            if (mappedMovie == null || parsedMovieInfo == null || grabbedEvent == null || grabbedEvent.MovieId <= 0 || grabbedEvent.MovieId == mappedMovie.Id)
+            {
+                return;
+            }
+
+            try
+            {
+                var grabbedMovie = _parsingService.Map(parsedMovieInfo, grabbedEvent.MovieId)?.Movie;
+
+                if (grabbedMovie == null || grabbedMovie.MovieMetadataId <= 0 || grabbedMovie.MovieMetadataId != mappedMovie.MovieMetadataId)
+                {
+                    return;
+                }
+
+                _logger.Debug("Download '{0}' was grabbed for {1}, tracking it there instead of {2}", trackedDownload.DownloadItem.Title, grabbedMovie, mappedMovie);
+                trackedDownload.RemoteMovie.Movie = grabbedMovie;
+            }
+            catch (ModelNotFoundException)
+            {
+                _logger.Debug("Movie {0} that download '{1}' was grabbed for no longer exists, keeping the title mapping", grabbedEvent.MovieId, trackedDownload.DownloadItem.Title);
+            }
+        }
+
+        // krzw(multi-edition) end
     }
 }

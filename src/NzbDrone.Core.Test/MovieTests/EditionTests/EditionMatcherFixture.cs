@@ -165,6 +165,31 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests
         }
 
         [Test]
+        public void select_row_should_prefer_the_exactly_named_row_over_a_containment_match()
+        {
+            var extendedRemastered = Row(5, "Extended Remastered", "extended remastered");
+            var rows = new List<Movie> { _default, _extended, extendedRemastered };
+
+            EditionMatcher.SelectRow(rows, "Extended Remastered").Should().BeSameAs(extendedRemastered);
+            EditionMatcher.SelectRow(rows, "Extended.Remastered").Should().BeSameAs(extendedRemastered);
+            EditionMatcher.SelectRow(rows, "Extended").Should().BeSameAs(_extended);
+            EditionMatcher.SelectRow(rows, "Extended Remastered Uncut").Should().BeSameAs(_extended);
+        }
+
+        [Test]
+        public void find_claiming_sibling_should_prefer_the_exactly_named_row_and_skip_the_row_itself()
+        {
+            var extendedRemastered = Row(5, "Extended Remastered", "extended remastered");
+            var siblings = new List<Movie> { _default, _extended, extendedRemastered, null };
+
+            EditionMatcher.FindClaimingSibling(_default, siblings, "Extended Remastered").Should().BeSameAs(extendedRemastered);
+            EditionMatcher.FindClaimingSibling(_default, siblings, "Extended").Should().BeSameAs(_extended);
+            EditionMatcher.FindClaimingSibling(_extended, siblings, "Extended").Should().BeNull();
+            EditionMatcher.FindClaimingSibling(_default, siblings, "Unrated").Should().BeNull();
+            EditionMatcher.FindClaimingSibling(_default, null, "Extended").Should().BeNull();
+        }
+
+        [Test]
         public void is_claimed_by_sibling_should_be_true_when_a_sibling_names_the_edition()
         {
             var siblings = new List<Movie> { _extended, _directorsCut, _ulysses };
