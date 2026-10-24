@@ -57,9 +57,10 @@ edition fields and a read-only path for such rows. Moving the default edition (r
 change, path edit, bulk move) moves the shared folder once and the edition rows follow.
 
 Deleting: an edition row deletes only itself and, with *delete files*, only its own movie
-file (recycle bin); the folder stays with the other editions. The **default row cannot be
-deleted while it still has editions** (`400 Cannot delete ...: its Extended edition(s) must be
-deleted first`); delete the editions first, or select the whole family in the bulk editor.
+file and the subtitles / extras linked to it (recycle bin); the folder stays with the other
+editions. The **default row cannot be deleted while it still has editions** (`400 Cannot
+delete ...: its Extended edition(s) must be deleted first`); delete the editions first, or
+select the whole family in the bulk editor.
 
 ## How releases and files find their edition
 
@@ -148,8 +149,6 @@ calendar.
 - An edition cannot be promoted to default, and a default row cannot become an edition.
 - One torrent containing two cuts: the file matching the grabbing row imports; the other is
   left for manual import, where it routes to its row.
-- Deleting an edition with *delete files* recycles its movie file; its subtitles and other
-  extras stay on disk until the default edition's next scan claims them.
 - Migration 248 replaces the unique index on `Movies.MovieMetadataId` by one on
   `(MovieMetadataId, Edition)`; a downgrade to upstream with edition rows present fails that
   constraint. Delete edition rows before downgrading.

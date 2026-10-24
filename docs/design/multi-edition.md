@@ -151,7 +151,7 @@ Slice 1 note (2026-10-24): Radarr maps one release to exactly one Movie row, so 
 
 ## 10. Delete, recycle, move
 
-- `MediaFileDeletionService.cs:91–125` already refuses to delete a folder whose path equals another movie's (logs an error). Change for sibling rows: delete only that row's `MovieFiles` through the recycle bin, skip the folder, no error.
+- `MediaFileDeletionService.cs:91–125` already refuses to delete a folder whose path equals another movie's (logs an error). Change for sibling rows: delete only that row's `MovieFiles` through the recycle bin, skip the folder, no error. The extras linked to that file (subtitles, others, metadata) are recycled by `ExtraFileService` on the same `MoviesDeletedEvent` before their rows go: no `MovieFileDeletedEvent` can be raised for a row that no longer exists.
 - Deleting the default row while edition rows exist is refused by the API (delete editions first, or a "demote/promote default" action in slice 2).
 - Path change on the default row (edit, bulk move, root-folder move, folder rename on refresh) propagates to sibling rows and moves the folder once (`MovieService.UpdateMovie` / `MoveMovieService`). Path edits on edition rows are rejected by validation. `MoviePathValidation.cs:33` allows equal paths among rows of the same metadata.
 - `CleanupOrphanedMovieMetadata` joins all Movies rows, so metadata survives while any row exists. Import-list exclusion on delete only from the default row.
