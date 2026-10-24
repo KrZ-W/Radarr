@@ -271,7 +271,14 @@ namespace NzbDrone.Core.Movies
 
         public List<Movie> FindByTmdbId(List<int> tmdbids)
         {
-            return Query(x => tmdbids.Contains(x.TmdbId));
+            // krzw(multi-edition) begin: Movies has no TmdbId column (Movie.TmdbId is an ignored pass-through to the metadata, migration 207
+            // dropped the column), so the lookup goes through MovieMetadata like FindByTmdbId(int). Every row of the given titles, default rows first.
+            return Query(x => tmdbids.Contains(x.MovieMetadata.Value.TmdbId))
+                .OrderBy(x => x.IsEdition ? 1 : 0)
+                .ThenBy(x => x.Id)
+                .ToList();
+
+            // krzw(multi-edition) end
         }
 
         public List<Movie> GetMoviesByFileId(int fileId)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;  // krzw(multi-edition)
 using FluentAssertions;
 using Moq;
 using NUnit.Framework;
@@ -104,11 +105,22 @@ namespace NzbDrone.Core.Test.MovieTests.MovieServiceTests
             Mocker.GetMock<IMovieRepository>().Setup(s => s.GetDefaultEdition(7)).Returns(_default);
             Mocker.GetMock<IMovieRepository>().Setup(s => s.EditionExists(603, "Extended")).Returns(true);
             Mocker.GetMock<IMovieRepository>().Setup(s => s.FindAllByTmdbId(603)).Returns(new List<Movie> { _default, _extended });
+            Mocker.GetMock<IMovieRepository>().Setup(s => s.FindByTmdbId(It.Is<List<int>>(l => l.SequenceEqual(new[] { 603, 604 })))).Returns(new List<Movie> { _default, _extended });
 
             Subject.GetEditionSiblings(1).Should().BeEquivalentTo(new List<Movie> { _extended });
             Subject.GetDefaultEdition(7).Should().BeSameAs(_default);
             Subject.EditionExists(603, "Extended").Should().BeTrue();
             Subject.FindAllByTmdbId(603).Should().HaveCount(2);
+            Subject.FindAllByTmdbIds(new List<int> { 603, 604 }).Should().HaveCount(2);
+        }
+
+        [Test]
+        public void find_all_by_tmdb_ids_should_not_query_for_an_empty_id_list()
+        {
+            Subject.FindAllByTmdbIds(new List<int>()).Should().BeEmpty();
+            Subject.FindAllByTmdbIds(null).Should().BeEmpty();
+
+            Mocker.GetMock<IMovieRepository>().Verify(v => v.FindByTmdbId(It.IsAny<List<int>>()), Times.Never());
         }
     }
 }

@@ -66,9 +66,14 @@ namespace NzbDrone.Core.Test.MovieTests.MovieRepositoryTests
 
         private Movie NewRow(string edition, params string[] aliases)
         {
+            return NewRow(_metadata.Id, edition, aliases);
+        }
+
+        private Movie NewRow(int metadataId, string edition, params string[] aliases)
+        {
             return Builder<Movie>.CreateNew()
                                  .With(m => m.Id = 0)
-                                 .With(m => m.MovieMetadataId = _metadata.Id)
+                                 .With(m => m.MovieMetadataId = metadataId)
                                  .With(m => m.QualityProfileId = _profile.Id)
                                  .With(m => m.Path = MoviePath)
                                  .With(m => m.Monitored = true)
@@ -96,6 +101,49 @@ namespace NzbDrone.Core.Test.MovieTests.MovieRepositoryTests
         public void find_all_by_tmdb_id_should_be_empty_for_unknown_ids()
         {
             Subject.FindAllByTmdbId(TmdbId + 1).Should().BeEmpty();
+        }
+
+        // A second title with a default row only, as the calendar and the bulk editor mix titles in one lookup.
+        private Movie GivenOtherTitle(int tmdbId)
+        {
+            var metadata = Builder<MovieMetadata>.CreateNew()
+                                                 .With(m => m.Id = 0)
+                                                 .With(m => m.TmdbId = tmdbId)
+                                                 .With(m => m.ImdbId = "tt" + tmdbId.ToString("D7"))
+                                                 .With(m => m.CleanTitle = "other" + tmdbId)
+                                                 .BuildNew();
+
+            Db.Insert(metadata);
+
+            var row = NewRow(metadata.Id, "");
+            row.Path = "/movies/Other (" + tmdbId + ")";
+            Subject.Insert(row);
+
+            return row;
+        }
+
+        [Test]
+        public void find_by_tmdb_id_list_should_return_every_row_of_the_given_titles_default_rows_first()
+        {
+            var other = GivenOtherTitle(TmdbId + 1);
+
+            var rows = Subject.FindByTmdbId(new List<int> { TmdbId, TmdbId + 1 });
+
+            rows.Should().HaveCount(3);
+            rows.Select(r => r.Id).Should().BeEquivalentTo(new[] { _default.Id, _extended.Id, other.Id });
+            rows.Take(2).Should().OnlyContain(r => r.IsDefaultEdition);
+            rows.Take(2).Select(r => r.Id).Should().BeInAscendingOrder();
+            rows[2].Id.Should().Be(_extended.Id);
+            rows.Should().OnlyContain(r => r.MovieMetadata.Value != null && r.QualityProfile != null);
+        }
+
+        [Test]
+        public void find_by_tmdb_id_list_should_only_return_rows_of_the_given_titles()
+        {
+            GivenOtherTitle(TmdbId + 1);
+
+            Subject.FindByTmdbId(new List<int> { TmdbId }).Select(r => r.Id).Should().BeEquivalentTo(new[] { _default.Id, _extended.Id });
+            Subject.FindByTmdbId(new List<int> { TmdbId + 2 }).Should().BeEmpty();
         }
 
         [Test]
