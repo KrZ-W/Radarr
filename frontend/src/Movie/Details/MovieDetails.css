@@ -76,6 +76,13 @@
   margin-right: 10px;
 }
 
+/* krzw(multi-edition) begin */
+.editionLabelContainer {
+  align-self: center;
+  margin-left: 10px;
+}
+/* krzw(multi-edition) end */
+
 .monitorToggleButton {
   composes: toggleButton from '~Components/MonitorToggleButton.css';
 
