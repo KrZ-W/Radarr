@@ -1,3 +1,4 @@
+using System.IO;  // krzw(multi-edition)
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.Download;
 using NzbDrone.Core.Parser.Model;
@@ -10,7 +11,17 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators
 
         public LocalMovie Aggregate(LocalMovie localMovie, DownloadClientItem downloadClientItem)
         {
-            var movieEdition = localMovie.DownloadClientMovieInfo?.Edition;
+            // krzw(multi-edition) begin
+            // An explicit Plex {edition-Name} tag on the file or its folder is a deliberate statement about this file
+            // and beats every parsed guess, including the download client title (spec §6.1: tag first, then aggregate).
+            var movieEdition = ParsePlexEditionTag(localMovie.Path);
+
+            if (movieEdition.IsNullOrWhiteSpace())
+            {
+                movieEdition = localMovie.DownloadClientMovieInfo?.Edition;
+            }
+
+            // krzw(multi-edition) end
 
             if (movieEdition.IsNullOrWhiteSpace())
             {
@@ -26,5 +37,25 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators
 
             return localMovie;
         }
+
+        // krzw(multi-edition) begin
+        private static string ParsePlexEditionTag(string path)
+        {
+            if (path.IsNullOrWhiteSpace())
+            {
+                return string.Empty;
+            }
+
+            var edition = Parser.Parser.ParseEditionTag(Path.GetFileName(path));
+
+            if (edition.IsNullOrWhiteSpace())
+            {
+                edition = Parser.Parser.ParseEditionTag(Path.GetFileName(Path.GetDirectoryName(path)));
+            }
+
+            return edition;
+        }
+
+        // krzw(multi-edition) end
     }
 }
