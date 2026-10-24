@@ -134,6 +134,8 @@ function ParseResult(props: ParseResultProps) {
                 titleSlug={movie.titleSlug}
                 title={movie.title}
                 year={movie.year}
+                movieId={movie.id} // krzw(multi-edition)
+                edition={movie.edition} // krzw(multi-edition)
               />
             ) : (
               '-'

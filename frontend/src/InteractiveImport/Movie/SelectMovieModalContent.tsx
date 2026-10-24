@@ -94,6 +94,7 @@ function Row({ index, style, data }: ListChildComponentProps<RowItemData>) {
         tmdbId={movie.tmdbId}
         imdbId={movie.imdbId}
         year={movie.year}
+        edition={movie.edition} // krzw(multi-edition)
       />
     </VirtualTableRowButton>
   );
@@ -172,6 +173,7 @@ function SelectMovieModalContent(props: SelectMovieModalContentProps) {
       sortedMovies.filter(
         (item) =>
           item.title.toLowerCase().includes(filter.toLowerCase()) ||
+          item.edition?.name.toLowerCase().includes(filter.toLowerCase()) || // krzw(multi-edition)
           item.tmdbId.toString().includes(filter) ||
           item.imdbId?.includes(filter)
       ),

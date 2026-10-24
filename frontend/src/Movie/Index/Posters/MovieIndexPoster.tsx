@@ -16,6 +16,8 @@ import { icons } from 'Helpers/Props';
 import DeleteMovieModal from 'Movie/Delete/DeleteMovieModal';
 import MovieDetailsLinks from 'Movie/Details/MovieDetailsLinks';
 import EditMovieModal from 'Movie/Edit/EditMovieModal';
+import EditionLabel from 'Movie/Edition/EditionLabel'; // krzw(multi-edition)
+import getMoviePath from 'Movie/Edition/getMoviePath'; // krzw(multi-edition)
 import MovieIndexProgressBar from 'Movie/Index/ProgressBar/MovieIndexProgressBar';
 import MovieIndexPosterSelect from 'Movie/Index/Select/MovieIndexPosterSelect';
 import { Statistics } from 'Movie/Movie';
@@ -90,6 +92,7 @@ function MovieIndexPoster(props: MovieIndexPosterProps) {
     originalTitle,
     originalLanguage,
     tags = [],
+    edition, // krzw(multi-edition)
   } = movie;
 
   const { sizeOnDisk = 0 } = statistics;
@@ -142,7 +145,7 @@ function MovieIndexPoster(props: MovieIndexPosterProps) {
     setIsDeleteMovieModalOpen(false);
   }, [setIsDeleteMovieModalOpen]);
 
-  const link = `/movie/${titleSlug}`;
+  const link = getMoviePath({ titleSlug, id: movieId, edition }); // krzw(multi-edition)
 
   const elementStyle = {
     width: `${posterWidth}px`,
@@ -153,7 +156,11 @@ function MovieIndexPoster(props: MovieIndexPosterProps) {
     <div className={styles.content}>
       <div className={styles.posterContainer} title={title}>
         {isSelectMode ? (
-          <MovieIndexPosterSelect movieId={movieId} titleSlug={titleSlug} />
+          <MovieIndexPosterSelect
+            movieId={movieId}
+            titleSlug={titleSlug}
+            link={link} // krzw(multi-edition)
+          />
         ) : null}
 
         <Label className={styles.controls}>
@@ -211,7 +218,10 @@ function MovieIndexPoster(props: MovieIndexPosterProps) {
           />
 
           {hasPosterError ? (
-            <div className={styles.overlayTitle}>{title}</div>
+            <div className={styles.overlayTitle}>
+              {title}
+              <EditionLabel edition={edition} /> {/* krzw(multi-edition) */}
+            </div>
           ) : null}
         </Link>
       </div>
@@ -231,6 +241,7 @@ function MovieIndexPoster(props: MovieIndexPosterProps) {
       {showTitle ? (
         <div className={styles.title} title={title}>
           {title}
+          <EditionLabel edition={edition} /> {/* krzw(multi-edition) */}
         </div>
       ) : null}
 

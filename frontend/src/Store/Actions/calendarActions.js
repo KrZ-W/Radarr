@@ -278,6 +278,7 @@ export const actionHandlers = handleThunks({
     });
 
     requestParams.unmonitored = requestParams.unmonitored ?? false;
+    requestParams.includeEditions = true; // krzw(multi-edition)
 
     const promise = createAjaxRequest({
       url: '/calendar',

@@ -14,6 +14,7 @@ import SelectMovieModal from 'InteractiveImport/Movie/SelectMovieModal';
 import SelectQualityModal from 'InteractiveImport/Quality/SelectQualityModal';
 import SelectReleaseGroupModal from 'InteractiveImport/ReleaseGroup/SelectReleaseGroupModal';
 import Language from 'Language/Language';
+import EditionLabel from 'Movie/Edition/EditionLabel'; // krzw(multi-edition)
 import IndexerFlags from 'Movie/IndexerFlags';
 import Movie from 'Movie/Movie';
 import MovieFormats from 'Movie/MovieFormats';
@@ -287,7 +288,12 @@ function InteractiveImportRow(props: InteractiveImportRowProps) {
           {showMoviePlaceholder ? (
             <InteractiveImportRowCellPlaceholder />
           ) : (
-            movieTitle
+            // krzw(multi-edition) begin: edition badge after the title
+            <>
+              {movieTitle}
+              <EditionLabel edition={movie?.edition} />
+            </>
+            // krzw(multi-edition) end
           )}
         </TableRowCellButton>
       ) : null}

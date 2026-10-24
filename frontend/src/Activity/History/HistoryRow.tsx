@@ -117,7 +117,12 @@ function HistoryRow(props: HistoryRowProps) {
         if (name === 'movieMetadata.sortTitle') {
           return (
             <TableRowCell key={name}>
-              <MovieTitleLink titleSlug={movie.titleSlug} title={movie.title} />
+              <MovieTitleLink
+                titleSlug={movie.titleSlug}
+                title={movie.title}
+                movieId={movie.id} // krzw(multi-edition)
+                edition={movie.edition} // krzw(multi-edition)
+              />
             </TableRowCell>
           );
         }

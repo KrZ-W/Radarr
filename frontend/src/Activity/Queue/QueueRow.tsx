@@ -192,6 +192,8 @@ function QueueRow(props: QueueRowProps) {
                 <MovieTitleLink
                   titleSlug={movie.titleSlug}
                   title={movie.title}
+                  movieId={movie.id} // krzw(multi-edition)
+                  edition={movie.edition} // krzw(multi-edition)
                 />
               ) : (
                 title

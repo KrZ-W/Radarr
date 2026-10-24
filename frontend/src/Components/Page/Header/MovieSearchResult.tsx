@@ -2,6 +2,7 @@ import React from 'react';
 import { Tag } from 'App/State/TagsAppState';
 import Label from 'Components/Label';
 import { kinds } from 'Helpers/Props';
+import EditionLabel from 'Movie/Edition/EditionLabel'; // krzw(multi-edition)
 import MoviePoster from 'Movie/MoviePoster';
 import { SuggestedMovie } from './MovieSearchInput';
 import styles from './MovieSearchResult.css';
@@ -26,6 +27,7 @@ function MovieSearchResult(props: MovieSearchResultProps) {
     tmdbId,
     imdbId,
     tags,
+    edition, // krzw(multi-edition)
   } = props;
 
   let alternateTitle = null;
@@ -50,6 +52,7 @@ function MovieSearchResult(props: MovieSearchResultProps) {
       <div className={styles.titles}>
         <div className={styles.title}>
           {title} {year > 0 ? `(${year})` : ''}
+          <EditionLabel edition={edition} /> {/* krzw(multi-edition) */}
         </div>
 
         {match.key === 'originalTitle' && originalTitle ? (

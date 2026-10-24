@@ -67,6 +67,12 @@ function AppRoutes() {
 
       <Route path="/add/discover" component={DiscoverMovieConnector} />
 
+      {/* krzw(multi-edition): edition rows share the titleSlug, so they get their own route by id */}
+      <Route
+        path="/movie/:titleSlug/edition/:editionId"
+        component={MovieDetailsPage}
+      />
+
       <Route path="/movie/:titleSlug" component={MovieDetailsPage} />
 
       {/*
