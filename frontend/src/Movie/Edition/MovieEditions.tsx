@@ -1,10 +1,12 @@
 // krzw(multi-edition): editions box on the movie details page (default row and its edition rows with monitor toggles, file status and links)
-import React, { useCallback, useMemo } from 'react';
+// krzw(edition-file-reassign): "move file here" on a sibling row without a file moves the current row's file to it
+import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import FieldSet from 'Components/FieldSet';
 import Label from 'Components/Label';
 import Button from 'Components/Link/Button';
 import IconButton from 'Components/Link/IconButton';
+import ConfirmModal from 'Components/Modal/ConfirmModal';
 import MonitorToggleButton from 'Components/MonitorToggleButton';
 import TableRowCell from 'Components/Table/Cells/TableRowCell';
 import Column from 'Components/Table/Column';
@@ -15,8 +17,11 @@ import { icons, kinds } from 'Helpers/Props';
 import Movie from 'Movie/Movie';
 import useMovie from 'Movie/useMovie';
 import QualityProfileName from 'Settings/Profiles/Quality/QualityProfileName';
+import { updateItem } from 'Store/Actions/baseActions';
 import { toggleMovieMonitored } from 'Store/Actions/movieActions';
+import { fetchMovieFiles } from 'Store/Actions/movieFileActions';
 import createAllMoviesSelector from 'Store/Selectors/createAllMoviesSelector';
+import createAjaxRequest from 'Utilities/createAjaxRequest';
 import translate from 'Utilities/String/translate';
 import getMoviePath from './getMoviePath';
 import styles from './MovieEditions.css';
@@ -64,9 +69,20 @@ function sortEditionRows(a: Movie, b: Movie) {
 interface MovieEditionRowProps {
   movie: Movie;
   isCurrent: boolean;
+  canReceiveFile: boolean;
+  onMoveFileHerePress: (target: Movie) => void;
 }
 
-function MovieEditionRow({ movie, isCurrent }: MovieEditionRowProps) {
+function editionName(movie: Movie) {
+  return movie.edition ? movie.edition.name : translate('DefaultEdition');
+}
+
+function MovieEditionRow({
+  movie,
+  isCurrent,
+  canReceiveFile,
+  onMoveFileHerePress,
+}: MovieEditionRowProps) {
   const dispatch = useDispatch();
 
   const {
@@ -75,7 +91,6 @@ function MovieEditionRow({ movie, isCurrent }: MovieEditionRowProps) {
     monitored,
     hasFile,
     qualityProfileId,
-    edition,
     isSaving = false,
   } = movie;
 
@@ -91,7 +106,11 @@ function MovieEditionRow({ movie, isCurrent }: MovieEditionRowProps) {
     [id, dispatch]
   );
 
-  const name = edition ? edition.name : translate('DefaultEdition');
+  const handleMoveFileHerePress = useCallback(() => {
+    onMoveFileHerePress(movie);
+  }, [movie, onMoveFileHerePress]);
+
+  const name = editionName(movie);
 
   return (
     <TableRow>
@@ -119,6 +138,14 @@ function MovieEditionRow({ movie, isCurrent }: MovieEditionRowProps) {
       </TableRowCell>
 
       <TableRowCell className={styles.actions}>
+        {canReceiveFile ? (
+          <IconButton
+            name={icons.MOVIE_FILE}
+            title={translate('MoveFileToEdition', { edition: name })}
+            onPress={handleMoveFileHerePress}
+          />
+        ) : null}
+
         {isCurrent ? null : (
           <IconButton
             name={icons.ARROW_RIGHT}
@@ -139,8 +166,48 @@ interface MovieEditionsProps {
 }
 
 function MovieEditions({ movieId, onAddEditionPress }: MovieEditionsProps) {
+  const dispatch = useDispatch();
   const movie = useMovie(movieId);
   const allMovies = useSelector(createAllMoviesSelector());
+  const [moveTarget, setMoveTarget] = useState<Movie | null>(null);
+  const [isMoving, setIsMoving] = useState(false);
+
+  const handleMoveFileCancel = useCallback(() => {
+    setMoveTarget(null);
+  }, []);
+
+  const handleMoveFileConfirm = useCallback(() => {
+    if (!movie || !moveTarget) {
+      return;
+    }
+
+    setIsMoving(true);
+
+    const { request } = createAjaxRequest({
+      url: '/edition/movefile',
+      method: 'POST',
+      dataType: 'json',
+      contentType: 'application/json',
+      data: JSON.stringify({
+        movieFileId: movie.movieFileId,
+        movieId: moveTarget.id,
+      }),
+    });
+
+    request.always(() => {
+      [movie.id, moveTarget.id].forEach((id) => {
+        createAjaxRequest({ url: `/movie/${id}` }).request.done(
+          (data: Movie) => {
+            dispatch(updateItem({ section: 'movies', ...data }));
+          }
+        );
+      });
+
+      dispatch(fetchMovieFiles({ movieId: movie.id }));
+      setIsMoving(false);
+      setMoveTarget(null);
+    });
+  }, [movie, moveTarget, dispatch]);
 
   const rows = useMemo(() => {
     if (!movie) {
@@ -172,11 +239,33 @@ function MovieEditions({ movieId, onAddEditionPress }: MovieEditionsProps) {
                 key={row.id}
                 movie={row}
                 isCurrent={row.id === movieId}
+                canReceiveFile={
+                  row.id !== movieId && movie.hasFile && !row.hasFile
+                }
+                onMoveFileHerePress={setMoveTarget}
               />
             ))}
           </TableBody>
         </Table>
       </div>
+
+      <ConfirmModal
+        isOpen={!!moveTarget}
+        kind={kinds.PRIMARY}
+        title={translate('MoveFileToEditionTitle')}
+        message={
+          moveTarget
+            ? translate('MoveFileToEditionMessage', {
+                from: editionName(movie),
+                to: editionName(moveTarget),
+              })
+            : ''
+        }
+        confirmLabel={translate('MoveFile')}
+        isSpinning={isMoving}
+        onConfirm={handleMoveFileConfirm}
+        onCancel={handleMoveFileCancel}
+      />
 
       {isEdition ? null : (
         <div className={styles.addButtonContainer}>

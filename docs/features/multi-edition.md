@@ -23,7 +23,8 @@ The add-edition dialog offers these names, each with the release spellings that 
 Theatrical · Extended (`extended cut`, `extended edition`) · Director's Cut
 (`director's edition`, `directors cut`, `dc`) · Unrated · Final Cut · Ulysses Cut · IMAX ·
 Criterion (`criterion collection`) · Remastered · Special Edition · Ultimate Edition ·
-Ultimate Cut · Open Matte · Uncut · Anniversary Edition
+Ultimate Cut · Open Matte · Uncut · Anniversary Edition · Assembly Cut · Restored
+(Director's Cut also matches a bare `directors`)
 
 Pick *Custom* for anything else (32 characters at most, letters or digits required). Aliases
 are free text; the name itself always counts as an alias.
@@ -103,6 +104,46 @@ tagged file on rescans too. Extras (subtitles, `-thumb` images, `.nfo`) attach t
 file whose name they start with; folder-level extras (`poster.jpg`, `fanart.jpg`) stay with the
 default edition. Upgrades compare only against the same row's file.
 
+## Existing files: audit and move to an edition
+
+Upgrading changes nothing on disk: every existing movie becomes a default row and keeps its
+file, whatever cut that file is. Two tools sort that out after the fact.
+
+**Audit.** `GET /api/v3/edition/audit` lists every default-row file that carries an edition,
+read from a Plex `{edition-X}` tag in the file name, else from the edition parsed from the
+release name at import. Each item has `kind`:
+
+| Kind | Meaning | Usual action |
+|---|---|---|
+| `cut` | Extended, Unrated, Director's Cut, Uncut, Final Cut, Special/Ultimate/Anniversary, Assembly Cut, Ulysses Cut | add that edition and move the file to it, or leave it if this cut is the one you want as default |
+| `theatrical` | the file already is the theatrical cut | none |
+| `variant` | Remastered, IMAX, Restored, Open Matte, Criterion: a release of the same cut | usually none |
+| `unrecognised` | an edition string no preset matches | look at it |
+
+`suggestedEdition` names the preset, `ambiguous` is set when several presets match
+(`Extended Director's Cut`), and `editionRowId` / `editionRowHasFile` point at an edition row
+that already claims the file. Export as CSV:
+
+```bash
+curl -s -H "X-Api-Key: $KEY" http://radarr:7878/api/v3/edition/audit | jq -r \
+  '(["kind","suggestedEdition","ambiguous","fileEdition","title","year","movieId","movieFileId"]|@csv),
+   (.[]|[.kind,.suggestedEdition,.ambiguous,.fileEdition,.title,.year,.movieId,.movieFileId]|@csv)'
+```
+
+**Move a file to an edition.** On the movie page, the *Editions* box shows a file icon on every
+other row of the title that has no file: it moves the current row's file there. The API is
+`POST /api/v3/edition/movefile` with `{"movieFileId": 2405, "movieId": 3272}`. The move:
+
+- repoints the file and its subtitles, metadata and other extras to the target row;
+- clears the source row's file (it shows as missing, and is searched if monitored) and sets
+  the target row's;
+- queues a rename of that file when renaming is enabled, so it gains or loses its
+  `{edition-…}` tag (extras are renamed with it);
+- keeps history where it was: past grabs and imports stay on the source row.
+
+It is refused (`400`) when the target belongs to another movie, already has a file, or already
+owns this file. Moving back to the default row works the same way.
+
 ## Naming
 
 New token **`{Edition Name}`** = the edition configured on the row, rendered verbatim
@@ -150,8 +191,10 @@ calendar.
 - One torrent containing two cuts: the file matching the grabbing row imports; the other is
   left for manual import, where it routes to its row.
 - Migration 248 replaces the unique index on `Movies.MovieMetadataId` by one on
-  `(MovieMetadataId, Edition)`; a downgrade to upstream with edition rows present fails that
-  constraint. Delete edition rows before downgrading.
+  `(MovieMetadataId, Edition)`. An older image started on a migrated database boots and
+  ignores the new columns (verified with `6.4.4.10685-krzw.1` on a database holding two edition
+  rows), but it shows edition rows as duplicate movies sharing a folder. Roll back by restoring
+  the pre-upgrade database backup, or delete the edition rows first.
 - Postgres: the migration is written for both engines but was only run on SQLite.
 
 ## Source

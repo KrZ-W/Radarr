@@ -29,13 +29,16 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests
                 "Ultimate Cut",
                 "Open Matte",
                 "Uncut",
-                "Anniversary Edition"
+                "Anniversary Edition",
+                "Assembly Cut",
+                "Restored"
             });
         }
 
         [TestCase("Director's Cut", "director's edition")]
         [TestCase("Director's Cut", "directors cut")]
         [TestCase("Director's Cut", "dc")]
+        [TestCase("Director's Cut", "directors")]
         [TestCase("Extended", "extended cut")]
         [TestCase("Extended", "extended edition")]
         [TestCase("Theatrical", "theatrical cut")]

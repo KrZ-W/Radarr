@@ -23,7 +23,7 @@ namespace NzbDrone.Core.Movies.Editions
         {
             new EditionPreset("Theatrical", "theatrical", "theatrical cut", "theatrical edition", "theatrical version"),
             new EditionPreset("Extended", "extended", "extended cut", "extended edition", "extended version"),
-            new EditionPreset("Director's Cut", "director's cut", "directors cut", "director's edition", "directors edition", "dc"),
+            new EditionPreset("Director's Cut", "director's cut", "directors cut", "director's edition", "directors edition", "directors", "dc"),
             new EditionPreset("Unrated", "unrated", "unrated cut", "unrated edition", "unrated version"),
             new EditionPreset("Final Cut", "final cut"),
             new EditionPreset("Ulysses Cut", "ulysses cut"),
@@ -35,7 +35,9 @@ namespace NzbDrone.Core.Movies.Editions
             new EditionPreset("Ultimate Cut", "ultimate cut"),
             new EditionPreset("Open Matte", "open matte"),
             new EditionPreset("Uncut", "uncut", "uncut version"),
-            new EditionPreset("Anniversary Edition", "anniversary edition", "anniversary")
+            new EditionPreset("Anniversary Edition", "anniversary edition", "anniversary"),
+            new EditionPreset("Assembly Cut", "assembly cut"), // krzw(edition-file-reassign)
+            new EditionPreset("Restored", "restored") // krzw(edition-file-reassign)
         }.AsReadOnly();
     }
 }
