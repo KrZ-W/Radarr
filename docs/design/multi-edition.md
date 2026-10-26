@@ -243,7 +243,7 @@ Acceptance: wanted lists show the edition rows; `MoviesSearch` per row; `GET /mo
 
 Fork code at the commit above (file:line as cited). Upstream: issues #1910, #2099, #2203, #2387, #3832, #5791, #7069, #10859, #11755; PR #11963; branch `zeus` commit 5ad3f96; Servarr wiki radarr/settings (Edition Tags) and faq; Plex support articles "Multiple Editions", "Naming and organizing your movie media files", "Multi-Version Movies". Production figures from the radarr-fr DB copy of 2026-09-15.
 
-## 19. Follow-up: existing files (built after krzw.2)
+## 19. Follow-up: existing files (released in krzw.3)
 
 The migration leaves every existing file on its default row. `MovieEditionFileService` adds an
 audit (`GET /api/v3/edition/audit`: default-row files whose Plex tag or parsed release edition

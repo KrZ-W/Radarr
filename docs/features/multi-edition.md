@@ -1,6 +1,6 @@
 # Multi-Edition Movies
 
-> **Status:** pilot (slice 1) · **Since:** `v6.4.4.10685+krzw.2` · **Surface:** movie page (*Editions* box, *Add Edition*, move file to edition), edit-movie modal, naming token `{Edition Name}`, `/api/v3/movie`, `/api/v3/calendar`, `/api/v3/edition` (audit and move file: unreleased) · **Design:** [design/multi-edition.md](../design/multi-edition.md)
+> **Status:** pilot (slice 1) · **Since:** `v6.4.4.10685+krzw.2` · **Surface:** movie page (*Editions* box, *Add Edition*, move file to edition), edit-movie modal, naming token `{Edition Name}`, `/api/v3/movie`, `/api/v3/calendar`, `/api/v3/edition` (audit and move file since `v6.4.4.10685+krzw.3`) · **Design:** [design/multi-edition.md](../design/multi-edition.md)
 
 ## What it does
 
@@ -208,7 +208,8 @@ rules `111e32fba`, naming token `04bda5360`, API `d84c3db12`, frontend merge `da
 review and integration fixes `feaf34e93`, docs `97f633f11`, verified fixes `95a56de3a`,
 `573934a79`, `e7e96a358`, `5071d6a32`), merged into
 `personal/all-features-master` as `a5534a06f` (release `v6.4.4.10685+krzw.2`).
-Audit and move-file-to-edition: branch `feat/edition-file-reassign-master` (`3f73e6a99`), files
+Audit and move-file-to-edition: branch `feat/edition-file-reassign-master` (`3f73e6a99`, docs `89d72fa42`),
+merged as `e4973c93d` (release `v6.4.4.10685+krzw.3`), files
 `Movies/Editions/MovieEditionFileService`, `Radarr.Api.V3/Movies/MovieEditionFileController`,
 `frontend/src/Movie/Edition/MovieEditions.tsx`, marked `krzw(edition-file-reassign)`.
 Key files: `Movies/Movie.cs` (`Edition`,

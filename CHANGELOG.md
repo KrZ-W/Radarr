@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.4.4.10685+krzw.3] — based on Radarr 6.4.4.10685
+
 ### Added
 
 - **Edition audit and move-file-to-edition.** `GET /api/v3/edition/audit` classifies every
@@ -19,6 +23,8 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   page's *Editions* box move an existing file (and its extras) to another edition of the same
   movie and queue its rename. Presets gain Assembly Cut, Restored and a bare `directors`
   alias. See [docs/features/multi-edition.md](docs/features/multi-edition.md#existing-files-audit-and-move-to-an-edition).
+
+Container image: `ghcr.io/krz-w/radarr:6.4.4.10685-krzw.3`.
 
 ## [v6.4.4.10685+krzw.2] — based on Radarr 6.4.4.10685
 
@@ -764,7 +770,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.4.4.10685+krzw.2...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.4.4.10685+krzw.3...HEAD
+[v6.4.4.10685+krzw.3]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.3
 [v6.4.4.10685+krzw.2]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.2
 [v6.4.4.10685+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.1
 [v6.3.0.10514+krzw.14]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.14
