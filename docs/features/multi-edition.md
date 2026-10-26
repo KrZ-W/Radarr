@@ -1,6 +1,6 @@
 # Multi-Edition Movies
 
-> **Status:** pilot (slice 1, arrdev) · **Since:** unreleased · **Surface:** movie page (*Editions* box, *Add Edition*), edit-movie modal, naming token `{Edition Name}`, `/api/v3/movie`, `/api/v3/calendar` · **Design:** [design/multi-edition.md](../design/multi-edition.md)
+> **Status:** pilot (slice 1) · **Since:** `v6.4.4.10685+krzw.2` · **Surface:** movie page (*Editions* box, *Add Edition*), edit-movie modal, naming token `{Edition Name}`, `/api/v3/movie`, `/api/v3/calendar` · **Design:** [design/multi-edition.md](../design/multi-edition.md)
 
 ## What it does
 
@@ -156,7 +156,13 @@ calendar.
 
 ## Source
 
-Branch `feat/multi-edition-master`. Key files: `Movies/Movie.cs` (`Edition`,
+Branch `feat/multi-edition-master` (cut from `v6.4.4.10685+krzw.1`; 17 commits,
+`44b7d79d5` to `5071d6a32`: design `44b7d79d5`, foundation `d31b2be5c`, parser `dd49ca341`,
+frontend `3b47da12b` / `ed6c5d4b7`, routing `a6cb8e0a4`, gates `e229017cc`, shared-folder
+rules `111e32fba`, naming token `04bda5360`, API `d84c3db12`, review and integration fixes
+`feaf34e93`, `95a56de3a`, `573934a79`, `e7e96a358`, `5071d6a32`), merged into
+`personal/all-features-master` as `a5534a06f` (release `v6.4.4.10685+krzw.2`).
+Key files: `Movies/Movie.cs` (`Edition`,
 `EditionAliases`, `EditionAcceptUntagged`), `Movies/Editions/*` (`EditionNormalizer`,
 `EditionPresets`, `EditionMatcher`, `EditionGate`, `EditionValidation`,
 `AddMovieEditionService`), `Datastore/Migration/248_add_movie_editions`,

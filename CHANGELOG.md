@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.4.4.10685+krzw.2] — based on Radarr 6.4.4.10685
+
 ### Added
 
 - **Multi-Edition Movies** (pilot, slice 1; see [docs/features/multi-edition.md](docs/features/multi-edition.md)).
@@ -36,6 +40,8 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   `EditionAcceptUntagged`; unique index `(MovieMetadataId, Edition)` replaces the one on
   `MovieMetadataId`). Known limitation: RSS routes untagged releases to the default edition
   only; accept-untagged editions are filled by their own automatic and interactive searches.
+
+Container image: `ghcr.io/krz-w/radarr:6.4.4.10685-krzw.2`.
 
 ## [v6.4.4.10685+krzw.1] — based on Radarr 6.4.4.10685
 
@@ -750,7 +756,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.4.4.10685+krzw.1...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.4.4.10685+krzw.2...HEAD
+[v6.4.4.10685+krzw.2]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.2
 [v6.4.4.10685+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.1
 [v6.3.0.10514+krzw.14]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.14
 [v6.3.0.10514+krzw.13]: https://github.com/KrZ-W/Radarr/releases/tag/v6.3.0.10514%2Bkrzw.13
