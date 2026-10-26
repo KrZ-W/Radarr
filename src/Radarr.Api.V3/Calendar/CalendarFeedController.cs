@@ -47,12 +47,29 @@ namespace Radarr.Api.V3.Calendar
             calendar.AddProperty(new CalendarProperty("NAME", calendarName));
             calendar.AddProperty(new CalendarProperty("X-WR-CALNAME", calendarName));
 
+            // krzw(multi-edition) begin: one event per title; an edition row stands in only when no other row of its title is listed
+            var emittedTitles = new HashSet<int>();
+            var titlesWithDefaultRow = movies.Where(m => m.IsDefaultEdition && (parsedTags.Empty() || parsedTags.Any(m.Tags.Contains)))
+                                             .Select(m => m.MovieMetadataId)
+                                             .ToHashSet();
+
+            // krzw(multi-edition) end
             foreach (var movie in movies.OrderBy(v => v.Added))
             {
                 if (parsedTags.Any() && parsedTags.None(movie.Tags.Contains))
                 {
                     continue;
                 }
+
+                // krzw(multi-edition) begin
+                if (movie.IsEdition && (titlesWithDefaultRow.Contains(movie.MovieMetadataId) || emittedTitles.Contains(movie.MovieMetadataId)))
+                {
+                    continue;
+                }
+
+                emittedTitles.Add(movie.MovieMetadataId);
+
+                // krzw(multi-edition) end
 
                 if (releaseTypes is not { Count: not 0 } || releaseTypes.Contains(CalendarReleaseType.CinemaRelease))
                 {

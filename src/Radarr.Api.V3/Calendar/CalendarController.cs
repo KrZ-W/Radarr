@@ -46,7 +46,7 @@ namespace Radarr.Api.V3.Calendar
 
         [HttpGet]
         [Produces("application/json")]
-        public List<MovieResource> GetCalendar(DateTime? start, DateTime? end, bool unmonitored = false, string tags = "")
+        public List<MovieResource> GetCalendar(DateTime? start, DateTime? end, bool unmonitored = false, string tags = "", bool includeEditions = false)  // krzw(multi-edition)
         {
             var startUse = start ?? DateTime.Today;
             var endUse = end ?? DateTime.Today.AddDays(2);
@@ -71,10 +71,27 @@ namespace Radarr.Api.V3.Calendar
                     continue;
                 }
 
+                // krzw(multi-edition) begin: edition rows share their title's dates; hidden unless asked for
+                if (!includeEditions && movie.IsEdition)
+                {
+                    continue;
+                }
+
+                // krzw(multi-edition) end
                 results.Add(movie);
             }
 
             var resources = MapToResource(results);
+
+            // krzw(multi-edition) begin: EditionParentId/Editions from every row of the kept titles (the monitored filter may have dropped some)
+            var titleRows = unmonitored || results.Empty() ? movies : _moviesService.FindAllByTmdbIds(results.Select(m => m.TmdbId).Distinct().ToList());
+
+            for (var i = 0; i < results.Count; i++)
+            {
+                resources[i].LinkEditions(results[i], titleRows);
+            }
+
+            // krzw(multi-edition) end
 
             return resources
                 .OrderBy(m => m.InCinemas)

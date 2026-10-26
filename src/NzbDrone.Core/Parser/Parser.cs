@@ -15,9 +15,16 @@ namespace NzbDrone.Core.Parser
     {
         private static readonly Logger Logger = NzbDroneLogger.GetLogger(typeof(Parser));
 
-        private static readonly Regex EditionRegex = new Regex(@"\(?\b(?<edition>(((Recut.|Extended.|Ultimate.)?(Director.?s|Collector.?s|Theatrical|Ultimate|Extended|Despecialized|(Special|Rouge|Final|Assembly|Imperial|Diamond|Signature|Hunter|Rekall)(?=(.(Cut|Edition|Version)))|\d{2,3}(th)?.Anniversary)(?:.(Cut|Edition|Version))?(.(Extended|Uncensored|Remastered|Unrated|Uncut|Open.?Matte|IMAX|Fan.?Edit))?|((Uncensored|Remastered|Unrated|Uncut|Open?.Matte|IMAX|Fan.?Edit|Restored|((2|3|4)in1))))))\b\)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private static readonly Regex EditionRegex = new Regex(@"\(?\b(?<edition>(((Recut.|Extended.|Ultimate.)?(Director.?s|Collector.?s|Theatrical|Ultimate|Extended|Despecialized|Criterion(?:.Collection)?|(Special|Rouge|Final|Assembly|Imperial|Diamond|Signature|Hunter|Rekall|Ulysses)(?=(.(Cut|Edition|Version)))|\d{2,3}(th)?.Anniversary)(?:.(Cut|Edition|Version))?(.(Extended|Uncensored|Remastered|Unrated|Uncut|Open.?Matte|IMAX|Fan.?Edit))?|((Uncensored|Remastered|Unrated|Uncut|Open?.Matte|IMAX|Fan.?Edit|Restored|((2|3|4)in1))))))\b\)?", RegexOptions.Compiled | RegexOptions.IgnoreCase);  // krzw(multi-edition): + Criterion(.Collection), Ulysses Cut
 
         private static readonly Regex ReportEditionRegex = new Regex(@"^.+?" + EditionRegex, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        // krzw(multi-edition) begin
+        // Plex multi-edition tag ({edition-Name} in a file or folder name). The tag and the separators around it are
+        // removed before the title regexes and the sub-parsers run, and its value beats whatever EditionRegex finds.
+        private static readonly Regex PlexEditionTagRegex = new Regex(@"(?<lead>[-_. ]*)\{edition-(?<edition>[^{}]*)\}(?<trail>[-_. ]*)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
+        // krzw(multi-edition) end
 
         private static readonly Regex HardcodedSubsRegex = new Regex(@"\b((?<hcsub>(\w+(?<!SOFT|MULTI|HORRIBLE)SUBS?))|(?<hc>(HC|SUBBED)))\b",
                                                         RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
@@ -197,6 +204,17 @@ namespace NzbDrone.Core.Parser
                 // Trim dashes from end
                 releaseTitle = releaseTitle.Trim('-', '_');
 
+                // krzw(multi-edition) begin
+                var plexEdition = ParseEditionTag(releaseTitle);
+
+                if (PlexEditionTagRegex.IsMatch(releaseTitle))
+                {
+                    releaseTitle = RemoveEditionTag(releaseTitle);
+                    Logger.Debug("Plex edition tag '{0}' removed, parsing '{1}'", plexEdition, releaseTitle);
+                }
+
+                // krzw(multi-edition) end
+
                 releaseTitle = releaseTitle.Replace("【", "[").Replace("】", "]");
 
                 foreach (var replace in ParserCommon.PreSubstitutionRegex)
@@ -288,6 +306,15 @@ namespace NzbDrone.Core.Parser
                                     Logger.Debug("Edition parsed: {0}", result.Edition);
                                 }
 
+                                // krzw(multi-edition) begin
+                                if (plexEdition.IsNotNullOrWhiteSpace())
+                                {
+                                    result.Edition = plexEdition;
+                                    Logger.Debug("Edition taken from Plex tag: {0}", result.Edition);
+                                }
+
+                                // krzw(multi-edition) end
+
                                 result.ReleaseHash = GetReleaseHash(match);
                                 if (!result.ReleaseHash.IsNullOrWhiteSpace())
                                 {
@@ -367,6 +394,37 @@ namespace NzbDrone.Core.Parser
 
             return "";
         }
+
+        // krzw(multi-edition) begin
+        public static string ParseEditionTag(string title)
+        {
+            if (title.IsNullOrWhiteSpace())
+            {
+                return string.Empty;
+            }
+
+            var match = PlexEditionTagRegex.Match(title);
+
+            return match.Success ? match.Groups["edition"].Value.Trim() : string.Empty;
+        }
+
+        private static string RemoveEditionTag(string title)
+        {
+            return PlexEditionTagRegex.Replace(title, match =>
+            {
+                var lead = match.Groups["lead"].Value;
+                var trail = match.Groups["trail"].Value;
+
+                if (lead.Length > 0)
+                {
+                    return lead.Substring(0, 1);
+                }
+
+                return trail.Length > 0 ? trail.Substring(0, 1) : " ";
+            }).Trim(' ', '.', '-', '_');
+        }
+
+        // krzw(multi-edition) end
 
         public static string ReplaceGermanUmlauts(string s)
         {

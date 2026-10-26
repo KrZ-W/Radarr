@@ -37,6 +37,14 @@ namespace NzbDrone.Core.Movies
 
         private void MoveSingleMovie(Movie movie, string sourcePath, string destinationPath, int? index = null, int? total = null)
         {
+            // krzw(multi-edition) begin: an edition row shares its folder with the default row, and the default row is the one that moves it
+            if (movie.IsEdition)
+            {
+                _logger.Debug("'{0}' is the {1} edition and shares its folder with the default edition, which moves it. Skipping.", movie.Title, movie.Edition);
+                return;
+            }
+
+            // krzw(multi-edition) end
             if (!sourcePath.IsPathValid(PathValidationType.CurrentOs))
             {
                 _logger.Warn("Folder '{0}' for '{1}' is invalid, unable to move movie. Try moving files manually", sourcePath, movie.Title);

@@ -10,6 +10,7 @@ interface CssExports {
   'details': string;
   'detailsInfoLabel': string;
   'detailsLabel': string;
+  'editionLabelContainer': string;
   'errorMessage': string;
   'filterIcon': string;
   'genres': string;

@@ -19,6 +19,7 @@ namespace Radarr.Api.V3.ManualImport
         public List<CustomFormatResource> CustomFormats { get; set; }
         public int CustomFormatScore { get; set; }
         public int IndexerFlags { get; set; }
+        public bool EditionOverride { get; set; }  // krzw(multi-edition): true once the user picked the movie row; the edition gate trusts that pick, not a preselection
         public IEnumerable<ImportRejectionResource> Rejections { get; set; }
     }
 }

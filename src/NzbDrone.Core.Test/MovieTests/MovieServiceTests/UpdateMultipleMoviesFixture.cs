@@ -27,6 +27,7 @@ namespace NzbDrone.Core.Test.MovieTests.MovieServiceTests
                 .With(s => s.Monitored)
                 .With(s => s.Path = @"C:\Test\name".AsOsAgnostic())
                 .With(s => s.RootFolderPath = "")
+                .With(s => s.Edition = "")  // krzw(multi-edition): NBuilder fills Edition, which would make these edition rows
                 .Build().ToList();
 
             Mocker.GetMock<IAutoTaggingService>()
@@ -71,6 +72,7 @@ namespace NzbDrone.Core.Test.MovieTests.MovieServiceTests
             var movies = Builder<Movie>.CreateListOfSize(50)
                                         .All()
                                         .With(s => s.Path = (@"C:\Test\Movies\" + s.Path).AsOsAgnostic())
+                                        .With(s => s.Edition = "")  // krzw(multi-edition)
                                         .Build()
                                         .ToList();
 

@@ -19,6 +19,7 @@ namespace NzbDrone.Core.Parser.Model
         public TorrentSeedConfiguration SeedConfiguration { get; set; }
         public List<Language> Languages { get; set; }
         public ReleaseSourceType ReleaseSource { get; set; }
+        public List<Movie> EditionSiblings { get; set; }  // krzw(multi-edition): the title's other rows when routing loaded them all; null = not loaded, the edition gate queries then
 
         public RemoteMovie()
         {

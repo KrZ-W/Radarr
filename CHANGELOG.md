@@ -10,7 +10,32 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **Multi-Edition Movies** (pilot, slice 1; see [docs/features/multi-edition.md](docs/features/multi-edition.md)).
+  A movie can hold several *editions* (Theatrical, Extended, Director's Cut, Unrated, Final
+  Cut, Ulysses Cut, IMAX, Criterion, Remastered, ... or a custom name), each a Movie row of
+  its own with its own monitored flag, quality profile, file, history and searches, sharing
+  the default edition's TMDb metadata and movie folder. Releases route to the edition whose
+  name or alias they carry (spelling-insensitive, an exactly named edition wins over a
+  containment match); the default edition refuses releases that belong to a sibling edition,
+  an edition accepts only its own or, opt-in, untagged ones; a download stays with the
+  edition it was grabbed for even when the client, folder or file name drops the edition.
+  Each edition sees only its own file in the shared folder (rescans, Manage Files, extras),
+  the default row cannot be deleted while it has editions, and moving it moves the family.
+  New naming token `{Edition Name}` (empty on the default edition; recommended
+  `{Movie Title} ({Release Year}) {edition-{Edition Name}} {Quality Full} {Custom Formats}`,
+  refused in the folder format); the parser learns `Ulysses Cut`, `Criterion` /
+  `Criterion Collection` and the Plex `{edition-X}` file tag. API: `edition`,
+  `editionParentId`, `editions` on movie resources, `includeEditions` (default `false`) on
+  `GET /api/v3/movie` and `GET /api/v3/calendar`, `POST /api/v3/movie` with an `edition`
+  object adds an edition to an existing movie, `PUT` may rename it but not move it, webhook
+  `movie.edition`. UI: edition badge everywhere a movie title links, *Editions* box and
+  *Add Edition* modal on the movie page, edition fields in the edit modal, `{Edition Name}`
+  in the naming modal. Migration 248 (`Movies.Edition`, `EditionAliases`,
+  `EditionAcceptUntagged`; unique index `(MovieMetadataId, Edition)` replaces the one on
+  `MovieMetadataId`). Known limitation: RSS routes untagged releases to the default edition
+  only; accept-untagged editions are filled by their own automatic and interactive searches.
 
 ## [v6.4.4.10685+krzw.1] — based on Radarr 6.4.4.10685
 

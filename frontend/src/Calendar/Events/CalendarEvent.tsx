@@ -7,6 +7,9 @@ import getStatusStyle from 'Calendar/getStatusStyle';
 import Icon from 'Components/Icon';
 import Link from 'Components/Link/Link';
 import { icons, kinds } from 'Helpers/Props';
+import EditionLabel from 'Movie/Edition/EditionLabel'; // krzw(multi-edition)
+import getMoviePath from 'Movie/Edition/getMoviePath'; // krzw(multi-edition)
+import { MovieEdition } from 'Movie/Movie'; // krzw(multi-edition)
 import useMovieFile from 'MovieFile/useMovieFile';
 import { createQueueItemSelectorForHook } from 'Store/Selectors/createQueueItemSelector';
 import createUISettingsSelector from 'Store/Selectors/createUISettingsSelector';
@@ -19,6 +22,7 @@ interface CalendarEventProps {
   movieFileId?: number;
   title: string;
   titleSlug: string;
+  edition?: MovieEdition | null; // krzw(multi-edition)
   genres: string[];
   certification?: string;
   date: string;
@@ -36,6 +40,7 @@ function CalendarEvent({
   movieFileId,
   title,
   titleSlug,
+  edition, // krzw(multi-edition)
   genres = [],
   certification,
   date,
@@ -69,7 +74,7 @@ function CalendarEvent({
     isAvailable
   );
   const joinedGenres = genres.slice(0, 2).join(', ');
-  const link = `/movie/${titleSlug}`;
+  const link = getMoviePath({ titleSlug, id, edition }); // krzw(multi-edition)
 
   const eventTypes = useMemo(() => {
     const momentDate = moment(date);
@@ -124,7 +129,10 @@ function CalendarEvent({
 
       <div className={styles.overlay}>
         <div className={styles.info}>
-          <div className={styles.movieTitle}>{title}</div>
+          <div className={styles.movieTitle}>
+            {title}
+            <EditionLabel edition={edition} /> {/* krzw(multi-edition) */}
+          </div>
 
           <div
             className={classNames(

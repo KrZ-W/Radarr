@@ -391,5 +391,125 @@ namespace NzbDrone.Core.Test.Download.TrackedDownloads
             trackedDownload.RemoteMovie.Movie.Id.Should().Be(5);
             trackedDownload.RemoteMovie.ParsedMovieInfo.Year.Should().Be(1998);
         }
+
+        // krzw(multi-edition) begin
+        private static DownloadClientDefinition GivenClient()
+        {
+            return new DownloadClientDefinition
+            {
+                Id = 1,
+                Protocol = DownloadProtocol.Torrent
+            };
+        }
+
+        private static DownloadClientItem GivenItem(DownloadClientDefinition client, string title)
+        {
+            return new DownloadClientItem
+            {
+                Title = title,
+                DownloadId = "35238",
+                DownloadClientInfo = new DownloadClientItemClientInfo
+                {
+                    Protocol = client.Protocol,
+                    Id = client.Id,
+                    Name = client.Name
+                }
+            };
+        }
+
+        private static RemoteMovie GivenRemoteMovie(Movie movie)
+        {
+            return new RemoteMovie
+            {
+                Movie = movie,
+                ParsedMovieInfo = new ParsedMovieInfo
+                {
+                    MovieTitles = new List<string> { "A Movie" },
+                    Year = 1998
+                }
+            };
+        }
+
+        private void GivenGrabbedFor(int movieId)
+        {
+            Mocker.GetMock<IHistoryService>()
+                  .Setup(s => s.FindByDownloadId("35238"))
+                  .Returns(new List<MovieHistory>
+                  {
+                      new MovieHistory
+                      {
+                          DownloadId = "35238",
+                          SourceTitle = "A Movie 1998 Extended 1080p",
+                          MovieId = movieId,
+                          EventType = MovieHistoryEventType.Grabbed
+                      }
+                  });
+        }
+
+        [Test]
+        public void should_track_the_download_on_the_edition_row_it_was_grabbed_for()
+        {
+            var defaultRow = new Movie { Id = 3, MovieMetadataId = 10, Edition = "" };
+            var extendedRow = new Movie { Id = 7, MovieMetadataId = 10, Edition = "Extended", EditionAcceptUntagged = true };
+
+            GivenGrabbedFor(extendedRow.Id);
+
+            Mocker.GetMock<IParsingService>()
+                  .Setup(s => s.Map(It.IsAny<ParsedMovieInfo>(), It.IsAny<string>(), It.IsAny<int>(), null))
+                  .Returns(GivenRemoteMovie(defaultRow));
+
+            Mocker.GetMock<IParsingService>()
+                  .Setup(s => s.Map(It.IsAny<ParsedMovieInfo>(), extendedRow.Id))
+                  .Returns(GivenRemoteMovie(extendedRow));
+
+            var client = GivenClient();
+            var trackedDownload = Subject.TrackDownload(client, GivenItem(client, "A Movie 1998 1080p"));
+
+            trackedDownload.RemoteMovie.Movie.Should().BeSameAs(extendedRow);
+            trackedDownload.RemoteMovie.Release.Should().NotBeNull();
+        }
+
+        [Test]
+        public void should_keep_the_title_mapping_when_the_grabbed_movie_is_another_title()
+        {
+            var defaultRow = new Movie { Id = 3, MovieMetadataId = 10, Edition = "" };
+            var otherTitle = new Movie { Id = 7, MovieMetadataId = 11, Edition = "" };
+
+            GivenGrabbedFor(otherTitle.Id);
+
+            Mocker.GetMock<IParsingService>()
+                  .Setup(s => s.Map(It.IsAny<ParsedMovieInfo>(), It.IsAny<string>(), It.IsAny<int>(), null))
+                  .Returns(GivenRemoteMovie(defaultRow));
+
+            Mocker.GetMock<IParsingService>()
+                  .Setup(s => s.Map(It.IsAny<ParsedMovieInfo>(), otherTitle.Id))
+                  .Returns(GivenRemoteMovie(otherTitle));
+
+            var client = GivenClient();
+            var trackedDownload = Subject.TrackDownload(client, GivenItem(client, "A Movie 1998 1080p"));
+
+            trackedDownload.RemoteMovie.Movie.Should().BeSameAs(defaultRow);
+        }
+
+        [Test]
+        public void should_not_look_the_grabbed_movie_up_when_the_title_already_maps_to_it()
+        {
+            var defaultRow = new Movie { Id = 3, MovieMetadataId = 10, Edition = "" };
+
+            GivenGrabbedFor(defaultRow.Id);
+
+            Mocker.GetMock<IParsingService>()
+                  .Setup(s => s.Map(It.IsAny<ParsedMovieInfo>(), It.IsAny<string>(), It.IsAny<int>(), null))
+                  .Returns(GivenRemoteMovie(defaultRow));
+
+            var client = GivenClient();
+            var trackedDownload = Subject.TrackDownload(client, GivenItem(client, "A Movie 1998 1080p"));
+
+            trackedDownload.RemoteMovie.Movie.Should().BeSameAs(defaultRow);
+
+            Mocker.GetMock<IParsingService>().Verify(v => v.Map(It.IsAny<ParsedMovieInfo>(), It.IsAny<int>()), Times.Never());
+        }
+
+        // krzw(multi-edition) end
     }
 }

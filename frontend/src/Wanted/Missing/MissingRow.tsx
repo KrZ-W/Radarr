@@ -4,6 +4,7 @@ import TableRowCell from 'Components/Table/Cells/TableRowCell';
 import TableSelectCell from 'Components/Table/Cells/TableSelectCell';
 import Column from 'Components/Table/Column';
 import TableRow from 'Components/Table/TableRow';
+import { MovieEdition } from 'Movie/Movie'; // krzw(multi-edition)
 import MovieSearchCell from 'Movie/MovieSearchCell';
 import MovieStatus from 'Movie/MovieStatus';
 import MovieTitleLink from 'Movie/MovieTitleLink';
@@ -20,6 +21,7 @@ interface MissingRowProps {
   title: string;
   year: number;
   titleSlug: string;
+  edition?: MovieEdition | null; // krzw(multi-edition)
   isSelected?: boolean;
   columns: Column[];
   onSelectedChange: (options: SelectStateInputProps) => void;
@@ -35,6 +37,7 @@ function MissingRow({
   title,
   year,
   titleSlug,
+  edition, // krzw(multi-edition)
   isSelected,
   columns,
   onSelectedChange,
@@ -61,7 +64,12 @@ function MissingRow({
         if (name === 'movieMetadata.sortTitle') {
           return (
             <TableRowCell key={name}>
-              <MovieTitleLink titleSlug={titleSlug} title={title} />
+              <MovieTitleLink
+                titleSlug={titleSlug}
+                title={title}
+                movieId={id} // krzw(multi-edition)
+                edition={edition} // krzw(multi-edition)
+              />
             </TableRowCell>
           );
         }

@@ -125,6 +125,13 @@ namespace NzbDrone.Core.Movies
 
             movie.ApplyChanges(newMovie);
 
+            // krzw(multi-edition) begin: plain adds (API, import lists, collections, bulk import) always create the title's default row;
+            // edition rows are added through AddMovieEditionService, which copies the default row's folder instead of building one
+            movie.Edition = "";
+            movie.EditionAliases = new List<string>();
+            movie.EditionAcceptUntagged = false;
+
+            // krzw(multi-edition) end
             return movie;
         }
 

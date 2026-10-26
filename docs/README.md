@@ -30,6 +30,7 @@ exact behavior.
 | [Per-Profile Size Limits](features/profile-size-limits.md) | Each quality profile can override the min / preferred / max MB-per-minute size limits of any quality or group it contains; UI inputs in the profile editor, preferred clamped into the window, no migration |
 | [Symlink Import Guard](features/symlink-import-guard.md) | Import candidates that are symbolic links are rejected (reason names the link target, Warn log), hardlinks unaffected; setting on by default, off for rclone / debrid setups |
 | [Completed Download Handling](features/completed-download-handling.md) | Stuck `ImportPending`/`ImportBlocked` items self-heal instead of stalling until a cleaner marks them failed |
+| [Multi-Edition Movies](features/multi-edition.md) | Several editions (Theatrical, Extended, Director's Cut, ...) per movie, each its own row with its own profile, file and searches in the shared folder; releases route to the edition they name, `{Edition Name}` naming token, `edition`/`includeEditions` API; pilot |
 | [Docker / GHCR Deployment](features/docker-deployment.md) | LinuxServer.io-style image published to GHCR |
 
 ## Maintainer

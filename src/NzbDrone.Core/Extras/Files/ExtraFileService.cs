@@ -97,8 +97,68 @@ namespace NzbDrone.Core.Extras.Files
 
         public void HandleAsync(MoviesDeletedEvent message)
         {
+            // krzw(multi-edition) begin: an edition row leaving a folder it shared takes its file's extras along
+            if (message.DeleteFiles)
+            {
+                foreach (var movie in message.Movies)
+                {
+                    RecycleExtrasOfSharedFolderRow(movie);
+                }
+            }
+
+            // krzw(multi-edition) end
             _repository.DeleteForMovies(message.Movies.Select(m => m.Id).ToList());
         }
+
+        // krzw(multi-edition) begin
+        // Deleting a row whose folder stays with the title's other editions recycles only that row's movie file
+        // (MediaFileDeletionService.DeleteOwnMovieFile), and no MovieFileDeletedEvent can follow because the row is
+        // gone. So the extras linked to that file are recycled here, before their rows are dropped. A row with no
+        // remaining sibling at its path keeps upstream behaviour: the whole folder is recycled elsewhere.
+        private void RecycleExtrasOfSharedFolderRow(Movie movie)
+        {
+            if (movie == null || movie.MovieFileId <= 0 || movie.Path.IsNullOrWhiteSpace())
+            {
+                return;
+            }
+
+            var siblings = (_movieService.GetEditionSiblings(movie) ?? new List<Movie>())
+                           .Where(s => s != null && s.Path.IsNotNullOrWhiteSpace() && s.Path.PathEquals(movie.Path))
+                           .ToList();
+
+            if (siblings.Empty())
+            {
+                return;
+            }
+
+            // an extra at a path a sibling's extra also claims (equal stems, see EditionExtraFileFilter) stays with the sibling
+            var pathsOwnedBySiblings = siblings.SelectMany(s => _repository.GetFilesByMovie(s.Id) ?? new List<TExtraFile>())
+                                               .Select(e => e.RelativePath)
+                                               .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var extra in _repository.GetFilesByMovieFile(movie.MovieFileId) ?? new List<TExtraFile>())
+            {
+                var path = Path.Combine(movie.Path, extra.RelativePath);
+
+                if (pathsOwnedBySiblings.Contains(extra.RelativePath))
+                {
+                    _logger.Debug("Not recycling extra '{0}': the path belongs to another edition of {1}", path, movie);
+                    continue;
+                }
+
+                if (!_diskProvider.FileExists(path))
+                {
+                    continue;
+                }
+
+                _logger.Debug("Recycling extra '{0}' of the deleted {1}; the folder stays with its other editions", path, movie);
+
+                var subfolder = _diskProvider.GetParentFolder(movie.Path).GetRelativePath(_diskProvider.GetParentFolder(path));
+                _recycleBinProvider.DeleteFile(path, subfolder);
+            }
+        }
+
+        // krzw(multi-edition) end
 
         public void HandleAsync(MovieFileDeletedEvent message)
         {

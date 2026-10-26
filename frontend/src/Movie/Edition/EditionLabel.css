@@ -1,0 +1,6 @@
+.editionLabel {
+  composes: label from '~Components/Label.css';
+
+  margin-left: 6px;
+  vertical-align: middle;
+}

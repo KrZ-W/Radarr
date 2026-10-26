@@ -83,6 +83,7 @@ namespace Radarr.Api.V3.Movies
             var translation = GetMovieTranslation(translations, movie.MovieMetadata, language);
 
             var resource = movie.ToResource(availDelay, translation, _upgradableSpecification, _formatCalculator);
+            resource.LinkEditions(movie, _movieService.FindAllByTmdbId(movie.TmdbId));  // krzw(multi-edition): one query, like MovieController's single-resource mapping
             FetchAndLinkMovieStatistics(resource);
 
             _coverMapper.ConvertToLocalUrls(resource.Id, resource.Images);

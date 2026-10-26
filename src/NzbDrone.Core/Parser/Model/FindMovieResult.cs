@@ -1,3 +1,4 @@
+using System.Collections.Generic;  // krzw(multi-edition)
 using NzbDrone.Core.Movies;
 
 namespace NzbDrone.Core.Parser.Model
@@ -6,6 +7,7 @@ namespace NzbDrone.Core.Parser.Model
     {
         public Movie Movie { get; set; }
         public MovieMatchType MatchType { get; set; }
+        public List<Movie> EditionSiblings { get; set; }  // krzw(multi-edition): the other rows of the movie's title, when routing loaded the full set (else null)
 
         public FindMovieResult(Movie movie, MovieMatchType matchType)
         {

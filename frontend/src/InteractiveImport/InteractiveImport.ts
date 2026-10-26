@@ -32,6 +32,7 @@ interface InteractiveImport extends ModelBase {
   indexerFlags: number;
   rejections: Rejection[];
   movieFileId?: number;
+  editionOverride?: boolean; // krzw(multi-edition): set once the user picked the movie row; sent with every reprocess so the pick survives later edits
 }
 
 export default InteractiveImport;

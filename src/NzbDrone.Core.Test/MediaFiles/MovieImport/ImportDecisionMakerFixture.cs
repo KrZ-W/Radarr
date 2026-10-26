@@ -270,5 +270,51 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport
 
             ExceptionVerification.ExpectedErrors(1);
         }
+
+        // krzw(multi-edition) begin
+        [Test]
+        public void should_route_each_file_through_the_edition_router_and_flag_user_picks()
+        {
+            GivenSpecifications(_pass1);
+
+            var sibling = Builder<Movie>.CreateNew()
+                                        .With(e => e.Id = 99)
+                                        .With(e => e.Path = @"C:\Test\Sibling".AsOsAgnostic())
+                                        .With(e => e.QualityProfile = _movie.QualityProfile)
+                                        .Build();
+
+            var untaggedFile = @"C:\Test\Unsorted\The.Movie.2018.DVDRip.XviD-OSiTV.avi".AsOsAgnostic();
+            var extendedFile = @"C:\Test\Sibling\The.Movie.2018.Extended.DVDRip.XviD-OSiTV.avi".AsOsAgnostic();
+            var files = new List<string> { untaggedFile, extendedFile };
+
+            var result = Subject.GetImportDecisions(files, _movie, null, null, false, false, true, file => file == extendedFile ? sibling : null);
+
+            result.Should().HaveCount(2);
+            result[0].LocalMovie.Movie.Should().BeSameAs(_movie);
+            result[0].LocalMovie.ExistingFile.Should().BeFalse();
+            result[1].LocalMovie.Movie.Should().BeSameAs(sibling);
+            result[1].LocalMovie.ExistingFile.Should().BeTrue();
+            result.Should().OnlyContain(d => d.LocalMovie.EditionOverride);
+        }
+
+        [Test]
+        public void should_keep_every_file_on_the_movie_without_a_router_and_not_flag_user_picks()
+        {
+            GivenSpecifications(_pass1);
+
+            var files = new List<string>
+            {
+                @"C:\Test\Unsorted\The.Movie.2018.DVDRip.XviD-OSiTV.avi".AsOsAgnostic(),
+                @"C:\Test\Unsorted\The.Movie.2018.Extended.DVDRip.XviD-OSiTV.avi".AsOsAgnostic()
+            };
+
+            var routed = Subject.GetImportDecisions(files, _movie, null, null, false, false, false, null);
+            var legacy = Subject.GetImportDecisions(files, _movie, null, null, false, false);
+
+            routed.Concat(legacy).Should().HaveCount(4);
+            routed.Concat(legacy).Should().OnlyContain(d => d.LocalMovie.Movie == _movie && !d.LocalMovie.EditionOverride);
+        }
+
+        // krzw(multi-edition) end
     }
 }

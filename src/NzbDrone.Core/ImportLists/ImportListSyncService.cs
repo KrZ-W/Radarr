@@ -4,6 +4,7 @@ using NLog;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Common.Instrumentation.Extensions;
 using NzbDrone.Core.Configuration;
+using NzbDrone.Core.Exceptions;  // krzw(multi-edition)
 using NzbDrone.Core.ImportLists.ImportExclusions;
 using NzbDrone.Core.ImportLists.ImportListMovies;
 using NzbDrone.Core.Messaging.Commands;
@@ -194,8 +195,9 @@ namespace NzbDrone.Core.ImportLists
 
             var moviesToUpdate = new List<Movie>();
 
-            foreach (var movie in moviesInLibrary)
+            foreach (var movie in moviesInLibrary.OrderBy(m => m.IsDefaultEdition ? 1 : 0))
             {
+                // krzw(multi-edition): ordered above so a title's edition rows go before its default row, which cannot be deleted while they exist
                 var movieExists = listMovies.Any(c =>
                     c.TmdbId == movie.TmdbId ||
                     (c.ImdbId.IsNotNullOrWhiteSpace() && movie.ImdbId.IsNotNullOrWhiteSpace() && c.ImdbId == movie.ImdbId));
@@ -214,11 +216,11 @@ namespace NzbDrone.Core.ImportLists
                             break;
                         case "removeAndKeep":
                             _logger.Info("{0} was in your library, but not found in your lists --> Removing from library (keeping files)", movie);
-                            _movieService.DeleteMovie(movie.Id, false);
+                            DeleteMovieForList(movie, false);  // krzw(multi-edition)
                             break;
                         case "removeAndDelete":
                             _logger.Info("{0} was in your library, but not found in your lists --> Removing from library and deleting files", movie);
-                            _movieService.DeleteMovie(movie.Id, true);
+                            DeleteMovieForList(movie, true);  // krzw(multi-edition)
                             break;
                     }
                 }
@@ -226,5 +228,22 @@ namespace NzbDrone.Core.ImportLists
 
             _movieService.UpdateMovie(moviesToUpdate, true);
         }
+
+        // krzw(multi-edition) begin
+        // A default row whose edition rows are still in the library (they are on a list, or were kept) cannot be
+        // deleted; the clean-up skips it with a warning instead of aborting the whole sync.
+        private void DeleteMovieForList(Movie movie, bool deleteFiles)
+        {
+            try
+            {
+                _movieService.DeleteMovie(movie.Id, deleteFiles);
+            }
+            catch (NzbDroneClientException e)
+            {
+                _logger.Warn("{0} was not removed from the library: {1}", movie, e.Message);
+            }
+        }
+
+        // krzw(multi-edition) end
     }
 }

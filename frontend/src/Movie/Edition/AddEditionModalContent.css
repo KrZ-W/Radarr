@@ -1,0 +1,33 @@
+.searchForMissingMovieLabelContainer {
+  display: flex;
+  margin-top: 2px;
+  margin-right: auto;
+}
+
+.searchForMissingMovieLabel {
+  margin-right: 8px;
+  font-weight: normal;
+}
+
+.searchForMissingMovieContainer {
+  composes: container from '~Components/Form/CheckInput.css';
+
+  flex: 0 1 0;
+}
+
+.searchForMissingMovieInput {
+  composes: input from '~Components/Form/CheckInput.css';
+
+  margin-top: 0;
+}
+
+.modalFooter {
+  composes: modalFooter from '~Components/Modal/ModalFooter.css';
+}
+
+@media only screen and (max-width: $breakpointSmall) {
+  .modalFooter {
+    display: block;
+    text-align: center;
+  }
+}

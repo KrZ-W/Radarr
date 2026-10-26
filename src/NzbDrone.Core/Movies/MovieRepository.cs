@@ -6,6 +6,7 @@ using NzbDrone.Core.Datastore;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Movies.AlternativeTitles;
+using NzbDrone.Core.Movies.Editions;  // krzw(multi-edition)
 using NzbDrone.Core.Movies.Translations;
 using NzbDrone.Core.Profiles.Qualities;
 using NzbDrone.Core.Qualities;
@@ -31,6 +32,11 @@ namespace NzbDrone.Core.Movies
         List<int> GetRecommendations();
         bool ExistsByMetadataId(int metadataId);
         HashSet<int> AllMovieWithCollectionsTmdbIds();
+        List<Movie> FindAllByTmdbId(int tmdbId);  // krzw(multi-edition)
+        List<Movie> GetEditionSiblings(int movieId);  // krzw(multi-edition)
+        List<Movie> GetEditionSiblings(Movie movie);  // krzw(multi-edition): no scalar read when the caller holds the row
+        Movie GetDefaultEdition(int movieMetadataId);  // krzw(multi-edition)
+        bool EditionExists(int tmdbId, string editionName);  // krzw(multi-edition)
     }
 
     public class MovieRepository : BasicRepository<Movie>, IMovieRepository
@@ -210,17 +216,87 @@ namespace NzbDrone.Core.Movies
         public Movie FindByImdbId(string imdbid)
         {
             var imdbIdWithPrefix = Parser.Parser.NormalizeImdbId(imdbid);
-            return imdbIdWithPrefix == null ? null : Query(x => x.MovieMetadata.Value.ImdbId == imdbIdWithPrefix).FirstOrDefault();
+            return imdbIdWithPrefix == null ? null : Query(x => x.MovieMetadata.Value.ImdbId == imdbIdWithPrefix).FirstOrDefault(x => x.IsDefaultEdition);  // krzw(multi-edition): default row only
         }
 
         public Movie FindByTmdbId(int tmdbid)
         {
-            return Query(x => x.MovieMetadata.Value.TmdbId == tmdbid).FirstOrDefault();
+            return Query(x => x.MovieMetadata.Value.TmdbId == tmdbid).FirstOrDefault(x => x.IsDefaultEdition);  // krzw(multi-edition): default row only, edition rows never leak to legacy callers
         }
+
+        // krzw(multi-edition) begin
+        public List<Movie> FindAllByTmdbId(int tmdbId)
+        {
+            return Query(x => x.MovieMetadata.Value.TmdbId == tmdbId)
+                .OrderBy(x => x.IsEdition ? 1 : 0)
+                .ThenBy(x => x.Id)
+                .ToList();
+        }
+
+        public List<Movie> GetEditionSiblings(int movieId)
+        {
+            int? metadataId;
+
+            // a scalar read; the joined Movie query is spent on the siblings only
+            using (var conn = _database.OpenConnection())
+            {
+                metadataId = conn.ExecuteScalar<int?>("SELECT \"MovieMetadataId\" FROM \"Movies\" WHERE \"Id\" = @movieId", new { movieId });
+            }
+
+            if (metadataId == null || metadataId <= 0)
+            {
+                return new List<Movie>();
+            }
+
+            var movieMetadataId = metadataId.Value;
+
+            return Query(x => x.MovieMetadataId == movieMetadataId && x.Id != movieId)
+                .OrderBy(x => x.IsEdition ? 1 : 0)
+                .ThenBy(x => x.Id)
+                .ToList();
+        }
+
+        // The caller holds the row, so the metadata id needs no read of its own: one joined query for the siblings.
+        public List<Movie> GetEditionSiblings(Movie movie)
+        {
+            if (movie == null || movie.MovieMetadataId <= 0)
+            {
+                return new List<Movie>();
+            }
+
+            var movieMetadataId = movie.MovieMetadataId;
+            var movieId = movie.Id;
+
+            return Query(x => x.MovieMetadataId == movieMetadataId && x.Id != movieId)
+                .OrderBy(x => x.IsEdition ? 1 : 0)
+                .ThenBy(x => x.Id)
+                .ToList();
+        }
+
+        public Movie GetDefaultEdition(int movieMetadataId)
+        {
+            return Query(x => x.MovieMetadataId == movieMetadataId).FirstOrDefault(x => x.IsDefaultEdition);
+        }
+
+        public bool EditionExists(int tmdbId, string editionName)
+        {
+            var normalized = EditionNormalizer.Normalize(editionName);
+
+            return FindAllByTmdbId(tmdbId).Any(x => EditionNormalizer.Normalize(x.Edition) == normalized);
+        }
+
+        // krzw(multi-edition) end
 
         public List<Movie> FindByTmdbId(List<int> tmdbids)
         {
-            return Query(x => tmdbids.Contains(x.TmdbId));
+            // krzw(multi-edition) begin: Movies has no TmdbId column (Movie.TmdbId is an ignored pass-through to the metadata, migration 207
+            // dropped the column), so the lookup goes through MovieMetadata like FindByTmdbId(int). Every row of the given titles, default rows first.
+            return Query(x => tmdbids.Contains(x.MovieMetadata.Value.TmdbId))
+                .OrderBy(x => x.IsEdition ? 1 : 0)
+                .ThenBy(x => x.Id)
+                .ToList();
+
+            // krzw(multi-edition) end
         }
 
         public List<Movie> GetMoviesByFileId(int fileId)
@@ -294,7 +370,7 @@ namespace NzbDrone.Core.Movies
 
         public Movie FindByPath(string path)
         {
-            return Query(x => x.Path == path).FirstOrDefault();
+            return Query(x => x.Path == path).FirstOrDefault(x => x.IsDefaultEdition);  // krzw(multi-edition): rows of one title share the path, answer with the default row
         }
 
         public Dictionary<int, string> AllMoviePaths()

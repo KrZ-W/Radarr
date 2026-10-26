@@ -21,6 +21,7 @@ namespace Radarr.Api.V3.Movies
         {
             Monitored = true;
             MinimumAvailability = MovieStatusType.Released;
+            Editions = new List<MovieEditionSummaryResource>();  // krzw(multi-edition)
         }
 
         // Todo: Sorters should be done completely on the client
@@ -85,6 +86,14 @@ namespace Radarr.Api.V3.Movies
         public float Popularity { get; set; }
         public DateTime? LastSearchTime { get; set; }
         public MovieStatisticsResource Statistics { get; set; }
+
+        // krzw(multi-edition) begin: Edition is null on the default row of a title; edition rows carry it plus EditionParentId
+        // (the default row's id); Editions lists a default row's edition rows and is empty elsewhere
+        public MovieEditionResource Edition { get; set; }
+        public int? EditionParentId { get; set; }
+        public List<MovieEditionSummaryResource> Editions { get; set; }
+
+        // krzw(multi-edition) end
 
         // Hiding this so people don't think its usable (only used to set the initial state)
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
@@ -165,6 +174,7 @@ namespace Radarr.Api.V3.Movies
                 Collection = collection,
                 Popularity = model.MovieMetadata.Value.Popularity,
                 LastSearchTime = model.LastSearchTime,
+                Edition = model.ToEditionResource(),  // krzw(multi-edition): EditionParentId/Editions need the title's other rows, see LinkEditions
             };
         }
 
@@ -211,6 +221,13 @@ namespace Radarr.Api.V3.Movies
                 RootFolderPath = resource.RootFolderPath,
 
                 Tags = resource.Tags ?? new HashSet<int>(),
+
+                // krzw(multi-edition) begin
+                Edition = resource.Edition?.Name ?? "",
+                EditionAliases = resource.Edition?.Aliases ?? new List<string>(),
+                EditionAcceptUntagged = resource.Edition?.AcceptUntagged ?? false,
+
+                // krzw(multi-edition) end
                 Added = resource.Added,
                 AddOptions = resource.AddOptions
             };

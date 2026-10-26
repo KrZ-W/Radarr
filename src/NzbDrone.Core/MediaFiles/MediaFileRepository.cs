@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Messaging.Events;
+using NzbDrone.Core.Movies;  // krzw(multi-edition)
 
 namespace NzbDrone.Core.MediaFiles
 {
@@ -9,6 +10,7 @@ namespace NzbDrone.Core.MediaFiles
     {
         List<MovieFile> GetFilesByMovie(int movieId);
         List<MovieFile> GetFilesByMovies(IEnumerable<int> movieIds);
+        List<MovieFile> GetFilesBySiblingEditions(int movieMetadataId, int movieId);  // krzw(multi-edition)
         List<MovieFile> GetFilesWithoutMediaInfo();
         void DeleteForMovies(List<int> movieIds);
 
@@ -31,6 +33,19 @@ namespace NzbDrone.Core.MediaFiles
         {
             return Query(x => movieIds.Contains(x.MovieId));
         }
+
+        // krzw(multi-edition) begin
+        // Files owned by the other rows (default or editions) of one title. Those rows share the folder, so their
+        // files must not look unmapped when another row of the title is scanned. One joined query.
+        public List<MovieFile> GetFilesBySiblingEditions(int movieMetadataId, int movieId)
+        {
+            var builder = Builder().Join<MovieFile, Movie>((f, m) => f.MovieId == m.Id)
+                                   .Where<Movie>(m => m.MovieMetadataId == movieMetadataId && m.Id != movieId);
+
+            return Query(builder);
+        }
+
+        // krzw(multi-edition) end
 
         public List<MovieFile> GetFilesWithoutMediaInfo()
         {

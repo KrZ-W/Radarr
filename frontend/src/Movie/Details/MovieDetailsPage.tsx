@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useHistory, useParams } from 'react-router';
 import NotFound from 'Components/NotFound';
@@ -9,12 +9,35 @@ import MovieDetails from './MovieDetails';
 
 function MovieDetailsPage() {
   const allMovies = useSelector(createAllMoviesSelector());
-  const { titleSlug } = useParams<{ titleSlug: string }>();
+  // krzw(multi-edition) begin: /movie/:titleSlug resolves to the default row, /movie/:titleSlug/edition/:editionId to an edition row
+  const { titleSlug, editionId } = useParams<{
+    titleSlug: string;
+    editionId?: string;
+  }>();
   const history = useHistory();
 
-  const movieIndex = allMovies.findIndex(
-    (movie) => movie.titleSlug === titleSlug
-  );
+  const movieIndex = useMemo(() => {
+    const candidates = allMovies.reduce((acc: number[], movie, index) => {
+      if (movie.titleSlug === titleSlug) {
+        acc.push(index);
+      }
+
+      return acc;
+    }, []);
+
+    if (editionId) {
+      const id = parseInt(editionId);
+
+      return candidates.find((index) => allMovies[index].id === id) ?? -1;
+    }
+
+    return (
+      candidates.find((index) => !allMovies[index].edition) ??
+      candidates[0] ??
+      -1
+    );
+  }, [allMovies, titleSlug, editionId]);
+  // krzw(multi-edition) end
 
   const previousIndex = usePrevious(movieIndex);
 

@@ -445,7 +445,9 @@ function getSaveAjaxOptions({ ajaxOptions, payload }) {
 
 export const actionHandlers = handleThunks({
 
-  [FETCH_MOVIES]: createFetchHandler(section, '/movie'),
+  [FETCH_MOVIES]: (getState, payload, dispatch) => { // krzw(multi-edition) begin: the UI always wants edition rows
+    createFetchHandler(section, '/movie')(getState, { includeEditions: true, ...payload }, dispatch);
+  }, // krzw(multi-edition) end
   [SAVE_MOVIE]: createSaveProviderHandler(section, '/movie', { getAjaxOptions: getSaveAjaxOptions }),
   [DELETE_MOVIE]: (getState, payload, dispatch) => {
     createRemoveItemHandler(section, '/movie')(getState, payload, dispatch);

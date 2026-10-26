@@ -38,6 +38,25 @@ namespace NzbDrone.Core.Test.Housekeeping.Housekeepers
             AllStoredModels.Should().HaveCount(1);
         }
 
+        // krzw(multi-edition)
+        [Test]
+        public void should_keep_metadata_referenced_only_by_an_edition_row()
+        {
+            var movieMetadata = Builder<MovieMetadata>.CreateNew().BuildNew();
+
+            Db.Insert(movieMetadata);
+
+            var editionRow = Builder<Movie>.CreateNew()
+                                           .With(b => b.MovieMetadataId = movieMetadata.Id)
+                                           .With(b => b.Edition = "Extended")
+                                           .BuildNew();
+
+            Db.Insert(editionRow);
+
+            Subject.Clean();
+            AllStoredModels.Should().HaveCount(1);
+        }
+
         [Test]
         public void should_not_delete_unorphaned_movie_metadata_items_for_lists()
         {

@@ -25,6 +25,7 @@ namespace NzbDrone.Core.Test.MovieTests
         {
             _movie = Builder<Movie>
                 .CreateNew()
+                .With(m => m.Edition = "")  // krzw(multi-edition): NBuilder fills Edition, which would make this an edition row
                 .Build();
 
             _command = new MoveMovieCommand
@@ -114,6 +115,27 @@ namespace NzbDrone.Core.Test.MovieTests
                   .Verify(v => v.TransferFolder(_bulkCommand.Movies.First().SourcePath, expectedPath, TransferMode.Move), Times.Once());
         }
 
+        // krzw(multi-edition) begin
+        [Test]
+        public void should_not_move_an_edition_row_its_folder_moves_with_the_default_row()
+        {
+            _movie.Edition = "Extended";
+
+            Mocker.GetMock<IBuildFileNames>()
+                  .Setup(s => s.GetMovieFolder(It.IsAny<Movie>(), null))
+                  .Returns("Movie");
+
+            Subject.Execute(_command);
+            Subject.Execute(_bulkCommand);
+
+            Mocker.GetMock<IDiskTransferService>()
+                  .Verify(v => v.TransferFolder(It.IsAny<string>(), It.IsAny<string>(), TransferMode.Move), Times.Never());
+
+            Mocker.GetMock<IMovieService>()
+                  .Verify(v => v.UpdateMovie(It.IsAny<Movie>()), Times.Never());
+        }
+
+        // krzw(multi-edition) end
         [Test]
         public void should_skip_movie_folder_if_it_does_not_exist()
         {

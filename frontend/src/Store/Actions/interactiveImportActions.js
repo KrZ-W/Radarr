@@ -169,7 +169,8 @@ export const actionHandlers = handleThunks({
         languages: item.languages,
         releaseGroup: item.releaseGroup,
         indexerFlags: item.indexerFlags,
-        downloadId: item.downloadId
+        downloadId: item.downloadId,
+        editionOverride: item.editionOverride === true // krzw(multi-edition): false unless the user picked the movie row
       };
     });
 

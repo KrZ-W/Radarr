@@ -9,7 +9,7 @@ namespace NzbDrone.Core.Organizer
 {
     public static class FileNameValidation
     {
-        public static readonly Regex DeprecatedMovieFolderTokensRegex = new(@"(\{[- ._\[\(]?(?:Original[- ._](?:Title|Filename)|Release[- ._]Group|Edition[- ._]Tags|Quality[- ._](?:Full|Title|Proper|Real)|MediaInfo[- ._](?:Video|VideoCodec|VideoBitDepth|Audio|AudioCodec|AudioChannels|AudioLanguages|AudioLanguagesAll|SubtitleLanguages|SubtitleLanguagesAll|3D|Simple|Full|VideoDynamicRange|VideoDynamicRangeType))[- ._\]\)]?\})",
+        public static readonly Regex DeprecatedMovieFolderTokensRegex = new(@"(\{[- ._\[\(]?(?:Original[- ._](?:Title|Filename)|Release[- ._]Group|Edition[- ._](?:Tags|Name)|Quality[- ._](?:Full|Title|Proper|Real)|MediaInfo[- ._](?:Video|VideoCodec|VideoBitDepth|Audio|AudioCodec|AudioChannels|AudioLanguages|AudioLanguagesAll|SubtitleLanguages|SubtitleLanguagesAll|3D|Simple|Full|VideoDynamicRange|VideoDynamicRangeType))[- ._\]\)]?\})",  // krzw(multi-edition): {Edition Name} is per row, edition rows share the folder
                                                                             RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         internal static readonly Regex OriginalTokenRegex = new(@"(\{Original[- ._](?:Title|Filename)\})",
