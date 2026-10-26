@@ -1,6 +1,6 @@
 # Multi-Edition Movies
 
-> **Status:** pilot (slice 1) · **Since:** `v6.4.4.10685+krzw.2` · **Surface:** movie page (*Editions* box, *Add Edition*), edit-movie modal, naming token `{Edition Name}`, `/api/v3/movie`, `/api/v3/calendar` · **Design:** [design/multi-edition.md](../design/multi-edition.md)
+> **Status:** pilot (slice 1) · **Since:** `v6.4.4.10685+krzw.2` · **Surface:** movie page (*Editions* box, *Add Edition*, move file to edition), edit-movie modal, naming token `{Edition Name}`, `/api/v3/movie`, `/api/v3/calendar`, `/api/v3/edition` (audit and move file: unreleased) · **Design:** [design/multi-edition.md](../design/multi-edition.md)
 
 ## What it does
 
@@ -170,6 +170,8 @@ when the format contains the token.
 | `POST /api/v3/movie` | with `edition` adds an edition to an existing movie; without it always creates a default row |
 | `PUT /api/v3/movie/{id}` | edition fields editable, path not; a default row cannot be turned into an edition |
 | `DELETE /api/v3/movie/{id}` | `400` on a default row that still has editions |
+| `GET /api/v3/edition/audit` | default-row files that carry an edition, classified `cut` / `theatrical` / `variant` / `unrecognised` (see *Existing files*) |
+| `POST /api/v3/edition/movefile` | `{movieFileId, movieId}`: move a file and its extras to another row of the same movie, then rename it; `400` for another movie, a row that has a file, or the owning row |
 | `GET /api/v3/calendar` | `includeEditions` (default `false`) |
 | `GET /feed/v3/calendar/radarr.ics` | one event per title (an edition stands in when it is the only monitored row) |
 | `/api/v3/wanted/missing`, `/wanted/cutoff`, queue, history, blocklist, manual import, parse | edition rows always included, resources carry `edition` |
@@ -202,9 +204,13 @@ calendar.
 Branch `feat/multi-edition-master` (cut from `v6.4.4.10685+krzw.1`; 17 commits,
 `44b7d79d5` to `5071d6a32`: design `44b7d79d5`, foundation `d31b2be5c`, parser `dd49ca341`,
 frontend `3b47da12b` / `ed6c5d4b7`, routing `a6cb8e0a4`, gates `e229017cc`, shared-folder
-rules `111e32fba`, naming token `04bda5360`, API `d84c3db12`, review and integration fixes
-`feaf34e93`, `95a56de3a`, `573934a79`, `e7e96a358`, `5071d6a32`), merged into
+rules `111e32fba`, naming token `04bda5360`, API `d84c3db12`, frontend merge `da54f450c`,
+review and integration fixes `feaf34e93`, docs `97f633f11`, verified fixes `95a56de3a`,
+`573934a79`, `e7e96a358`, `5071d6a32`), merged into
 `personal/all-features-master` as `a5534a06f` (release `v6.4.4.10685+krzw.2`).
+Audit and move-file-to-edition: branch `feat/edition-file-reassign-master` (`3f73e6a99`), files
+`Movies/Editions/MovieEditionFileService`, `Radarr.Api.V3/Movies/MovieEditionFileController`,
+`frontend/src/Movie/Edition/MovieEditions.tsx`, marked `krzw(edition-file-reassign)`.
 Key files: `Movies/Movie.cs` (`Edition`,
 `EditionAliases`, `EditionAcceptUntagged`), `Movies/Editions/*` (`EditionNormalizer`,
 `EditionPresets`, `EditionMatcher`, `EditionGate`, `EditionValidation`,
