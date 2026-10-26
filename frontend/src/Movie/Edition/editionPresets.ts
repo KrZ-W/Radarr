@@ -33,6 +33,7 @@ const editionPresets: EditionPreset[] = [
       'directors cut',
       "director's edition",
       'directors edition',
+      'directors',
       'dc',
     ],
   },
@@ -57,6 +58,9 @@ const editionPresets: EditionPreset[] = [
     name: 'Anniversary Edition',
     aliases: ['anniversary edition', 'anniversary'],
   },
+  // krzw(edition-file-reassign)
+  { name: 'Assembly Cut', aliases: ['assembly cut'] },
+  { name: 'Restored', aliases: ['restored'] },
 ];
 
 export function findEditionPreset(name: string): EditionPreset | undefined {

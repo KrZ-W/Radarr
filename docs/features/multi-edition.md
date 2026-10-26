@@ -1,6 +1,6 @@
 # Multi-Edition Movies
 
-> **Status:** pilot (slice 1) · **Since:** `v6.4.4.10685+krzw.2` · **Surface:** movie page (*Editions* box, *Add Edition*), edit-movie modal, naming token `{Edition Name}`, `/api/v3/movie`, `/api/v3/calendar` · **Design:** [design/multi-edition.md](../design/multi-edition.md)
+> **Status:** pilot (slice 1) · **Since:** `v6.4.4.10685+krzw.2` · **Surface:** movie page (*Editions* box, *Add Edition*, move file to edition), edit-movie modal, naming token `{Edition Name}`, `/api/v3/movie`, `/api/v3/calendar`, `/api/v3/edition` (audit and move file: unreleased) · **Design:** [design/multi-edition.md](../design/multi-edition.md)
 
 ## What it does
 
@@ -23,7 +23,8 @@ The add-edition dialog offers these names, each with the release spellings that 
 Theatrical · Extended (`extended cut`, `extended edition`) · Director's Cut
 (`director's edition`, `directors cut`, `dc`) · Unrated · Final Cut · Ulysses Cut · IMAX ·
 Criterion (`criterion collection`) · Remastered · Special Edition · Ultimate Edition ·
-Ultimate Cut · Open Matte · Uncut · Anniversary Edition
+Ultimate Cut · Open Matte · Uncut · Anniversary Edition · Assembly Cut · Restored
+(Director's Cut also matches a bare `directors`)
 
 Pick *Custom* for anything else (32 characters at most, letters or digits required). Aliases
 are free text; the name itself always counts as an alias.
@@ -103,6 +104,46 @@ tagged file on rescans too. Extras (subtitles, `-thumb` images, `.nfo`) attach t
 file whose name they start with; folder-level extras (`poster.jpg`, `fanart.jpg`) stay with the
 default edition. Upgrades compare only against the same row's file.
 
+## Existing files: audit and move to an edition
+
+Upgrading changes nothing on disk: every existing movie becomes a default row and keeps its
+file, whatever cut that file is. Two tools sort that out after the fact.
+
+**Audit.** `GET /api/v3/edition/audit` lists every default-row file that carries an edition,
+read from a Plex `{edition-X}` tag in the file name, else from the edition parsed from the
+release name at import. Each item has `kind`:
+
+| Kind | Meaning | Usual action |
+|---|---|---|
+| `cut` | Extended, Unrated, Director's Cut, Uncut, Final Cut, Special/Ultimate/Anniversary, Assembly Cut, Ulysses Cut | add that edition and move the file to it, or leave it if this cut is the one you want as default |
+| `theatrical` | the file already is the theatrical cut | none |
+| `variant` | Remastered, IMAX, Restored, Open Matte, Criterion: a release of the same cut | usually none |
+| `unrecognised` | an edition string no preset matches | look at it |
+
+`suggestedEdition` names the preset, `ambiguous` is set when several presets match
+(`Extended Director's Cut`), and `editionRowId` / `editionRowHasFile` point at an edition row
+that already claims the file. Export as CSV:
+
+```bash
+curl -s -H "X-Api-Key: $KEY" http://radarr:7878/api/v3/edition/audit | jq -r \
+  '(["kind","suggestedEdition","ambiguous","fileEdition","title","year","movieId","movieFileId"]|@csv),
+   (.[]|[.kind,.suggestedEdition,.ambiguous,.fileEdition,.title,.year,.movieId,.movieFileId]|@csv)'
+```
+
+**Move a file to an edition.** On the movie page, the *Editions* box shows a file icon on every
+other row of the title that has no file: it moves the current row's file there. The API is
+`POST /api/v3/edition/movefile` with `{"movieFileId": 2405, "movieId": 3272}`. The move:
+
+- repoints the file and its subtitles, metadata and other extras to the target row;
+- clears the source row's file (it shows as missing, and is searched if monitored) and sets
+  the target row's;
+- queues a rename of that file when renaming is enabled, so it gains or loses its
+  `{edition-…}` tag (extras are renamed with it);
+- keeps history where it was: past grabs and imports stay on the source row.
+
+It is refused (`400`) when the target belongs to another movie, already has a file, or already
+owns this file. Moving back to the default row works the same way.
+
 ## Naming
 
 New token **`{Edition Name}`** = the edition configured on the row, rendered verbatim
@@ -129,6 +170,8 @@ when the format contains the token.
 | `POST /api/v3/movie` | with `edition` adds an edition to an existing movie; without it always creates a default row |
 | `PUT /api/v3/movie/{id}` | edition fields editable, path not; a default row cannot be turned into an edition |
 | `DELETE /api/v3/movie/{id}` | `400` on a default row that still has editions |
+| `GET /api/v3/edition/audit` | default-row files that carry an edition, classified `cut` / `theatrical` / `variant` / `unrecognised` (see *Existing files*) |
+| `POST /api/v3/edition/movefile` | `{movieFileId, movieId}`: move a file and its extras to another row of the same movie, then rename it; `400` for another movie, a row that has a file, or the owning row |
 | `GET /api/v3/calendar` | `includeEditions` (default `false`) |
 | `GET /feed/v3/calendar/radarr.ics` | one event per title (an edition stands in when it is the only monitored row) |
 | `/api/v3/wanted/missing`, `/wanted/cutoff`, queue, history, blocklist, manual import, parse | edition rows always included, resources carry `edition` |
@@ -150,8 +193,10 @@ calendar.
 - One torrent containing two cuts: the file matching the grabbing row imports; the other is
   left for manual import, where it routes to its row.
 - Migration 248 replaces the unique index on `Movies.MovieMetadataId` by one on
-  `(MovieMetadataId, Edition)`; a downgrade to upstream with edition rows present fails that
-  constraint. Delete edition rows before downgrading.
+  `(MovieMetadataId, Edition)`. An older image started on a migrated database boots and
+  ignores the new columns (verified with `6.4.4.10685-krzw.1` on a database holding two edition
+  rows), but it shows edition rows as duplicate movies sharing a folder. Roll back by restoring
+  the pre-upgrade database backup, or delete the edition rows first.
 - Postgres: the migration is written for both engines but was only run on SQLite.
 
 ## Source
@@ -159,9 +204,13 @@ calendar.
 Branch `feat/multi-edition-master` (cut from `v6.4.4.10685+krzw.1`; 17 commits,
 `44b7d79d5` to `5071d6a32`: design `44b7d79d5`, foundation `d31b2be5c`, parser `dd49ca341`,
 frontend `3b47da12b` / `ed6c5d4b7`, routing `a6cb8e0a4`, gates `e229017cc`, shared-folder
-rules `111e32fba`, naming token `04bda5360`, API `d84c3db12`, review and integration fixes
-`feaf34e93`, `95a56de3a`, `573934a79`, `e7e96a358`, `5071d6a32`), merged into
+rules `111e32fba`, naming token `04bda5360`, API `d84c3db12`, frontend merge `da54f450c`,
+review and integration fixes `feaf34e93`, docs `97f633f11`, verified fixes `95a56de3a`,
+`573934a79`, `e7e96a358`, `5071d6a32`), merged into
 `personal/all-features-master` as `a5534a06f` (release `v6.4.4.10685+krzw.2`).
+Audit and move-file-to-edition: branch `feat/edition-file-reassign-master` (`3f73e6a99`), files
+`Movies/Editions/MovieEditionFileService`, `Radarr.Api.V3/Movies/MovieEditionFileController`,
+`frontend/src/Movie/Edition/MovieEditions.tsx`, marked `krzw(edition-file-reassign)`.
 Key files: `Movies/Movie.cs` (`Edition`,
 `EditionAliases`, `EditionAcceptUntagged`), `Movies/Editions/*` (`EditionNormalizer`,
 `EditionPresets`, `EditionMatcher`, `EditionGate`, `EditionValidation`,

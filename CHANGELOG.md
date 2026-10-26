@@ -10,7 +10,15 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **Edition audit and move-file-to-edition.** `GET /api/v3/edition/audit` classifies every
+  default-row file that carries an edition (Plex tag or parsed release edition) as `cut`,
+  `theatrical`, `variant` or `unrecognised`, with the matching preset and any edition row
+  that already claims it. `POST /api/v3/edition/movefile` and a new button in the movie
+  page's *Editions* box move an existing file (and its extras) to another edition of the same
+  movie and queue its rename. Presets gain Assembly Cut, Restored and a bare `directors`
+  alias. See [docs/features/multi-edition.md](docs/features/multi-edition.md#existing-files-audit-and-move-to-an-edition).
 
 ## [v6.4.4.10685+krzw.2] — based on Radarr 6.4.4.10685
 
