@@ -76,13 +76,14 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
                 return result;
             }
 
-            // One candidate per edition name: the strongest entry (source priority, then confidence, then closest)
+            // One candidate per edition name, even when the name is known at two runtimes (Fellowship Extended 208 and
+            // 228): the strongest entry (source priority, then the closest runtime, then confidence)
             var matched = usable.Select(e => new { Entry = e, Minutes = MatchedMinutes(fileMinutes, e.RuntimeMinutes, tolerance) })
                                 .Where(m => m.Minutes.HasValue)
                                 .GroupBy(m => EditionNormalizer.Normalize(m.Entry.Name))
                                 .Select(g => g.OrderByDescending(m => EditionCatalogPriority.Rank(m.Entry.Source))
-                                              .ThenByDescending(m => m.Entry.Confidence)
                                               .ThenBy(m => Math.Abs(m.Minutes.Value - m.Entry.RuntimeMinutes))
+                                              .ThenByDescending(m => m.Entry.Confidence)
                                               .First())
                                 .ToList();
 

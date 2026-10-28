@@ -81,11 +81,20 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
         }
 
         [Test]
-        public void should_refuse_a_second_entry_with_the_same_title_name_and_source()
+        public void should_refuse_a_second_entry_with_the_same_title_name_source_and_runtime()
         {
-            Action insert = () => Subject.Insert(Entry(1, "Theatrical", 180, EditionCatalogSource.Imdb));
+            Action insert = () => Subject.Insert(Entry(1, "Theatrical", 178, EditionCatalogSource.Imdb));
 
             insert.Should().Throw<Exception>().WithMessage("*UNIQUE*");
+        }
+
+        [Test]
+        public void should_store_the_same_title_name_and_source_at_another_runtime()
+        {
+            Subject.Insert(Entry(1, "Extended", 208, EditionCatalogSource.Imdb));
+
+            Subject.GetByMetadata(1).Where(e => e.Name == "Extended" && e.Source == EditionCatalogSource.Imdb)
+                   .Select(e => e.RuntimeMinutes).Should().BeEquivalentTo(new[] { 208, 228 });
         }
 
         [Test]

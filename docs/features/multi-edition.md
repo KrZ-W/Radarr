@@ -162,8 +162,12 @@ catalog**: per title, a list of `{name, runtimeMinutes, source, confidence}` ent
 
 Merging ranks `user` > `library` > `imdb` > `wikidata` > `tmdb`, then confidence. Two entries
 with the same cut name within the tolerance collapse into the stronger one; the same name
-further apart stays twice (two releases of one cut). Entries below confidence 30 are shown
-but never take part in matching. An edition row's **expected runtime** (`expectedRuntimeMinutes`,
+further apart stays twice (two releases of one cut, e.g. Fellowship's Extended at 208 and
+228 min). This also holds within one source: a refresh, an import or a user entry stores the
+same name again when its runtime is further than the tolerance from the stored one, and
+updates the stored one otherwise. Matching counts such a cut once, so a 228-min file is a
+unique *Extended* match although Extended is also known at 208. Entries below confidence 30
+are shown but never take part in matching. An edition row's **expected runtime** (`expectedRuntimeMinutes`,
 set in Add Edition or Edit Movie) counts as an entry of that row's cut too.
 
 **Refresh.** After every movie refresh, Radarr queues `RefreshEditionCatalog` for the same

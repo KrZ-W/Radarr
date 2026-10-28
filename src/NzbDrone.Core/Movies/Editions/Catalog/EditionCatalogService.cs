@@ -56,7 +56,9 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
                    .ToList();
         }
 
-        // Same title, same source and same normalised name = same entry: its runtime, confidence and attributes are updated
+        // Same title, same source, same normalised name and a runtime within the runtime tolerance = same entry: its
+        // runtime, confidence and attributes are updated. The same name further apart is another release of that cut
+        // (Fellowship Extended 208 on DVD, 228 on Blu-ray) and gets an entry of its own.
         public EditionCatalogEntry Upsert(EditionCatalogEntry entry)
         {
             Validate(entry);
@@ -68,9 +70,7 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
                 entry.Updated = DateTime.UtcNow;
             }
 
-            var normalized = EditionNormalizer.Normalize(entry.Name);
-            var existing = _repository.GetByMetadata(entry.MovieMetadataId)
-                                      .FirstOrDefault(e => e.Source == entry.Source && EditionNormalizer.Normalize(e.Name) == normalized);
+            var existing = FindSame(_repository.GetByMetadata(entry.MovieMetadataId), entry.Source, entry.Name, entry.RuntimeMinutes, Tolerance());
 
             if (existing == null)
             {
@@ -92,28 +92,42 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
             return _repository.Update(existing);
         }
 
-        // Replaces everything one source says about a title (provider refresh). Entries with the same normalised name keep
-        // the strongest one (confidence, then first listed), since (title, name, source) is unique.
+        // Replaces everything one source says about a title (provider refresh). Entries with the same normalised name and
+        // runtimes within the tolerance keep the strongest one (confidence, then first listed); the same name further
+        // apart stays once per runtime, since (title, name, source, runtime) is unique.
         public void ReplaceSource(int metadataId, EditionCatalogSource source, List<EditionCatalogEntry> entries)
         {
             var now = DateTime.UtcNow;
+            var tolerance = Tolerance();
+            var kept = new List<EditionCatalogEntry>();
 
-            var toInsert = (entries ?? new List<EditionCatalogEntry>())
-                           .Where(e => e != null && e.Name.IsNotNullOrWhiteSpace() && e.RuntimeMinutes > 0)
-                           .Select((e, index) => new { Entry = e, Index = index })
-                           .GroupBy(x => EditionNormalizer.Normalize(x.Entry.Name))
-                           .Select(g => g.OrderByDescending(x => x.Entry.Confidence).ThenBy(x => x.Index).First().Entry)
-                           .Select(e => new EditionCatalogEntry
-                           {
-                               MovieMetadataId = metadataId,
-                               Name = e.Name.Trim(),
-                               RuntimeMinutes = e.RuntimeMinutes,
-                               Source = source,
-                               Confidence = e.Confidence,
-                               Attributes = e.Attributes,
-                               Updated = e.Updated == default ? now : e.Updated
-                           })
-                           .ToList();
+            var ordered = (entries ?? new List<EditionCatalogEntry>())
+                          .Where(e => e != null && e.Name.IsNotNullOrWhiteSpace() && e.RuntimeMinutes > 0)
+                          .Select((e, index) => new { Entry = e, Index = index })
+                          .OrderByDescending(x => x.Entry.Confidence)
+                          .ThenBy(x => x.Index)
+                          .Select(x => x.Entry);
+
+            foreach (var e in ordered)
+            {
+                if (FindSame(kept, source, e.Name, e.RuntimeMinutes, tolerance) != null)
+                {
+                    continue;
+                }
+
+                kept.Add(new EditionCatalogEntry
+                {
+                    MovieMetadataId = metadataId,
+                    Name = e.Name.Trim(),
+                    RuntimeMinutes = e.RuntimeMinutes,
+                    Source = source,
+                    Confidence = e.Confidence,
+                    Attributes = e.Attributes,
+                    Updated = e.Updated == default ? now : e.Updated
+                });
+            }
+
+            var toInsert = kept.OrderBy(e => e.RuntimeMinutes).ToList();
 
             _repository.DeleteBySource(metadataId, source);
 
@@ -128,9 +142,24 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
         // Same name, runtimes further apart: both stay (two releases of one cut, e.g. DVD and Blu-ray extended).
         public List<EditionCatalogEntry> Merged(int metadataId)
         {
-            var tolerance = Math.Max(0, _configService.EditionRuntimeToleranceMinutes);
+            return Merge(GetForMetadata(metadataId), Tolerance());
+        }
 
-            return Merge(GetForMetadata(metadataId), tolerance);
+        // The stored entry an incoming one updates: same source, same normalised name, runtime within the tolerance
+        // (closest first, then the exact spelling), or null
+        public static EditionCatalogEntry FindSame(IEnumerable<EditionCatalogEntry> entries, EditionCatalogSource source, string name, int runtimeMinutes, int toleranceMinutes)
+        {
+            var normalized = EditionNormalizer.Normalize(name);
+            var trimmed = name?.Trim();
+
+            return (entries ?? Enumerable.Empty<EditionCatalogEntry>())
+                   .Where(e => e != null &&
+                               e.Source == source &&
+                               EditionNormalizer.Normalize(e.Name) == normalized &&
+                               Math.Abs(e.RuntimeMinutes - runtimeMinutes) <= Math.Max(0, toleranceMinutes))
+                   .OrderBy(e => Math.Abs(e.RuntimeMinutes - runtimeMinutes))
+                   .ThenBy(e => e.Name == trimmed ? 0 : 1)
+                   .FirstOrDefault();
         }
 
         public static List<EditionCatalogEntry> Merge(IEnumerable<EditionCatalogEntry> entries, int toleranceMinutes)
@@ -167,6 +196,11 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
                        .ThenByDescending(e => EditionCatalogPriority.Rank(e.Source))
                        .ThenBy(e => e.Name, StringComparer.OrdinalIgnoreCase)
                        .ToList();
+        }
+
+        private int Tolerance()
+        {
+            return Math.Max(0, _configService.EditionRuntimeToleranceMinutes);
         }
 
         private static EditionCatalogEntry Copy(EditionCatalogEntry entry)

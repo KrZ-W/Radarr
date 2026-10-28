@@ -40,19 +40,20 @@ namespace NzbDrone.Core.Test.Datastore.Migration
         }
 
         [Test]
-        public void should_create_the_catalog_table_unique_per_title_name_and_source()
+        public void should_create_the_catalog_table_unique_per_title_name_source_and_runtime()
         {
             using var conn = WithDapperMigrationTestDb();
 
             conn.Execute(InsertEntrySql, Entry("Extended", 2, 208));
+            conn.Execute(InsertEntrySql, Entry("Extended", 2, 228));
             conn.Execute(InsertEntrySql, Entry("Extended", 3, 228));
             conn.Execute(InsertEntrySql, Entry("Theatrical", 2, 178));
 
-            Action duplicate = () => conn.Execute(InsertEntrySql, Entry("Extended", 2, 210));
+            Action duplicate = () => conn.Execute(InsertEntrySql, Entry("Extended", 2, 208));
             duplicate.Should().Throw<Exception>();
 
             conn.Query<int>("SELECT \"RuntimeMinutes\" FROM \"MovieEditionCatalog\" WHERE \"MovieMetadataId\" = 1 ORDER BY \"RuntimeMinutes\"")
-                .Should().Equal(178, 208, 228);
+                .Should().Equal(178, 208, 228, 228);
         }
 
         [Test]

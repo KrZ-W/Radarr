@@ -6,6 +6,7 @@ using FluentAssertions;
 using FluentValidation;
 using Moq;
 using NUnit.Framework;
+using NzbDrone.Core.Configuration;
 using NzbDrone.Core.Datastore;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Movies.Editions.Catalog;
@@ -34,6 +35,8 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
 
             _stored = new List<EditionCatalogEntry>();
             _upserted = new List<EditionCatalogEntry>();
+
+            Mocker.GetMock<IConfigService>().SetupGet(c => c.EditionRuntimeToleranceMinutes).Returns(3);
 
             Mocker.GetMock<IMovieService>().Setup(s => s.GetMovie(1)).Returns(_default);
             Mocker.GetMock<IMovieService>().Setup(s => s.GetMovie(2)).Returns(_extended);
@@ -201,7 +204,7 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
         }
 
         [Test]
-        public void import_should_count_an_identical_entry_as_unchanged_and_update_a_different_runtime()
+        public void import_should_count_an_identical_entry_as_unchanged_and_update_a_runtime_within_tolerance()
         {
             GivenStored(1, "Extended", 228, EditionCatalogSource.Library, 90);
             GivenStored(2, "Director's Cut", 190, EditionCatalogSource.Library, 90);
@@ -209,12 +212,24 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
             var result = Subject.Import(new List<EditionCatalogExchangeItem>
             {
                 Item("Extended", 228),
-                Item("Director's Cut", 194)
+                Item("Director's Cut", 192)
             });
 
             result.Unchanged.Should().Be(1);
             result.Updated.Should().Be(1);
-            _upserted.Single().RuntimeMinutes.Should().Be(194);
+            _upserted.Single().RuntimeMinutes.Should().Be(192);
+        }
+
+        [Test]
+        public void import_should_add_the_same_name_at_a_runtime_further_apart_than_the_tolerance()
+        {
+            GivenStored(1, "Extended", 208, EditionCatalogSource.Library, 90);
+
+            var result = Subject.Import(new List<EditionCatalogExchangeItem> { Item("Extended", 228) });
+
+            result.Added.Should().Be(1);
+            result.Updated.Should().Be(0);
+            _upserted.Single().RuntimeMinutes.Should().Be(228);
         }
 
         [Test]

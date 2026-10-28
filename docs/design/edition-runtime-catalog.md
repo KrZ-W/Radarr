@@ -42,7 +42,7 @@ New table `MovieEditionCatalog`: `MovieMetadataId`, `Name` (preset or free text,
 - `Wikidata` entries: labelled durations mapped to presets (theatrical version → Theatrical, director's cut → Director's Cut, extended cut → Extended, final cut → Final Cut). Unlabelled ones are ignored.
 - `Library` entries: created when the user confirms a file's edition (move-file, edit file edition, "accept suggestion" in the audit). Runtime = that file's runtime, de-PAL'd.
 - `User` entries: typed in the Add Edition dialog or the audit page. Highest priority.
-- Merge: `User` > `Library` > `Imdb` > `Wikidata` > `Tmdb`; same name within tolerance collapses to one entry.
+- Merge: `User` > `Library` > `Imdb` > `Wikidata` > `Tmdb`; same name within tolerance collapses to one entry. The same name further apart stays once per runtime (Fellowship: IMDb lists Extended at 208 and 228, both kept), so the table is unique on `(MovieMetadataId, Name, Source, RuntimeMinutes)` and matching counts one cut known at two runtimes as one candidate.
 - Edition rows get `ExpectedRuntimeMinutes` (nullable) copied from the catalog entry they were created from, editable.
 
 Refresh: a `RefreshEditionCatalog` step inside the existing movie refresh: IMDb batched 50 titles per call with 1.5 s spacing and the required headers, Wikidata batched 250 per query, results cached 30 days, one retry then skip on errors. A one-off `RefreshEditionCatalog` command fills the whole library at install (about 2 minutes). Settings: IMDb provider on/off, Wikidata on/off.

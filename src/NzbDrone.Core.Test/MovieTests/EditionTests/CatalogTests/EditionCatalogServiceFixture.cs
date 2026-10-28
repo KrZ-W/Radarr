@@ -182,6 +182,31 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
         }
 
         [Test]
+        public void upsert_should_insert_the_same_name_at_a_runtime_further_apart_than_the_tolerance()
+        {
+            GivenStored(Entry("Extended", 208, EditionCatalogSource.Library, 90, 1));
+
+            var result = Subject.Upsert(Entry("Extended", 228, EditionCatalogSource.Library, 90));
+
+            result.Id.Should().Be(2);
+            _stored.Select(e => e.RuntimeMinutes).Should().BeEquivalentTo(new[] { 208, 228 });
+            Mocker.GetMock<IEditionCatalogRepository>().Verify(r => r.Update(It.IsAny<EditionCatalogEntry>()), Times.Never());
+        }
+
+        [Test]
+        public void upsert_should_update_the_closest_runtime_of_a_name_known_at_two_runtimes()
+        {
+            GivenStored(Entry("Extended", 208, EditionCatalogSource.Library, 90, 1),
+                        Entry("Extended", 228, EditionCatalogSource.Library, 90, 2));
+
+            var result = Subject.Upsert(Entry("Extended", 226, EditionCatalogSource.Library, 90));
+
+            result.Id.Should().Be(2);
+            _stored.Single(e => e.Id == 1).RuntimeMinutes.Should().Be(208);
+            _stored.Single(e => e.Id == 2).RuntimeMinutes.Should().Be(226);
+        }
+
+        [Test]
         public void upsert_should_insert_when_only_the_source_differs()
         {
             GivenStored(Entry("Extended", 208, EditionCatalogSource.Imdb, 60, 1));
@@ -203,7 +228,7 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
         }
 
         [Test]
-        public void replace_source_should_delete_that_source_and_insert_deduplicated_entries()
+        public void replace_source_should_delete_that_source_and_collapse_the_same_name_within_tolerance()
         {
             List<EditionCatalogEntry> inserted = null;
 
@@ -215,7 +240,7 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
             {
                 new EditionCatalogEntry { Name = "Theatrical", RuntimeMinutes = 144, Confidence = 80 },
                 new EditionCatalogEntry { Name = "Director's Cut", RuntimeMinutes = 190, Confidence = 70 },
-                new EditionCatalogEntry { Name = "Director's Cut", RuntimeMinutes = 194, Confidence = 60, Attributes = new List<string> { "director's cut roadshow" } },
+                new EditionCatalogEntry { Name = "Director's Cut", RuntimeMinutes = 192, Confidence = 60, Attributes = new List<string> { "director's cut roadshow" } },
                 new EditionCatalogEntry { Name = "Broken", RuntimeMinutes = 0, Confidence = 20 }
             });
 
@@ -224,6 +249,30 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
             inserted.Should().HaveCount(2);
             inserted.Should().OnlyContain(e => e.MovieMetadataId == MetadataId && e.Source == EditionCatalogSource.Imdb && e.Updated != default);
             inserted.Single(e => e.Name == "Director's Cut").RuntimeMinutes.Should().Be(190);
+        }
+
+        // Fellowship as IMDb lists it: Extended at 208 (DVD) and 228 (Blu-ray) are two releases of one cut
+        [Test]
+        public void replace_source_should_keep_the_same_name_at_runtimes_further_apart_than_the_tolerance()
+        {
+            List<EditionCatalogEntry> inserted = null;
+
+            Mocker.GetMock<IEditionCatalogRepository>()
+                  .Setup(r => r.InsertMany(It.IsAny<IList<EditionCatalogEntry>>()))
+                  .Callback((IList<EditionCatalogEntry> list) => inserted = list.ToList());
+
+            Subject.ReplaceSource(MetadataId, EditionCatalogSource.Imdb, new List<EditionCatalogEntry>
+            {
+                new EditionCatalogEntry { Name = "Theatrical", RuntimeMinutes = 178, Confidence = 80 },
+                new EditionCatalogEntry { Name = "Extended", RuntimeMinutes = 208, Confidence = 70 },
+                new EditionCatalogEntry { Name = "Extended", RuntimeMinutes = 228, Confidence = 60, Attributes = new List<string> { "Blu Ray Extended Edition" } },
+                new EditionCatalogEntry { Name = "Extended", RuntimeMinutes = 229, Confidence = 50 },
+                new EditionCatalogEntry { Name = "DVD Widescreen Edition", RuntimeMinutes = 171, Confidence = 20 }
+            });
+
+            inserted.Select(e => $"{e.Name} {e.RuntimeMinutes}").Should().BeEquivalentTo(
+                new[] { "Theatrical 178", "Extended 208", "Extended 228", "DVD Widescreen Edition 171" });
+            inserted.Single(e => e.RuntimeMinutes == 228).Confidence.Should().Be(60);
         }
 
         [Test]

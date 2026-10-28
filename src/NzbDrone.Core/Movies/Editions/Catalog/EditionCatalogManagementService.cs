@@ -6,6 +6,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using NLog;
 using NzbDrone.Common.Extensions;
+using NzbDrone.Core.Configuration;
 
 namespace NzbDrone.Core.Movies.Editions.Catalog
 {
@@ -63,16 +64,19 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
         private readonly IEditionCatalogService _catalogService;
         private readonly IEditionCatalogRepository _repository;
         private readonly IMovieService _movieService;
+        private readonly IConfigService _configService;
         private readonly Logger _logger;
 
         public EditionCatalogManagementService(IEditionCatalogService catalogService,
                                                IEditionCatalogRepository repository,
                                                IMovieService movieService,
+                                               IConfigService configService,
                                                Logger logger)
         {
             _catalogService = catalogService;
             _repository = repository;
             _movieService = movieService;
+            _configService = configService;
             _logger = logger;
         }
 
@@ -158,8 +162,9 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
                           .ToList();
         }
 
-        // Entries become Library (or User when the item says so). An existing entry of the same title, source and name
-        // is only replaced by an item of at least its confidence, so an import never weakens what this instance confirmed.
+        // Entries become Library (or User when the item says so). An existing entry of the same title, source and name,
+        // with a runtime within the tolerance (the same name further apart is another release of that cut), is only
+        // replaced by an item of at least its confidence, so an import never weakens what this instance confirmed.
         public EditionCatalogImportResult Import(List<EditionCatalogExchangeItem> items)
         {
             var result = new EditionCatalogImportResult();
@@ -179,6 +184,7 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
                                   .GroupBy(m => m.TmdbId)
                                   .ToDictionary(g => g.Key, g => g.First().MovieMetadataId);
 
+            var tolerance = Math.Max(0, _configService.EditionRuntimeToleranceMinutes);
             var existing = _repository.GetByMetadataIds(metadataIds.Values)
                                       .GroupBy(e => e.MovieMetadataId)
                                       .ToDictionary(g => g.Key, g => g.ToList());
@@ -203,10 +209,9 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
                 var source = item.Source == EditionCatalogSource.User ? EditionCatalogSource.User : EditionCatalogSource.Library;
                 var confidence = Math.Clamp(item.Confidence ?? (source == EditionCatalogSource.User ? UserConfidence : LibraryConfidence), 0, 100);
                 var name = item.Name.Trim();
-                var normalized = EditionNormalizer.Normalize(name);
 
                 var stored = existing.TryGetValue(metadataId, out var rows)
-                    ? rows.FirstOrDefault(e => e.Source == source && EditionNormalizer.Normalize(e.Name) == normalized)
+                    ? EditionCatalogService.FindSame(rows, source, name, item.RuntimeMinutes, tolerance)
                     : null;
 
                 if (stored != null && (stored.Confidence > confidence ||

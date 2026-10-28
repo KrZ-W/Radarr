@@ -123,6 +123,45 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
             match.Entry.Source.Should().Be(EditionCatalogSource.Library);
         }
 
+        // Fellowship with both releases of the extended cut IMDb lists: 208 (DVD) and 228 (Blu-ray)
+        private static List<EditionCatalogEntry> FellowshipReleases()
+        {
+            return new List<EditionCatalogEntry>
+            {
+                Entry("Theatrical", 178, 80),
+                Entry("Extended", 208, 70),
+                Entry("Extended", 228, 60),
+                Entry("DVD Widescreen Edition", 171, 20)
+            };
+        }
+
+        [TestCase(228.0, 228)]
+        [TestCase(208.0, 208)]
+        [TestCase(226.5, 228)]
+        public void a_cut_known_at_two_runtimes_matches_uniquely_at_either(double minutes, int expectedEntry)
+        {
+            var match = EditionRuntime.Match(minutes, FellowshipReleases(), 3);
+
+            match.Kind.Should().Be(RuntimeMatchKind.Unique);
+            match.Entry.Name.Should().Be("Extended");
+            match.Entry.RuntimeMinutes.Should().Be(expectedEntry);
+        }
+
+        [Test]
+        public void a_cut_known_at_two_runtimes_both_in_tolerance_is_one_candidate_at_the_closest_runtime()
+        {
+            var match = EditionRuntime.Match(225, FellowshipReleases(), 10);
+
+            match.Kind.Should().Be(RuntimeMatchKind.Unique);
+            match.Entry.RuntimeMinutes.Should().Be(228);
+        }
+
+        [Test]
+        public void a_runtime_between_the_releases_of_a_cut_matches_nothing()
+        {
+            EditionRuntime.Match(190, FellowshipReleases(), 3).Kind.Should().Be(RuntimeMatchKind.None);
+        }
+
         [Test]
         public void a_file_more_than_eight_minutes_longer_than_every_cut_is_an_unknown_longer_cut()
         {
