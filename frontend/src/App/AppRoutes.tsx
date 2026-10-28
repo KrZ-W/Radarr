@@ -11,6 +11,7 @@ import NotFound from 'Components/NotFound';
 import Switch from 'Components/Router/Switch';
 import DiscoverMovieConnector from 'DiscoverMovie/DiscoverMovieConnector';
 import MovieDetailsPage from 'Movie/Details/MovieDetailsPage';
+import EditionAudit from 'Movie/Edition/Audit/EditionAudit'; // krzw(edition-runtime-catalog)
 import MovieIndex from 'Movie/Index/MovieIndex';
 import CustomFormatSettingsPage from 'Settings/CustomFormats/CustomFormatSettingsPage';
 import DownloadClientSettingsConnector from 'Settings/DownloadClients/DownloadClientSettingsConnector';
@@ -66,6 +67,9 @@ function AppRoutes() {
       <Route path="/add/import" component={ImportMovies} />
 
       <Route path="/add/discover" component={DiscoverMovieConnector} />
+
+      {/* krzw(edition-runtime-catalog) */}
+      <Route path="/editionaudit" component={EditionAudit} />
 
       {/* krzw(multi-edition): edition rows share the titleSlug, so they get their own route by id */}
       <Route

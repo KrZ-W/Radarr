@@ -31,3 +31,48 @@
     text-align: center;
   }
 }
+
+/* krzw(edition-runtime-catalog) begin: known editions list */
+.knownEditions {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 35px;
+}
+
+.knownEditionsMessage {
+  padding: 6px 0;
+  color: var(--helpTextColor);
+}
+
+.knownEdition {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  text-align: left;
+
+  &:hover {
+    border-color: var(--inputBorderColor);
+    background-color: var(--inputBackgroundColor);
+  }
+}
+
+.knownEditionPicked {
+  composes: knownEdition;
+
+  border-color: var(--inputFocusBorderColor);
+}
+
+.knownEditionNameUsed {
+  color: var(--helpTextColor);
+  text-decoration: line-through;
+}
+
+.knownEditionRuntime {
+  color: var(--helpTextColor);
+}
+/* krzw(edition-runtime-catalog) end */

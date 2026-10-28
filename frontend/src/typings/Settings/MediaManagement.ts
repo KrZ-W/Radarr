@@ -40,4 +40,10 @@ export default interface MediaManagement {
 
   // krzw(symlink-import-guard)
   rejectSymlinkImportSources: boolean;
+
+  // krzw(edition-runtime-catalog)
+  editionRuntimeToleranceMinutes: number;
+  editionCatalogImdbEnabled: boolean;
+  editionCatalogWikidataEnabled: boolean;
+  editionRehomeOnImport: boolean;
 }

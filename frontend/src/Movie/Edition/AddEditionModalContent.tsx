@@ -1,5 +1,6 @@
 // krzw(multi-edition): add-edition form, POSTs /api/v3/movie with the default row's tmdbId plus an edition object
-import React, { useCallback, useMemo, useState } from 'react';
+// krzw(edition-runtime-catalog): "Known editions" from the edition catalog pre-fill name, aliases and expected runtime
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Error } from 'App/State/AppSectionState';
 import CheckInput from 'Components/Form/CheckInput';
@@ -7,8 +8,11 @@ import Form from 'Components/Form/Form';
 import FormGroup from 'Components/Form/FormGroup';
 import FormInputGroup from 'Components/Form/FormInputGroup';
 import FormLabel from 'Components/Form/FormLabel';
+import Label from 'Components/Label'; // krzw(edition-runtime-catalog)
 import Button from 'Components/Link/Button';
+import Link from 'Components/Link/Link'; // krzw(edition-runtime-catalog)
 import SpinnerErrorButton from 'Components/Link/SpinnerErrorButton';
+import LoadingIndicator from 'Components/Loading/LoadingIndicator'; // krzw(edition-runtime-catalog)
 import ModalBody from 'Components/Modal/ModalBody';
 import ModalContent from 'Components/Modal/ModalContent';
 import ModalFooter from 'Components/Modal/ModalFooter';
@@ -22,6 +26,15 @@ import selectSettings from 'Store/Selectors/selectSettings';
 import { InputChanged } from 'typings/inputs';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
 import translate from 'Utilities/String/translate';
+// krzw(edition-runtime-catalog)
+import {
+  EditionCatalogEntry,
+  EditionCatalogResponse,
+  formatRuntimeMinutes,
+  getEditionCatalogSourceKind,
+  getEditionCatalogSourceLabel,
+  mergeEditionAliases,
+} from './editionCatalog';
 import editionPresets, {
   CUSTOM_EDITION_PRESET,
   findEditionPreset,
@@ -41,6 +54,7 @@ type AddEditionForm = {
   monitored: boolean;
   acceptUntagged: boolean;
   searchForMovie: boolean;
+  expectedRuntimeMinutes: number | null; // krzw(edition-runtime-catalog)
 };
 
 const presetValues = [
@@ -69,8 +83,55 @@ function getInitialForm(movie: Movie, usedNames: string[]): AddEditionForm {
     monitored: true,
     acceptUntagged: false,
     searchForMovie: true,
+    expectedRuntimeMinutes: null, // krzw(edition-runtime-catalog)
   };
 }
+
+// krzw(edition-runtime-catalog) begin
+interface KnownEditionItemProps {
+  entry: EditionCatalogEntry;
+  isUsed: boolean;
+  isPicked: boolean;
+  onPress: (entry: EditionCatalogEntry) => void;
+}
+
+function KnownEditionItem({
+  entry,
+  isUsed,
+  isPicked,
+  onPress,
+}: KnownEditionItemProps) {
+  const handlePress = useCallback(() => {
+    onPress(entry);
+  }, [entry, onPress]);
+
+  return (
+    <Link
+      className={isPicked ? styles.knownEditionPicked : styles.knownEdition}
+      title={
+        isUsed
+          ? translate('KnownEditionAlreadyAdded')
+          : translate('KnownEditionPick')
+      }
+      onPress={handlePress}
+    >
+      <span className={isUsed ? styles.knownEditionNameUsed : undefined}>
+        {entry.name}
+      </span>
+
+      {entry.runtimeMinutes == null ? null : (
+        <span className={styles.knownEditionRuntime}>
+          {formatRuntimeMinutes(entry.runtimeMinutes)}
+        </span>
+      )}
+
+      <Label kind={getEditionCatalogSourceKind(entry.source)}>
+        {getEditionCatalogSourceLabel(entry.source)}
+      </Label>
+    </Link>
+  );
+}
+// krzw(edition-runtime-catalog) end
 
 function AddEditionModalContent({
   movieId,
@@ -98,6 +159,61 @@ function AddEditionModalContent({
     getInitialForm(movie!, usedNames)
   );
   const [isAdding, setIsAdding] = useState(false);
+  // krzw(edition-runtime-catalog) begin: catalog entries for this title
+  const [catalog, setCatalog] = useState<EditionCatalogResponse | null>(null);
+  const [isCatalogFetching, setIsCatalogFetching] = useState(true);
+  const [catalogError, setCatalogError] = useState(false);
+  const catalogMovieId = movie?.editionParentId ?? movie?.id;
+
+  useEffect(() => {
+    if (!catalogMovieId) {
+      setIsCatalogFetching(false);
+      return;
+    }
+
+    const { request, abortRequest } = createAjaxRequest({
+      url: '/edition/catalog',
+      data: { movieId: catalogMovieId },
+    });
+
+    request.done((data: EditionCatalogResponse) => {
+      setCatalog(data);
+      setIsCatalogFetching(false);
+    });
+
+    request.fail((xhr: { aborted?: boolean }) => {
+      if (!xhr.aborted) {
+        setCatalogError(true);
+        setIsCatalogFetching(false);
+      }
+    });
+
+    return abortRequest;
+  }, [catalogMovieId]);
+
+  const handleCatalogEntryPress = useCallback(
+    (entry: EditionCatalogEntry) => {
+      const preset = findEditionPreset(entry.name);
+      const rawAttributes = (catalog?.raw ?? [])
+        .filter((r) => r.name.toLowerCase() === entry.name.toLowerCase())
+        .flatMap((r) => r.attributes ?? []);
+
+      setForm((prev) => ({
+        ...prev,
+        preset: preset ? preset.name : CUSTOM_EDITION_PRESET,
+        name: entry.name,
+        aliases: mergeEditionAliases(
+          preset?.aliases,
+          entry.attributes,
+          rawAttributes
+        ),
+        expectedRuntimeMinutes:
+          entry.runtimeMinutes ?? prev.expectedRuntimeMinutes,
+      }));
+    },
+    [catalog]
+  );
+  // krzw(edition-runtime-catalog) end
   const [addError, setAddError] = useState<Error | undefined>(undefined);
 
   const { settings, validationErrors, validationWarnings } = useMemo(() => {
@@ -157,7 +273,9 @@ function AddEditionModalContent({
         name: form.name.trim(),
         aliases: form.aliases,
         acceptUntagged: form.acceptUntagged,
+        expectedRuntimeMinutes: form.expectedRuntimeMinutes, // krzw(edition-runtime-catalog)
       },
+      expectedRuntimeMinutes: form.expectedRuntimeMinutes, // krzw(edition-runtime-catalog)
     };
 
     const { request } = createAjaxRequest({
@@ -195,6 +313,46 @@ function AddEditionModalContent({
           validationErrors={validationErrors}
           validationWarnings={validationWarnings}
         >
+          {/* krzw(edition-runtime-catalog) begin: known editions from the catalog */}
+          <FormGroup size={sizes.MEDIUM}>
+            <FormLabel>{translate('KnownEditions')}</FormLabel>
+
+            <div className={styles.knownEditions}>
+              {isCatalogFetching ? <LoadingIndicator size={20} /> : null}
+
+              {!isCatalogFetching && catalogError ? (
+                <div className={styles.knownEditionsMessage}>
+                  {translate('KnownEditionsLoadError')}
+                </div>
+              ) : null}
+
+              {!isCatalogFetching &&
+              !catalogError &&
+              !(catalog?.merged ?? []).length ? (
+                <div className={styles.knownEditionsMessage}>
+                  {translate('KnownEditionsNone')}
+                </div>
+              ) : null}
+
+              {(catalog?.merged ?? []).map((entry) => {
+                const isUsed = usedNames.includes(entry.name.toLowerCase());
+                const isPicked =
+                  form.name.toLowerCase() === entry.name.toLowerCase();
+
+                return (
+                  <KnownEditionItem
+                    key={`${entry.id}-${entry.name}`}
+                    entry={entry}
+                    isUsed={isUsed}
+                    isPicked={isPicked}
+                    onPress={handleCatalogEntryPress}
+                  />
+                );
+              })}
+            </div>
+          </FormGroup>
+          {/* krzw(edition-runtime-catalog) end */}
+
           <FormGroup size={sizes.MEDIUM}>
             <FormLabel>{translate('EditionPreset')}</FormLabel>
 
@@ -230,6 +388,22 @@ function AddEditionModalContent({
               name="aliases"
               value={form.aliases}
               helpText={translate('EditionAliasesHelpText')}
+              onChange={handleInputChange}
+            />
+          </FormGroup>
+
+          {/* krzw(edition-runtime-catalog) */}
+          <FormGroup size={sizes.MEDIUM}>
+            <FormLabel>{translate('EditionExpectedRuntime')}</FormLabel>
+
+            <FormInputGroup
+              type={inputTypes.NUMBER}
+              name="expectedRuntimeMinutes"
+              value={form.expectedRuntimeMinutes}
+              unit={translate('Minutes')}
+              min={1}
+              max={1440}
+              helpText={translate('EditionExpectedRuntimeHelpText')}
               onChange={handleInputChange}
             />
           </FormGroup>

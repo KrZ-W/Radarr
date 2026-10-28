@@ -857,6 +857,63 @@ function MediaManagement() {
               </FieldSet>
             ) : null}
 
+            {/* krzw(edition-runtime-catalog) begin: runtime tolerance, catalog providers and import re-home */}
+            <FieldSet legend={translate('Editions')}>
+              <FormGroup size={sizes.MEDIUM}>
+                <FormLabel>{translate('EditionRuntimeTolerance')}</FormLabel>
+
+                <FormInputGroup
+                  type={inputTypes.NUMBER}
+                  name="editionRuntimeToleranceMinutes"
+                  unit={translate('Minutes')}
+                  helpText={translate('EditionRuntimeToleranceHelpText')}
+                  min={0}
+                  max={30}
+                  onChange={handleInputChange}
+                  {...settings.editionRuntimeToleranceMinutes}
+                />
+              </FormGroup>
+
+              <FormGroup size={sizes.MEDIUM}>
+                <FormLabel>{translate('EditionCatalogImdbEnabled')}</FormLabel>
+
+                <FormInputGroup
+                  type={inputTypes.CHECK}
+                  name="editionCatalogImdbEnabled"
+                  helpText={translate('EditionCatalogImdbEnabledHelpText')}
+                  onChange={handleInputChange}
+                  {...settings.editionCatalogImdbEnabled}
+                />
+              </FormGroup>
+
+              <FormGroup size={sizes.MEDIUM}>
+                <FormLabel>
+                  {translate('EditionCatalogWikidataEnabled')}
+                </FormLabel>
+
+                <FormInputGroup
+                  type={inputTypes.CHECK}
+                  name="editionCatalogWikidataEnabled"
+                  helpText={translate('EditionCatalogWikidataEnabledHelpText')}
+                  onChange={handleInputChange}
+                  {...settings.editionCatalogWikidataEnabled}
+                />
+              </FormGroup>
+
+              <FormGroup size={sizes.MEDIUM}>
+                <FormLabel>{translate('EditionRehomeOnImport')}</FormLabel>
+
+                <FormInputGroup
+                  type={inputTypes.CHECK}
+                  name="editionRehomeOnImport"
+                  helpText={translate('EditionRehomeOnImportHelpText')}
+                  onChange={handleInputChange}
+                  {...settings.editionRehomeOnImport}
+                />
+              </FormGroup>
+            </FieldSet>
+            {/* krzw(edition-runtime-catalog) end */}
+
             {showAdvancedSettings && !isWindows ? (
               <FieldSet legend={translate('Permissions')}>
                 <FormGroup
