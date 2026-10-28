@@ -38,6 +38,15 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
         public Movie RuntimeSibling { get; set; }
     }
 
+    // The evaluation of one file against one row, kept on the LocalMovie so the re-home step and the import
+    // specification share the sibling and catalog queries
+    public class EditionRuntimeEvaluation
+    {
+        public Movie Movie { get; set; }
+
+        public EditionRuntimeImportResult Result { get; set; }
+    }
+
     public class EditionRuntimeImportEvaluator : IEditionRuntimeImportEvaluator
     {
         public const string ConflictMessage = "Tagged {0}{1} but runtime {2} min matches {3} ({4} min)";
@@ -77,6 +86,20 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                 return null;
             }
 
+            if (localMovie.EditionRuntimeEvaluation != null && ReferenceEquals(localMovie.EditionRuntimeEvaluation.Movie, movie))
+            {
+                return localMovie.EditionRuntimeEvaluation.Result;
+            }
+
+            var result = Evaluate(localMovie, movie, minutes.Value);
+
+            localMovie.EditionRuntimeEvaluation = new EditionRuntimeEvaluation { Movie = movie, Result = result };
+
+            return result;
+        }
+
+        private EditionRuntimeImportResult Evaluate(LocalMovie localMovie, Movie movie, double minutes)
+        {
             var siblings = (_movieService.GetEditionSiblings(movie) ?? new List<Movie>()).Where(s => s != null && s.Id != movie.Id).ToList();
             var raw = movie.MovieMetadataId > 0 ? _catalogService.GetForMetadata(movie.MovieMetadataId) ?? new List<EditionCatalogEntry>() : new List<EditionCatalogEntry>();
 
@@ -90,18 +113,18 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
             rows.AddRange(siblings);
 
             var catalog = EditionAuditClassifier.PrepareCatalog(raw, rows, tolerance);
-            var result = new EditionRuntimeImportResult { FileMinutes = minutes.Value };
+            var result = new EditionRuntimeImportResult { FileMinutes = minutes };
             var tagCut = TagCut(localMovie.Edition, catalog);
 
             if (tagCut != null)
             {
-                result.Conflict = TagConflict(movie, tagCut, minutes.Value, catalog, tolerance);
+                result.Conflict = TagConflict(movie, tagCut, minutes, catalog, tolerance);
             }
             else if (movie.IsDefaultEdition && (localMovie.Edition.IsNullOrWhiteSpace() || IsVariantTag(localMovie.Edition)))
             {
                 // Untagged, or only a release variant (IMAX, Remastered...): a raw tag the catalog does not know (fan
                 // edit...) says the file is something else, so it is neither re-homed nor rejected
-                result.RuntimeSibling = RuntimeSibling(movie, siblings, minutes.Value, catalog, tolerance);
+                result.RuntimeSibling = RuntimeSibling(movie, siblings, minutes, catalog, tolerance);
             }
 
             return result;

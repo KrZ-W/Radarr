@@ -192,5 +192,32 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport
 
             Subject.IsRehomeTarget(GivenFile(_extended, 208)).Should().BeFalse();
         }
+
+        [Test]
+        public void should_query_siblings_and_catalog_once_for_the_rehome_step_and_the_import_spec()
+        {
+            var file = GivenFile(_default, 178);
+
+            Subject.FindRehomeTarget(file).Should().BeNull();
+            Subject.Evaluate(file).Should().NotBeNull();
+            Subject.Evaluate(file).RuntimeSibling.Should().BeNull();
+
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<Movie>()), Times.Once());
+            Mocker.GetMock<IEditionCatalogService>().Verify(v => v.GetForMetadata(MetadataId), Times.Once());
+        }
+
+        [Test]
+        public void should_evaluate_again_when_the_file_moves_to_another_row()
+        {
+            var file = GivenFile(_default, 208);
+
+            Subject.Evaluate(file).RuntimeSibling.Should().BeSameAs(_extended);
+
+            file.Movie = _extended;
+
+            Subject.Evaluate(file).RuntimeSibling.Should().BeNull();
+
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<Movie>()), Times.Exactly(2));
+        }
     }
 }
