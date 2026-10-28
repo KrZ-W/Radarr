@@ -24,10 +24,21 @@ namespace Radarr.Api.V3.Movies
 
         [HttpGet("audit")]
         [Produces("application/json")]
-        public List<EditionAuditItem> GetAudit()
+        public List<EditionAuditItem> GetAudit([FromQuery] bool includeAll = false)  // krzw(edition-runtime-catalog): includeAll
         {
-            return _editionFileService.Audit();
+            return _editionFileService.Audit(includeAll);  // krzw(edition-runtime-catalog)
         }
+
+        // krzw(edition-runtime-catalog) begin: per item, create the edition row if missing, move the file, record a Library runtime
+        [HttpPost("audit/apply")]
+        [Consumes("application/json")]
+        [Produces("application/json")]
+        public List<EditionAuditApplyResult> ApplyAudit([FromBody] List<EditionAuditApplyItem> items)
+        {
+            return _editionFileService.Apply(items ?? new List<EditionAuditApplyItem>());
+        }
+
+        // krzw(edition-runtime-catalog) end
 
         [HttpPost("movefile")]
         [Consumes("application/json")]
