@@ -101,11 +101,87 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport
         }
 
         [Test]
-        public void should_not_rehome_when_the_catalog_names_another_cut_at_that_runtime()
+        public void should_rehome_by_the_rows_expected_runtime_even_when_the_catalog_names_another_cut_at_that_runtime()
         {
             _catalog.Add(new EditionCatalogEntry { MovieMetadataId = MetadataId, Name = "Unrated", RuntimeMinutes = 207, Source = EditionCatalogSource.Imdb, Confidence = 70 });
 
-            Subject.FindRehomeTarget(GivenFile(_default, 208)).Should().BeNull();
+            Subject.FindRehomeTarget(GivenFile(_default, 208)).Should().BeSameAs(_extended);
+        }
+
+        // Waterworld: default row at 135 (expected, or the catalog's Theatrical), a "Ulysses Cut" row expecting 176,
+        // and IMDb listing the long cut as "Director's Cut" 176
+        private Movie GivenWaterworld(bool defaultExpected)
+        {
+            var ulysses = new Movie { Id = 4, MovieMetadataId = MetadataId, Monitored = true, Edition = "Ulysses Cut", ExpectedRuntimeMinutes = 176 };
+
+            _default.ExpectedRuntimeMinutes = defaultExpected ? 135 : null;
+            _rows = new List<Movie> { _default, ulysses };
+            _catalog = new List<EditionCatalogEntry>
+            {
+                new EditionCatalogEntry { MovieMetadataId = MetadataId, Name = "Default", RuntimeMinutes = 135, Source = EditionCatalogSource.Tmdb, Confidence = 30 },
+                new EditionCatalogEntry { MovieMetadataId = MetadataId, Name = "Theatrical", RuntimeMinutes = 135, Source = EditionCatalogSource.Imdb, Confidence = 80 },
+                new EditionCatalogEntry { MovieMetadataId = MetadataId, Name = "Director's Cut", RuntimeMinutes = 176, Source = EditionCatalogSource.Imdb, Confidence = 70 }
+            };
+
+            return ulysses;
+        }
+
+        [TestCase(true, 176)]
+        [TestCase(false, 176)]
+        [TestCase(true, 169)]
+        public void should_rehome_to_the_row_expecting_the_runtime_whatever_the_catalog_calls_that_cut(bool defaultExpected, double minutes)
+        {
+            // 169 min = 176 at 25 fps
+            var ulysses = GivenWaterworld(defaultExpected);
+
+            Subject.FindRehomeTarget(GivenFile(_default, minutes)).Should().BeSameAs(ulysses);
+        }
+
+        [TestCase(true)]
+        [TestCase(false)]
+        public void should_keep_a_file_with_the_default_rows_runtime_on_the_default_row(bool defaultExpected)
+        {
+            GivenWaterworld(defaultExpected);
+
+            Subject.FindRehomeTarget(GivenFile(_default, 135)).Should().BeNull();
+            Subject.Evaluate(GivenFile(_default, 135)).RuntimeSibling.Should().BeNull();
+        }
+
+        [Test]
+        public void should_report_the_sibling_without_rehoming_when_the_setting_is_off()
+        {
+            var ulysses = GivenWaterworld(true);
+            Mocker.GetMock<IConfigService>().SetupGet(s => s.EditionRehomeOnImport).Returns(false);
+
+            Subject.FindRehomeTarget(GivenFile(_default, 176)).Should().BeNull();
+            Subject.Evaluate(GivenFile(_default, 176)).RuntimeSibling.Should().BeSameAs(ulysses);
+        }
+
+        [Test]
+        public void should_neither_rehome_nor_report_when_two_sibling_rows_expect_the_runtime()
+        {
+            GivenWaterworld(true);
+            _rows.Add(new Movie { Id = 5, MovieMetadataId = MetadataId, Monitored = true, Edition = "Director's Cut", ExpectedRuntimeMinutes = 176 });
+
+            Subject.FindRehomeTarget(GivenFile(_default, 176)).Should().BeNull();
+            Subject.Evaluate(GivenFile(_default, 176)).RuntimeSibling.Should().BeNull();
+        }
+
+        [Test]
+        public void should_neither_rehome_nor_report_when_a_row_without_expected_runtime_matches_by_catalog_name_too()
+        {
+            GivenWaterworld(true);
+            _rows.Add(new Movie { Id = 5, MovieMetadataId = MetadataId, Monitored = true, Edition = "Director's Cut" });
+
+            Subject.Evaluate(GivenFile(_default, 176)).RuntimeSibling.Should().BeNull();
+        }
+
+        [Test]
+        public void should_rehome_to_a_row_without_expected_runtime_through_the_catalog_entry_of_its_name()
+        {
+            _catalog.Add(new EditionCatalogEntry { MovieMetadataId = MetadataId, Name = "Director's Cut", RuntimeMinutes = 190, Source = EditionCatalogSource.Imdb, Confidence = 70 });
+
+            Subject.FindRehomeTarget(GivenFile(_default, 191)).Should().BeSameAs(_directorsCut);
         }
 
         [Test]

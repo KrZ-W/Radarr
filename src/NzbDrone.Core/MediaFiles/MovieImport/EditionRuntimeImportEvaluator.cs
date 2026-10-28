@@ -34,7 +34,8 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
         // Tagged file whose runtime uniquely names another cut: the rejection message
         public string Conflict { get; set; }
 
-        // Untagged default-row file whose runtime uniquely matches exactly one sibling row's expected runtime
+        // Untagged default-row file whose runtime matches exactly one sibling row's expected runtime (or, for a row
+        // without one, the catalog runtime of its name) and not the default row's own
         public Movie RuntimeSibling { get; set; }
     }
 
@@ -221,8 +222,17 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
             return preset != null && VariantPresets.Contains(preset.Name);
         }
 
+        // The tagged row's expected runtime is the authority for its cut: a file that matches it is never a conflict,
+        // and the message quotes it. Without one, the catalog's runtime for the tagged cut's name is quoted.
         private static string TagConflict(Movie movie, string tagCut, double minutes, List<EditionCatalogEntry> catalog, int tolerance)
         {
+            var rowExpected = TaggedRowExpected(movie, tagCut);
+
+            if (rowExpected.HasValue && EditionRuntime.Matches(minutes, rowExpected.Value, tolerance))
+            {
+                return null;
+            }
+
             var item = new EditionAuditItem();
 
             // No theatrical references: an identification doubt is the audit's business, not a reason to reject
@@ -233,16 +243,12 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                 return null;
             }
 
-            var expected = catalog.Where(e => e.Confidence >= EditionRuntime.MinimumConfidence && e.RuntimeMinutes > 0 && EditionAuditClassifier.SameCut(e.Name, tagCut))
+            var expected = rowExpected ??
+                           catalog.Where(e => e.Confidence >= EditionRuntime.MinimumConfidence && e.RuntimeMinutes > 0 && EditionAuditClassifier.SameCut(e.Name, tagCut))
                                   .OrderByDescending(e => EditionCatalogPriority.Rank(e.Source))
                                   .ThenByDescending(e => e.Confidence)
                                   .Select(e => (int?)e.RuntimeMinutes)
                                   .FirstOrDefault();
-
-            if (!expected.HasValue && movie.IsEdition && movie.ExpectedRuntimeMinutes > 0 && EditionAuditClassifier.SameCut(movie.Edition, tagCut))
-            {
-                expected = movie.ExpectedRuntimeMinutes;
-            }
 
             return string.Format(ConflictMessage,
                                  tagCut,
@@ -252,44 +258,56 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                                  item.RuntimeSuggestedMinutes);
         }
 
+        // The expected runtime of the row the tagged file sits on, when that row is the tagged cut's row
+        private static int? TaggedRowExpected(Movie movie, string tagCut)
+        {
+            if (!(movie.ExpectedRuntimeMinutes > 0))
+            {
+                return null;
+            }
+
+            var isTagRow = movie.IsEdition
+                ? EditionMatcher.RowMatchesEdition(movie, tagCut) || EditionAuditClassifier.SameCut(movie.Edition, tagCut)
+                : EditionAuditClassifier.IsTheatrical(tagCut);
+
+            return isTagRow ? movie.ExpectedRuntimeMinutes : null;
+        }
+
+        // Re-home target of an untagged default-row file: the one sibling edition row whose runtime the file matches,
+        // provided it does not match the default row's own runtime. Each row's runtime is its expected runtime, the
+        // authority; a row without one falls back to the catalog entries of its name and aliases. The default row's
+        // own runtime is its expected runtime, else the catalog's Theatrical / TMDb baseline. Catalog names of other
+        // cuts play no part: IMDb's "Director's Cut" 176 does not stop a 176-min file going to a "Ulysses Cut" row
+        // that expects 176.
         private static Movie RuntimeSibling(Movie defaultRow, List<Movie> siblings, double minutes, List<EditionCatalogEntry> catalog, int tolerance)
         {
-            if (defaultRow.ExpectedRuntimeMinutes > 0 && EditionRuntime.Matches(minutes, defaultRow.ExpectedRuntimeMinutes.Value, tolerance))
+            var usable = catalog.Where(e => e.Confidence >= EditionRuntime.MinimumConfidence && e.RuntimeMinutes > 0).ToList();
+
+            var defaultRuntimes = defaultRow.ExpectedRuntimeMinutes > 0
+                ? new List<int> { defaultRow.ExpectedRuntimeMinutes.Value }
+                : usable.Where(e => EditionAuditClassifier.IsTheatrical(e.Name)).Select(e => e.RuntimeMinutes).ToList();
+
+            if (defaultRuntimes.Any(r => EditionRuntime.Matches(minutes, r, tolerance)))
             {
                 return null;
             }
 
-            var match = EditionRuntime.Match(minutes, catalog, tolerance);
-            EditionCatalogEntry entry = null;
-
-            if (match.Kind == RuntimeMatchKind.Unique)
-            {
-                entry = match.Entry;
-            }
-            else if (match.Kind == RuntimeMatchKind.Ambiguous && match.Candidates.All(c => EditionAuditClassifier.SameCut(c.Name, match.Candidates[0].Name)))
-            {
-                // Spellings of one cut ("Extended" from IMDb, "Extended Edition" from a row) are not a real ambiguity
-                entry = match.Candidates[0];
-            }
-
-            if (entry == null || EditionAuditClassifier.IsTheatrical(entry.Name))
-            {
-                return null;
-            }
-
-            var matching = siblings.Where(s => s.IsEdition &&
-                                               s.ExpectedRuntimeMinutes > 0 &&
-                                               EditionRuntime.Matches(minutes, s.ExpectedRuntimeMinutes.Value, tolerance))
+            var matching = siblings.Where(s => s.IsEdition && RowRuntimes(s, usable).Any(r => EditionRuntime.Matches(minutes, r, tolerance)))
                                    .ToList();
 
-            if (matching.Count != 1)
+            return matching.Count == 1 ? matching[0] : null;
+        }
+
+        private static List<int> RowRuntimes(Movie row, List<EditionCatalogEntry> usable)
+        {
+            if (row.ExpectedRuntimeMinutes > 0)
             {
-                return null;
+                return new List<int> { row.ExpectedRuntimeMinutes.Value };
             }
 
-            var row = matching[0];
-
-            return EditionMatcher.RowMatchesEdition(row, entry.Name) || EditionAuditClassifier.SameCut(row.Edition, entry.Name) ? row : null;
+            return usable.Where(e => EditionMatcher.RowMatchesEdition(row, e.Name) || EditionAuditClassifier.SameCut(row.Edition, e.Name))
+                         .Select(e => e.RuntimeMinutes)
+                         .ToList();
         }
 
         public static int Round(double minutes)

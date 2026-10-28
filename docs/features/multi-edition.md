@@ -243,9 +243,15 @@ the edition gate, and skips files without a runtime, existing files and manual p
 
 - **Tagged file, runtime matches another cut.** Rejected: *Tagged Extended (208 min) but
   runtime 178 min matches Theatrical (178 min)*. Choose the row by hand in Manual Import to
-  import it anyway.
-- **Untagged file on the default row, runtime uniquely matches a sibling row's expected
-  runtime** (and not the default row's own). With *Move Untagged Imports to Matching Edition*
+  import it anyway. The tagged row's expected runtime comes first: a file matching it is never
+  rejected, and the message quotes it (the catalog's runtime for the tag's name otherwise).
+- **Untagged file on the default row, runtime matches exactly one sibling row's expected
+  runtime** (and not the default row's own: its expected runtime, else the catalog's
+  Theatrical / TMDb runtime). PAL speed-ups count. A row without an expected runtime is
+  judged by the catalog entries of its name and aliases. The catalog's names for other cuts
+  do not matter: with IMDb listing Waterworld's long cut as *Director's Cut* 176 and a
+  *Ulysses Cut* row expecting 176, a 176-min file goes to Ulysses Cut. Two rows matching
+  leaves the file where it is. With *Move Untagged Imports to Matching Edition*
   on and that row monitored, the file is **re-homed** to the edition row (logged at Info);
   otherwise it is rejected for the default row: *Runtime 208 min matches the Extended edition
   of this movie*. A release variant tag (IMAX, Remastered...) counts as untagged; any other
