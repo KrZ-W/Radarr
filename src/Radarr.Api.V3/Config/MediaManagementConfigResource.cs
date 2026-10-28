@@ -57,6 +57,12 @@ namespace Radarr.Api.V3.Config
 
         // krzw(symlink-import-guard)
         public bool RejectSymlinkImportSources { get; set; }
+
+        // krzw(edition-runtime-catalog)
+        public int EditionRuntimeToleranceMinutes { get; set; }
+        public bool EditionCatalogImdbEnabled { get; set; }
+        public bool EditionCatalogWikidataEnabled { get; set; }
+        public bool EditionRehomeOnImport { get; set; }
     }
 
     public static class MediaManagementConfigResourceMapper
@@ -111,7 +117,13 @@ namespace Radarr.Api.V3.Config
                 ScoreFilesByGrabbedReleaseTitle = model.ScoreFilesByGrabbedReleaseTitle,
 
                 // krzw(symlink-import-guard)
-                RejectSymlinkImportSources = model.RejectSymlinkImportSources
+                RejectSymlinkImportSources = model.RejectSymlinkImportSources,
+
+                // krzw(edition-runtime-catalog)
+                EditionRuntimeToleranceMinutes = model.EditionRuntimeToleranceMinutes,
+                EditionCatalogImdbEnabled = model.EditionCatalogImdbEnabled,
+                EditionCatalogWikidataEnabled = model.EditionCatalogWikidataEnabled,
+                EditionRehomeOnImport = model.EditionRehomeOnImport
             };
         }
     }

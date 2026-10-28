@@ -24,7 +24,7 @@ namespace NzbDrone.Core.Movies.Editions
             _logger = logger;
         }
 
-        // editionRow carries what the caller chose: Edition, EditionAliases, EditionAcceptUntagged, QualityProfileId,
+        // editionRow carries what the caller chose: Edition, EditionAliases, EditionAcceptUntagged, ExpectedRuntimeMinutes, QualityProfileId,
         // Monitored, MinimumAvailability, Tags and AddOptions. Metadata, path and root folder come from the default
         // row of tmdbId, so no TMDb call is made here; the MovieAddedEvent published by MovieService.AddMovie runs
         // the refresh, the folder scan and search-on-add exactly as for a normal add.
@@ -62,6 +62,7 @@ namespace NzbDrone.Core.Movies.Editions
                 Edition = name,
                 EditionAliases = EditionValidation.BuildAliases(name, editionRow.EditionAliases),
                 EditionAcceptUntagged = editionRow.EditionAcceptUntagged,
+                ExpectedRuntimeMinutes = editionRow.ExpectedRuntimeMinutes,  // krzw(edition-runtime-catalog)
 
                 QualityProfileId = editionRow.QualityProfileId > 0 ? editionRow.QualityProfileId : defaultRow.QualityProfileId,
                 Monitored = editionRow.Monitored,

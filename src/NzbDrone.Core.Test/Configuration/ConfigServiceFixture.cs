@@ -218,5 +218,32 @@ namespace NzbDrone.Core.Test.Configuration
 
             Subject.RejectSymlinkImportSources.Should().BeFalse();
         }
+
+        // krzw(edition-runtime-catalog) begin: defaults decided for the runtime catalog
+        [Test]
+        public void edition_runtime_catalog_settings_should_have_the_decided_defaults()
+        {
+            Subject.EditionRuntimeToleranceMinutes.Should().Be(3);
+            Subject.EditionCatalogImdbEnabled.Should().BeTrue();
+            Subject.EditionCatalogWikidataEnabled.Should().BeTrue();
+            Subject.EditionRehomeOnImport.Should().BeTrue();
+        }
+
+        [Test]
+        public void edition_rehome_on_import_should_store_and_read_back_false()
+        {
+            Subject.EditionRehomeOnImport = false;
+
+            AssertUpsert("EditionRehomeOnImport", false);
+
+            Mocker.GetMock<IConfigRepository>().Setup(c => c.All()).Returns(new List<Config>
+            {
+                new Config { Key = "editionrehomeonimport", Value = "False" }
+            });
+
+            Subject.EditionRehomeOnImport.Should().BeFalse();
+        }
+
+        // krzw(edition-runtime-catalog) end
     }
 }

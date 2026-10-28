@@ -92,6 +92,7 @@ namespace Radarr.Api.V3.Movies
         public MovieEditionResource Edition { get; set; }
         public int? EditionParentId { get; set; }
         public List<MovieEditionSummaryResource> Editions { get; set; }
+        public int? ExpectedRuntimeMinutes { get; set; }  // krzw(edition-runtime-catalog): any row; null = unknown
 
         // krzw(multi-edition) end
 
@@ -175,6 +176,7 @@ namespace Radarr.Api.V3.Movies
                 Popularity = model.MovieMetadata.Value.Popularity,
                 LastSearchTime = model.LastSearchTime,
                 Edition = model.ToEditionResource(),  // krzw(multi-edition): EditionParentId/Editions need the title's other rows, see LinkEditions
+                ExpectedRuntimeMinutes = model.ExpectedRuntimeMinutes,  // krzw(edition-runtime-catalog)
             };
         }
 
@@ -226,6 +228,7 @@ namespace Radarr.Api.V3.Movies
                 Edition = resource.Edition?.Name ?? "",
                 EditionAliases = resource.Edition?.Aliases ?? new List<string>(),
                 EditionAcceptUntagged = resource.Edition?.AcceptUntagged ?? false,
+                ExpectedRuntimeMinutes = resource.ExpectedRuntimeMinutes ?? resource.Edition?.ExpectedRuntimeMinutes,  // krzw(edition-runtime-catalog)
 
                 // krzw(multi-edition) end
                 Added = resource.Added,

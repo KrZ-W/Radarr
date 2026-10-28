@@ -446,6 +446,37 @@ namespace NzbDrone.Core.Configuration
             set { SetValue("RejectSymlinkImportSources", value); }
         }
 
+        // krzw(edition-runtime-catalog) begin: runtime matching tolerance, catalog providers, re-home on import
+        public int EditionRuntimeToleranceMinutes
+        {
+            get { return GetValueInt("EditionRuntimeToleranceMinutes", 3); }
+
+            set { SetValue("EditionRuntimeToleranceMinutes", value); }
+        }
+
+        public bool EditionCatalogImdbEnabled
+        {
+            get { return GetValueBoolean("EditionCatalogImdbEnabled", true); }
+
+            set { SetValue("EditionCatalogImdbEnabled", value); }
+        }
+
+        public bool EditionCatalogWikidataEnabled
+        {
+            get { return GetValueBoolean("EditionCatalogWikidataEnabled", true); }
+
+            set { SetValue("EditionCatalogWikidataEnabled", value); }
+        }
+
+        public bool EditionRehomeOnImport
+        {
+            get { return GetValueBoolean("EditionRehomeOnImport", true); }
+
+            set { SetValue("EditionRehomeOnImport", value); }
+        }
+
+        // krzw(edition-runtime-catalog) end
+
         public bool UseScriptImport
         {
             get { return GetValueBoolean("UseScriptImport", false); }
