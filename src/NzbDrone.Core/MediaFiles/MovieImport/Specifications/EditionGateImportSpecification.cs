@@ -26,6 +26,14 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
                 return ImportSpecDecision.Accept();
             }
 
+            // krzw(edition-runtime-catalog) begin
+            if (localMovie.EditionRuntimeRehomed)
+            {
+                _logger.Debug("Movie row was chosen by runtime, skipping edition gate for {0}", localMovie.Path);
+                return ImportSpecDecision.Accept();
+            }
+
+            // krzw(edition-runtime-catalog) end
             var movie = localMovie.Movie;
 
             if (movie == null)

@@ -57,6 +57,10 @@ namespace NzbDrone.Core.Parser.Model
         // parsed edition. Rows resolved by title, tag or grab history leave it false.
         public bool EditionOverride { get; set; }
 
+        // krzw(edition-runtime-catalog): true when ImportDecisionMaker moved this untagged file from the default row to the
+        // sibling edition row its runtime matches; the edition gate and the runtime check then trust the row
+        public bool EditionRuntimeRehomed { get; set; }
+
         // krzw(grabbed-release-title): sanitised title of the release this file was grabbed as.
         // CustomFormats above is the scoring ladder's result - the formats CustomFormatScore is computed
         // from - so the list and the score reported to notifications, scripts and history always agree.
