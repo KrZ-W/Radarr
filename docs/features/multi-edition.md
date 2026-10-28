@@ -1,6 +1,6 @@
 # Multi-Edition Movies
 
-> **Status:** pilot (slice 1) · **Since:** `v6.4.4.10685+krzw.2` · **Surface:** movie page (*Editions* box, *Add Edition*, move file to edition), edit-movie modal, naming token `{Edition Name}`, `/api/v3/movie`, `/api/v3/calendar`, `/api/v3/edition` (audit and move file since `v6.4.4.10685+krzw.3`) · **Design:** [design/multi-edition.md](../design/multi-edition.md)
+> **Status:** pilot (slice 1) · **Since:** `v6.4.4.10685+krzw.2` · **Surface:** movie page (*Editions* box, *Add Edition*, move file to edition), edit-movie modal, naming token `{Edition Name}`, `/api/v3/movie`, `/api/v3/calendar`, `/api/v3/edition` (audit and move file since `v6.4.4.10685+krzw.3`; runtime catalog, audit verdicts, re-home since `v6.4.4.10685+krzw.4`) · **Design:** [design/multi-edition.md](../design/multi-edition.md)
 
 ## What it does
 

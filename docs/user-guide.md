@@ -294,7 +294,7 @@ if the index is missing or has not been rebuilt for twice the interval.
 ```yaml
 services:
   radarr:
-    image: ghcr.io/krz-w/radarr:6.4.4.10685-krzw.3  # pin to a release
+    image: ghcr.io/krz-w/radarr:6.4.4.10685-krzw.4  # pin to a release
     container_name: radarr
     environment:
       - PUID=1000

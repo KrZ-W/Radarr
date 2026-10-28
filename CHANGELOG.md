@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.4.4.10685+krzw.4] — based on Radarr 6.4.4.10685
+
 ### Added
 
 - **Runtime-aware editions.** A per-title *edition catalog* of cut runtimes, filled from IMDb
@@ -30,6 +34,8 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
   See [docs/features/multi-edition.md](docs/features/multi-edition.md#runtime-and-the-edition-catalog).
   IMDb's endpoint is undocumented and its data is for personal, non-commercial use; the
   provider can be switched off.
+
+Container image: `ghcr.io/krz-w/radarr:6.4.4.10685-krzw.4`.
 
 ## [v6.4.4.10685+krzw.3] — based on Radarr 6.4.4.10685
 
@@ -789,7 +795,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.4.4.10685+krzw.3...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.4.4.10685+krzw.4...HEAD
+[v6.4.4.10685+krzw.4]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.4
 [v6.4.4.10685+krzw.3]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.3
 [v6.4.4.10685+krzw.2]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.2
 [v6.4.4.10685+krzw.1]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.1
