@@ -42,6 +42,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
         private readonly IMediaFileService _mediaFileService;
         private readonly ICustomFormatCalculationService _formatCalculator;
         private readonly IEventAggregator _eventAggregator;
+        private readonly IEditionRuntimeImportEvaluator _editionRuntimeEvaluator;  // krzw(edition-runtime-catalog)
         private readonly Logger _logger;
 
         public ManualImportService(IDiskProvider diskProvider,
@@ -56,6 +57,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
                                    IMediaFileService mediaFileService,
                                    ICustomFormatCalculationService formatCalculator,
                                    IEventAggregator eventAggregator,
+                                   IEditionRuntimeImportEvaluator editionRuntimeEvaluator,  // krzw(edition-runtime-catalog)
                                    Logger logger)
         {
             _diskProvider = diskProvider;
@@ -70,6 +72,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
             _mediaFileService = mediaFileService;
             _formatCalculator = formatCalculator;
             _eventAggregator = eventAggregator;
+            _editionRuntimeEvaluator = editionRuntimeEvaluator;  // krzw(edition-runtime-catalog)
             _logger = logger;
         }
 
@@ -177,6 +180,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
             localMovie.Quality = finalQuality;
             localMovie.Languages = finalLanguages;
             localMovie.IndexerFlags = (IndexerFlags)indexerFlags;
+            KeepRuntimeRehome(localMovie);  // krzw(edition-runtime-catalog)
 
             // krzw(grabbed-release-title): parsed after Augment - before it SceneName and Release are
             // still null, so the preview's accept/reject used a stale custom format list. CustomFormats is
@@ -187,6 +191,23 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
 
             return MapItem(_importDecisionMaker.GetDecision(localMovie, downloadClientItem), rootFolder, downloadId, null);
         }
+
+        // krzw(edition-runtime-catalog) begin
+        // The listing shows a runtime re-homed file on its edition row but the flag is not sent back, so a quality or
+        // language edit re-derives it: the file keeps the re-home when its runtime still takes it to this row.
+        private void KeepRuntimeRehome(LocalMovie localMovie)
+        {
+            try
+            {
+                localMovie.EditionRuntimeRehomed = _editionRuntimeEvaluator.IsRehomeTarget(localMovie);
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn(ex, "Edition runtime re-home check failed for {0}", localMovie.Path);
+            }
+        }
+
+        // krzw(edition-runtime-catalog) end
 
         private List<ManualImportItem> ProcessFolder(string rootFolder, string baseFolder, string downloadId, int? movieId, bool filterExistingFiles)
         {

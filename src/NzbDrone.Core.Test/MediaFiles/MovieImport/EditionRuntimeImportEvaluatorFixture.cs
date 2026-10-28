@@ -49,6 +49,10 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport
             Mocker.GetMock<IMovieService>()
                   .Setup(s => s.GetEditionSiblings(It.IsAny<Movie>()))
                   .Returns<Movie>(m => _rows.Where(r => r.Id != m.Id).ToList());
+
+            Mocker.GetMock<IMovieService>()
+                  .Setup(s => s.GetDefaultEdition(MetadataId))
+                  .Returns(() => _default);
         }
 
         private static LocalMovie GivenFile(Movie movie, double minutes, string edition = null)
@@ -160,6 +164,33 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport
             file.MediaInfo = null;
 
             Subject.FindRehomeTarget(file).Should().BeNull();
+        }
+
+        [Test]
+        public void should_confirm_the_row_an_untagged_file_was_rehomed_to()
+        {
+            var file = GivenFile(_extended, 208);
+
+            Subject.IsRehomeTarget(file).Should().BeTrue();
+            file.Movie.Should().BeSameAs(_extended);
+        }
+
+        [Test]
+        public void should_not_confirm_a_row_the_runtime_does_not_take_the_file_to()
+        {
+            Subject.IsRehomeTarget(GivenFile(_extended, 178)).Should().BeFalse();
+            Subject.IsRehomeTarget(GivenFile(_directorsCut, 208)).Should().BeFalse();
+        }
+
+        [Test]
+        public void should_not_confirm_a_tagged_file_a_default_row_or_with_the_setting_off()
+        {
+            Subject.IsRehomeTarget(GivenFile(_extended, 208, "Director's Cut")).Should().BeFalse();
+            Subject.IsRehomeTarget(GivenFile(_default, 208)).Should().BeFalse();
+
+            Mocker.GetMock<IConfigService>().SetupGet(s => s.EditionRehomeOnImport).Returns(false);
+
+            Subject.IsRehomeTarget(GivenFile(_extended, 208)).Should().BeFalse();
         }
     }
 }

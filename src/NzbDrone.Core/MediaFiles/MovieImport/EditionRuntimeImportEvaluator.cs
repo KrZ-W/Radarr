@@ -21,6 +21,10 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
         // The sibling edition row an untagged default-row file is re-homed to, or null (setting off, no unique
         // runtime match, or the target row is unmonitored)
         Movie FindRehomeTarget(LocalMovie localMovie);
+
+        // True when this file sits on an edition row that the re-home would have taken it to from the default row
+        // (Manual Import reprocess: the listing already shows the re-homed row, the flag is not round-tripped)
+        bool IsRehomeTarget(LocalMovie localMovie);
     }
 
     public class EditionRuntimeImportResult
@@ -124,6 +128,39 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
             }
 
             return target;
+        }
+
+        public bool IsRehomeTarget(LocalMovie localMovie)
+        {
+            var row = localMovie?.Movie;
+
+            if (row == null || !row.IsEdition || localMovie.EditionOverride || localMovie.ExistingFile || !_configService.EditionRehomeOnImport)
+            {
+                return false;
+            }
+
+            if (!FileMinutes(localMovie).HasValue || !(localMovie.Edition.IsNullOrWhiteSpace() || IsVariantTag(localMovie.Edition)))
+            {
+                return false;
+            }
+
+            var defaultRow = row.MovieMetadataId > 0 ? _movieService.GetDefaultEdition(row.MovieMetadataId) : null;
+
+            if (defaultRow == null || defaultRow.Id == row.Id)
+            {
+                return false;
+            }
+
+            localMovie.Movie = defaultRow;
+
+            try
+            {
+                return FindRehomeTarget(localMovie)?.Id == row.Id;
+            }
+            finally
+            {
+                localMovie.Movie = row;
+            }
         }
 
         public static double? FileMinutes(LocalMovie localMovie)

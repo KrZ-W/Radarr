@@ -272,9 +272,9 @@ curl -s -H "X-Api-Key: $KEY_A" http://radarr-a:7878/api/v3/edition/catalog/expor
 ### Limits
 
 - The IMDb failure count behind the health check lives in memory and resets on restart.
-- Manual Import's preview of a re-homed file, after you change its quality or language,
-  can show the edition gate's *does not accept untagged releases* reason; the import itself
-  goes through.
+- Manual Import does not send the re-home back to the server: when you change a re-homed
+  file's quality or language, the preview re-checks the runtime and keeps the re-home while
+  the runtime still points to that row (an edit of the catalog in between can change it).
 - Migration 249 (`MovieEditionCatalog`, `Movies.ExpectedRuntimeMinutes`) was only run on
   SQLite.
 
