@@ -19,6 +19,7 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
         private List<Movie> _movies;
         private List<EditionCatalogEntry> _stored;
         private List<string> _calls;
+        private List<int> _staleMarkers;
         private Mock<IEditionCatalogProvider> _imdb;
         private Mock<IEditionCatalogProvider> _wikidata;
         private Mock<IEditionCatalogProvider> _tmdb;
@@ -28,6 +29,7 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
         {
             _stored = new List<EditionCatalogEntry>();
             _calls = new List<string>();
+            _staleMarkers = new List<int>();
 
             _movies = new List<Movie>
             {
@@ -49,7 +51,16 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
 
             Mocker.GetMock<IEditionCatalogService>()
                   .Setup(s => s.ReplaceSource(It.IsAny<int>(), It.IsAny<EditionCatalogSource>(), It.IsAny<List<EditionCatalogEntry>>()))
-                  .Callback((int id, EditionCatalogSource source, List<EditionCatalogEntry> entries) => _calls.Add($"{source}:{id}:{entries.Count}"));
+                  .Callback((int id, EditionCatalogSource source, List<EditionCatalogEntry> entries) =>
+                  {
+                      _calls.Add($"{source}:{id}:{entries.Count}");
+
+                      if (source == EditionCatalogSource.Tmdb && entries.Any() &&
+                          entries.All(e => e.Updated != default && e.Updated < DateTime.UtcNow.AddDays(-RefreshEditionCatalogService.StaleAfterDays)))
+                      {
+                          _staleMarkers.Add(id);
+                      }
+                  });
 
             _imdb = GivenProvider(EditionCatalogSource.Imdb);
             _wikidata = GivenProvider(EditionCatalogSource.Wikidata);
@@ -180,11 +191,12 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
 
             Subject.Execute(new RefreshEditionCatalogCommand());
 
-            // 101: IMDb failed -> no IMDb replace, no TMDb marker, Wikidata still stored
-            _calls.Should().NotContain(c => c.StartsWith("Imdb:101") || c.StartsWith("Tmdb:101"));
-            _calls.Should().Contain("Wikidata:101:1");
+            // 101: IMDb failed -> no IMDb replace, TMDb baseline written already stale, Wikidata still stored
+            _calls.Should().NotContain(c => c.StartsWith("Imdb:101"));
+            _calls.Should().Contain(new[] { "Wikidata:101:1", "Tmdb:101:1" });
+            _staleMarkers.Should().Equal(101);
 
-            // 102: answered with nothing -> its IMDb entries are cleared, marker written
+            // 102: answered with nothing -> its IMDb entries are cleared, fresh marker written
             _calls.Should().Contain(new[] { "Imdb:102:0", "Tmdb:102:1" });
 
             Mocker.GetMock<NzbDrone.Core.Messaging.Events.IEventAggregator>()
@@ -200,8 +212,8 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
 
             Subject.Execute(new RefreshEditionCatalogCommand());
 
-            _calls.Should().Contain("Wikidata:101:1");
-            _calls.Should().NotContain(c => c.StartsWith("Tmdb"));
+            _calls.Should().Contain(new[] { "Wikidata:101:1", "Tmdb:101:1", "Tmdb:102:1" });
+            _staleMarkers.Should().BeEquivalentTo(new[] { 101, 102 });
 
             ExceptionVerification.ExpectedErrors(1);
             ExceptionVerification.ExpectedWarns(1);

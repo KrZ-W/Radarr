@@ -24,6 +24,8 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
             _stored = new List<EditionCatalogEntry>();
 
             Mocker.GetMock<IConfigService>().SetupGet(c => c.EditionRuntimeToleranceMinutes).Returns(3);
+            Mocker.GetMock<IConfigService>().SetupGet(c => c.EditionCatalogImdbEnabled).Returns(true);
+            Mocker.GetMock<IConfigService>().SetupGet(c => c.EditionCatalogWikidataEnabled).Returns(true);
 
             Mocker.GetMock<IEditionCatalogRepository>()
                   .Setup(r => r.GetByMetadata(It.IsAny<int>()))
@@ -90,6 +92,23 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
             GivenStored(Entry("Director's Cut", 190, weaker, 95, 1), Entry("Directors Cut", 191, stronger, 10, 2));
 
             Subject.Merged(MetadataId).Should().ContainSingle().Which.Source.Should().Be(stronger);
+        }
+
+        [Test]
+        public void should_hide_the_entries_of_a_provider_switched_off_in_settings()
+        {
+            GivenStored(Entry("Extended", 208, EditionCatalogSource.Imdb, 70, 1),
+                        Entry("Director's Cut", 228, EditionCatalogSource.Wikidata, 70, 2),
+                        Entry("Default", 178, EditionCatalogSource.Tmdb, 30, 3));
+
+            Mocker.GetMock<IConfigService>().SetupGet(c => c.EditionCatalogImdbEnabled).Returns(false);
+
+            Subject.GetForMetadata(MetadataId).Select(e => e.Source).Should().BeEquivalentTo(new[] { EditionCatalogSource.Wikidata, EditionCatalogSource.Tmdb });
+            Subject.Merged(MetadataId).Should().NotContain(e => e.Source == EditionCatalogSource.Imdb);
+
+            Mocker.GetMock<IConfigService>().SetupGet(c => c.EditionCatalogWikidataEnabled).Returns(false);
+
+            Subject.Merged(MetadataId).Select(e => e.Source).Should().Equal(EditionCatalogSource.Tmdb);
         }
 
         [Test]

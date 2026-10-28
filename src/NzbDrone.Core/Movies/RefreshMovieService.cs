@@ -253,6 +253,7 @@ namespace NzbDrone.Core.Movies
                         _logger.Error(e, "Couldn't refresh info for {0}", movie);
                         UpdateTags(movie, isNew);
                         RescanMovie(movie, isNew, trigger);
+                        QueueEditionCatalogRefresh(message); // krzw(edition-runtime-catalog): the rethrow skips the push below
                         throw;
                     }
                 }
@@ -300,10 +301,17 @@ namespace NzbDrone.Core.Movies
                 }
             }
 
-            // krzw(edition-runtime-catalog): stale edition catalogs of the refreshed movies (all movies on a full refresh), queued so a slow IMDb never holds up the movie refresh
-            _commandQueueManager.Push(new RefreshEditionCatalogCommand { MovieIds = message.MovieIds.ToList() });
+            QueueEditionCatalogRefresh(message); // krzw(edition-runtime-catalog)
 
             _eventAggregator.PublishEvent(new MovieRefreshCompleteEvent());
         }
+
+        // krzw(edition-runtime-catalog) begin: stale edition catalogs of the refreshed movies (all movies on a full refresh), queued so a slow IMDb never holds up the movie refresh
+        private void QueueEditionCatalogRefresh(RefreshMovieCommand message)
+        {
+            _commandQueueManager.Push(new RefreshEditionCatalogCommand { MovieIds = message.MovieIds.ToList() });
+        }
+
+        // krzw(edition-runtime-catalog) end
     }
 }

@@ -93,8 +93,10 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
             {
                 result.Conflict = TagConflict(movie, tagCut, minutes.Value, catalog, tolerance);
             }
-            else if (movie.IsDefaultEdition)
+            else if (movie.IsDefaultEdition && (localMovie.Edition.IsNullOrWhiteSpace() || IsVariantTag(localMovie.Edition)))
             {
+                // Untagged, or only a release variant (IMAX, Remastered...): a raw tag the catalog does not know (fan
+                // edit...) says the file is something else, so it is neither re-homed nor rejected
                 result.RuntimeSibling = RuntimeSibling(movie, siblings, minutes.Value, catalog, tolerance);
             }
 
@@ -150,6 +152,13 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
             var normalized = EditionNormalizer.Normalize(edition);
 
             return catalog.Any(e => EditionNormalizer.Normalize(e.Name) == normalized) ? edition.Trim() : null;
+        }
+
+        public static bool IsVariantTag(string edition)
+        {
+            var preset = edition.IsNullOrWhiteSpace() ? null : EditionAuditClassifier.PresetFor(edition);
+
+            return preset != null && VariantPresets.Contains(preset.Name);
         }
 
         private static string TagConflict(Movie movie, string tagCut, double minutes, List<EditionCatalogEntry> catalog, int tolerance)

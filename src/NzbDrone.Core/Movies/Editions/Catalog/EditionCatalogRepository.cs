@@ -60,7 +60,8 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
                 return new List<EditionCatalogEntry>();
             }
 
-            return Query(x => list.Contains(x.Source));
+            // One equality query per source: an enum list in Contains is sent to Postgres as an unmapped array parameter
+            return list.SelectMany(source => Query(x => x.Source == source)).ToList();
         }
     }
 }

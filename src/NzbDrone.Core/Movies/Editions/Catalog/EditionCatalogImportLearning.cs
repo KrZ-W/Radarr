@@ -53,7 +53,17 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
                     return;
                 }
 
-                var runtime = FilmRuntime(minutes, mediaInfo.VideoFps, movie.ExpectedRuntimeMinutes, Math.Max(0, _configService.EditionRuntimeToleranceMinutes));
+                var tolerance = Math.Max(0, _configService.EditionRuntimeToleranceMinutes);
+
+                // The row's expected runtime is the user's word for this cut: a file that contradicts it (manual pick,
+                // untagged grab) teaches nothing
+                if (movie.ExpectedRuntimeMinutes > 0 && !EditionRuntime.Matches(minutes, movie.ExpectedRuntimeMinutes.Value, tolerance))
+                {
+                    _logger.Debug("Runtime {0:0} min of the imported {1} file of {2} does not match its expected {3} min, not learning it", minutes, movie.Edition, movie.Title, movie.ExpectedRuntimeMinutes);
+                    return;
+                }
+
+                var runtime = FilmRuntime(minutes, mediaInfo.VideoFps, movie.ExpectedRuntimeMinutes, tolerance);
 
                 if (runtime <= 0)
                 {

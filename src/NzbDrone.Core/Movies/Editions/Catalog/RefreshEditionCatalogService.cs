@@ -10,10 +10,10 @@ using NzbDrone.Core.Movies.Editions.Catalog.Providers;
 
 namespace NzbDrone.Core.Movies.Editions.Catalog
 {
-    // Staleness is read from the TMDb baseline entry: it is written last, and only when every enabled online provider
-    // answered for the title, so a title whose IMDb or Wikidata call failed stays stale and is retried on the next
-    // refresh, while its cached entries are kept. Titles without a TMDb runtime have no marker and are re-asked on
-    // every refresh (rare: unreleased titles).
+    // Staleness is read from the TMDb baseline entry: it is written last, for every title (it needs no network), but
+    // with an already-stale Updated when an enabled online provider did not answer for the title, so that title is
+    // retried on the next refresh while its cached entries are kept. Titles without a TMDb runtime have no marker and
+    // are re-asked on every refresh (rare: unreleased titles).
     public class RefreshEditionCatalogService : IExecute<RefreshEditionCatalogCommand>
     {
         public const int StaleAfterDays = 30;
@@ -131,10 +131,19 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
             {
                 var result = Fetch(provider, chunk);
 
-                foreach (var title in chunk.Where(t => !incomplete.Contains(t.Id)))
+                var staleStamp = DateTime.UtcNow.AddDays(-StaleAfterDays - 1);
+
+                foreach (var title in chunk)
                 {
                     result.TryGetValue(title.Id, out var entries);
-                    Replace(title, provider.Source, entries ?? new List<EditionCatalogEntry>());
+                    entries ??= new List<EditionCatalogEntry>();
+
+                    if (incomplete.Contains(title.Id))
+                    {
+                        entries.ForEach(e => e.Updated = staleStamp);
+                    }
+
+                    Replace(title, provider.Source, entries);
                 }
             }
 

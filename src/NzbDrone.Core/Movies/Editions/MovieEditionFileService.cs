@@ -176,7 +176,7 @@ namespace NzbDrone.Core.Movies.Editions
             var tolerance = Math.Max(0, _configService.EditionRuntimeToleranceMinutes);
 
             var withFiles = all.Where(m => m.IsDefaultEdition && m.MovieFileId > 0 && m.MovieFile != null).ToList();
-            var catalogs = (_catalogRepository.GetByMetadataIds(withFiles.Select(m => m.MovieMetadataId).Distinct().ToList()) ?? new List<EditionCatalogEntry>())
+            var catalogs = EditionCatalogService.Active(_catalogRepository.GetByMetadataIds(withFiles.Select(m => m.MovieMetadataId).Distinct().ToList()), _configService)
                                              .GroupBy(e => e.MovieMetadataId)
                                              .ToDictionary(g => g.Key, g => g.ToList());
 

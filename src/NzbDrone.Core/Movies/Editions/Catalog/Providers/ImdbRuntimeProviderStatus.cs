@@ -8,6 +8,7 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
     {
         int ConsecutiveFailedBatches { get; }
         DateTime? LastSuccess { get; }
+        DateTime? LastFailure { get; }
         void RecordBatch(bool success);
     }
 
@@ -15,6 +16,7 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
     {
         private int _consecutiveFailedBatches;
         private long _lastSuccessTicks;
+        private long _lastFailureTicks;
 
         public int ConsecutiveFailedBatches => Volatile.Read(ref _consecutiveFailedBatches);
 
@@ -23,6 +25,15 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
             get
             {
                 var ticks = Interlocked.Read(ref _lastSuccessTicks);
+                return ticks == 0 ? null : new DateTime(ticks, DateTimeKind.Utc);
+            }
+        }
+
+        public DateTime? LastFailure
+        {
+            get
+            {
+                var ticks = Interlocked.Read(ref _lastFailureTicks);
                 return ticks == 0 ? null : new DateTime(ticks, DateTimeKind.Utc);
             }
         }
@@ -37,6 +48,7 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
             else
             {
                 Interlocked.Increment(ref _consecutiveFailedBatches);
+                Interlocked.Exchange(ref _lastFailureTicks, DateTime.UtcNow.Ticks);
             }
         }
     }

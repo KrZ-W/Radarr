@@ -79,6 +79,25 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests.ProviderTests
         }
 
         [Test]
+        public void should_convert_hours_and_seconds_and_skip_other_units()
+        {
+            const string json = @"{ ""results"": { ""bindings"": [
+    { ""imdb"": { ""value"": ""tt1"" }, ""dur"": { ""value"": ""2.2"" }, ""unit"": { ""value"": ""http://www.wikidata.org/entity/Q25235"" },
+      ""qualLabel"": { ""value"": ""director's cut"" } },
+    { ""imdb"": { ""value"": ""tt1"" }, ""dur"": { ""value"": ""7920"" }, ""unit"": { ""value"": ""http://www.wikidata.org/entity/Q11574"" },
+      ""qualLabel"": { ""value"": ""extended cut"" } },
+    { ""imdb"": { ""value"": ""tt1"" }, ""dur"": { ""value"": ""140"" }, ""unit"": { ""value"": ""http://www.wikidata.org/entity/Q7727"" },
+      ""qualLabel"": { ""value"": ""theatrical version"" } },
+    { ""imdb"": { ""value"": ""tt1"" }, ""dur"": { ""value"": ""3"" }, ""unit"": { ""value"": ""http://www.wikidata.org/entity/Q577"" },
+      ""qualLabel"": { ""value"": ""final cut"" } }
+  ] } }";
+
+            var result = WikidataRuntimeProvider.Parse(json);
+
+            result["tt1"].Select(e => (e.Name, e.RuntimeMinutes)).Should().BeEquivalentTo(new[] { ("Director's Cut", 132), ("Extended", 132), ("Theatrical", 140) });
+        }
+
+        [Test]
         public void should_build_the_contract_query()
         {
             var query = WikidataRuntimeProvider.BuildQuery(new[] { "tt1", "tt2" });
@@ -86,6 +105,7 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests.ProviderTests
             query.Should().Contain("VALUES ?imdb { \"tt1\" \"tt2\" }");
             query.Should().Contain("?film wdt:P345 ?imdb . ?film p:P2047 ?st . ?st ps:P2047 ?dur . OPTIONAL { ?st pq:P518 ?qual . }");
             query.Should().Contain("wikibase:language \"en\"");
+            query.Should().Contain("?st psv:P2047/wikibase:quantityUnit ?unit");
         }
 
         [Test]

@@ -15,7 +15,8 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
 {
     // The endpoint is unofficial and answers 403 without the headers imdb.com sends. Batched (50 ids per call), spaced
     // (1.5 s), one retry per batch then skip; after 3 failed batches in a row the rest of the run is skipped so a blocked
-    // endpoint costs a few calls, not the whole library. Cached entries of skipped titles are kept by the caller.
+    // endpoint costs a few calls, not the whole library. The count carries over between Fetch calls (the refresh calls
+    // once per chunk) for BlockedBackoff after the last failure. Cached entries of skipped titles are kept by the caller.
     public class ImdbRuntimeProvider : IEditionCatalogProvider
     {
         public const string Url = "https://caching.graphql.imdb.com/";
@@ -24,6 +25,7 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
         public const string BrowserUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
         public const string Query = "query Q($ids:[ID!]!){ titles(ids:$ids){ id titleText{text} runtime{seconds} runtimes(first:20){ edges{ node{ seconds attributes{ text } } } } } }";
 
+        public static readonly TimeSpan BlockedBackoff = TimeSpan.FromHours(1);
         private static readonly Regex ImdbIdRegex = new Regex(@"^tt\d+$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         private readonly IHttpClient _httpClient;
@@ -73,7 +75,9 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
                 ids.Add(title.Id);
             }
 
-            var consecutiveFailures = 0;
+            // Failures of the previous chunks of this refresh (or of a refresh within the backoff) count too
+            var lastFailure = _status.LastFailure;
+            var consecutiveFailures = lastFailure.HasValue && DateTime.UtcNow - lastFailure.Value < BlockedBackoff ? _status.ConsecutiveFailedBatches : 0;
 
             foreach (var batch in byImdbId.Keys.Chunk(BatchSize))
             {
@@ -97,11 +101,16 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
 
                 foreach (var imdbId in batch)
                 {
-                    titles.TryGetValue(imdbId, out var entries);
+                    // A title IMDb left out or returned as null (partial GraphQL error) is not answered: its cached
+                    // entries are kept and it is retried on the next refresh
+                    if (!titles.TryGetValue(imdbId, out var entries))
+                    {
+                        continue;
+                    }
 
                     foreach (var metadataId in byImdbId[imdbId])
                     {
-                        result[metadataId] = (entries ?? new List<EditionCatalogEntry>()).Select(e => WithMetadata(e, metadataId)).ToList();
+                        result[metadataId] = entries.Select(e => WithMetadata(e, metadataId)).ToList();
                     }
                 }
             }
@@ -187,7 +196,8 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
             });
         }
 
-        // Keyed by the requested id. A title IMDb returns under another id (merged titles) is matched by position.
+        // Keyed by the requested id. A title IMDb returns under another id (merged titles) is matched by position, only
+        // when the list has one slot per requested id; null slots are left out.
         // Throws when the response carries no titles list (GraphQL error, HTML block page...).
         public static Dictionary<string, List<EditionCatalogEntry>> Parse(string json, IList<string> requestedIds)
         {
@@ -204,6 +214,7 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
             }
 
             var requested = new HashSet<string>(requestedIds ?? new List<string>(), StringComparer.OrdinalIgnoreCase);
+            var positional = requestedIds != null && titles.GetArrayLength() == requestedIds.Count;
             var index = -1;
 
             foreach (var title in titles.EnumerateArray())
@@ -219,7 +230,7 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
 
                 if (id == null || !requested.Contains(id))
                 {
-                    if (requestedIds == null || index >= requestedIds.Count)
+                    if (!positional)
                     {
                         continue;
                     }

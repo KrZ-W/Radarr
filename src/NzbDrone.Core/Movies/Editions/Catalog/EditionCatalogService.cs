@@ -40,9 +40,20 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
             return GetForMetadata(movie.MovieMetadataId);
         }
 
+        // Entries of a provider switched off in settings are kept in the table (switching it back on restores them
+        // without a refresh) but hidden from every reader
         public List<EditionCatalogEntry> GetForMetadata(int metadataId)
         {
-            return _repository.GetByMetadata(metadataId);
+            return Active(_repository.GetByMetadata(metadataId), _configService);
+        }
+
+        public static List<EditionCatalogEntry> Active(IEnumerable<EditionCatalogEntry> entries, IConfigService configService)
+        {
+            return (entries ?? Enumerable.Empty<EditionCatalogEntry>())
+                   .Where(e => e != null &&
+                               (e.Source != EditionCatalogSource.Imdb || configService.EditionCatalogImdbEnabled) &&
+                               (e.Source != EditionCatalogSource.Wikidata || configService.EditionCatalogWikidataEnabled))
+                   .ToList();
         }
 
         // Same title, same source and same normalised name = same entry: its runtime, confidence and attributes are updated
@@ -119,7 +130,7 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
         {
             var tolerance = Math.Max(0, _configService.EditionRuntimeToleranceMinutes);
 
-            return Merge(_repository.GetByMetadata(metadataId), tolerance);
+            return Merge(GetForMetadata(metadataId), tolerance);
         }
 
         public static List<EditionCatalogEntry> Merge(IEnumerable<EditionCatalogEntry> entries, int toleranceMinutes)

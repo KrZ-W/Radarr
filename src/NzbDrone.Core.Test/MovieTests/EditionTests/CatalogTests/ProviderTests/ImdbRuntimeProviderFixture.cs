@@ -55,6 +55,20 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests.ProviderTests
             return r => new HttpResponse(r, new HttpHeader(), content, HttpStatusCode.OK);
         }
 
+        // Every requested title, found, with no runtimes
+        private static Func<HttpRequest, HttpResponse> Echo()
+        {
+            return r =>
+            {
+                using var body = System.Text.Json.JsonDocument.Parse(Encoding.UTF8.GetString(r.ContentData));
+                var titles = body.RootElement.GetProperty("variables").GetProperty("ids").EnumerateArray()
+                                 .Select(id => new { id = id.GetString(), runtimes = new { edges = Array.Empty<object>() } })
+                                 .ToArray();
+
+                return new HttpResponse(r, new HttpHeader(), System.Text.Json.JsonSerializer.Serialize(new { data = new { titles } }), HttpStatusCode.OK);
+            };
+        }
+
         private static Func<HttpRequest, HttpResponse> Status(HttpStatusCode status)
         {
             return r => new HttpResponse(r, new HttpHeader(), "blocked", status);
@@ -170,6 +184,61 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests.ProviderTests
         }
 
         [Test]
+        public void should_not_match_by_position_when_imdb_left_a_title_out()
+        {
+            // tt1 dropped, tt2 returned under its merged id at index 0: position says nothing
+            var json = "{\"data\":{\"titles\":[{\"id\":\"tt9\",\"runtime\":{\"seconds\":6000},\"runtimes\":null}]}}";
+
+            var result = ImdbRuntimeProvider.Parse(json, new[] { "tt1", "tt2" });
+
+            result.Should().BeEmpty();
+        }
+
+        [Test]
+        public void should_leave_out_a_title_returned_as_null_in_a_successful_batch()
+        {
+            GivenResponses(Ok("{\"data\":{\"titles\":[null,{\"id\":\"tt1000002\",\"runtime\":{\"seconds\":6000},\"runtimes\":null}]},\"errors\":[{\"message\":\"partial\"}]}"));
+
+            var result = Subject.Fetch(Titles(2));
+
+            // Title 1 is not answered: its cached IMDb entries stay
+            result.Keys.Should().BeEquivalentTo(new[] { 2 });
+            result[2].Single().RuntimeMinutes.Should().Be(100);
+        }
+
+        [Test]
+        public void should_not_call_imdb_again_in_the_next_chunk_after_3_recent_failed_batches()
+        {
+            GivenResponses(Ok(_sample));
+
+            var status = Mocker.GetMock<IImdbRuntimeProviderStatus>();
+            status.SetupGet(s => s.ConsecutiveFailedBatches).Returns(3);
+            status.SetupGet(s => s.LastFailure).Returns(DateTime.UtcNow.AddMinutes(-5));
+
+            var result = Subject.Fetch(Titles(10));
+
+            _requests.Should().BeEmpty();
+            result.Should().BeEmpty();
+
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public void should_try_imdb_again_once_the_backoff_has_passed()
+        {
+            GivenResponses(Echo());
+
+            var status = Mocker.GetMock<IImdbRuntimeProviderStatus>();
+            status.SetupGet(s => s.ConsecutiveFailedBatches).Returns(3);
+            status.SetupGet(s => s.LastFailure).Returns(DateTime.UtcNow - ImdbRuntimeProvider.BlockedBackoff - TimeSpan.FromMinutes(1));
+
+            var result = Subject.Fetch(Titles(10));
+
+            _requests.Should().HaveCount(1);
+            result.Should().HaveCount(10);
+        }
+
+        [Test]
         public void should_throw_on_response_without_titles()
         {
             Assert.Throws<FormatException>(() => ImdbRuntimeProvider.Parse("{\"errors\":[{\"message\":\"nope\"}]}", new[] { "tt1" }));
@@ -206,7 +275,7 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests.ProviderTests
         [Test]
         public void should_batch_120_ids_in_3_calls_of_at_most_50()
         {
-            GivenResponses(Ok(EmptyResponse));
+            GivenResponses(Echo());
 
             var result = Subject.Fetch(Titles(120));
 
@@ -247,7 +316,7 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests.ProviderTests
         [Test]
         public void should_leave_out_titles_of_a_batch_that_failed_twice()
         {
-            GivenResponses(Status(HttpStatusCode.Forbidden), Status(HttpStatusCode.Forbidden), Ok(EmptyResponse));
+            GivenResponses(Status(HttpStatusCode.Forbidden), Status(HttpStatusCode.Forbidden), Echo());
 
             var result = Subject.Fetch(Titles(60));
 

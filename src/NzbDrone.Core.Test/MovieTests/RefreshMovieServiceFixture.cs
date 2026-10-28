@@ -6,11 +6,13 @@ using NUnit.Framework;
 using NzbDrone.Common.Extensions;
 using NzbDrone.Core.AutoTagging;
 using NzbDrone.Core.Exceptions;
+using NzbDrone.Core.Messaging.Commands; // krzw(edition-runtime-catalog)
 using NzbDrone.Core.MetadataSource;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Movies.Collections;
 using NzbDrone.Core.Movies.Commands;
 using NzbDrone.Core.Movies.Credits;
+using NzbDrone.Core.Movies.Editions.Catalog; // krzw(edition-runtime-catalog)
 using NzbDrone.Core.RootFolders;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
@@ -134,5 +136,53 @@ namespace NzbDrone.Core.Test.MovieTests
 
             ExceptionVerification.ExpectedErrors(1);
         }
+
+        // krzw(edition-runtime-catalog) begin: the refresh queues the edition catalog refresh of the same movies
+        private void VerifyCatalogRefreshQueued(List<int> movieIds)
+        {
+            Mocker.GetMock<IManageCommandQueue>()
+                  .Verify(v => v.Push(It.Is<RefreshEditionCatalogCommand>(c => c.MovieIds.Count == movieIds.Count && c.MovieIds.TrueForAll(movieIds.Contains)),
+                                      It.IsAny<CommandPriority>(),
+                                      It.IsAny<CommandTrigger>()),
+                          Times.Once());
+        }
+
+        [Test]
+        public void should_queue_edition_catalog_refresh_for_the_refreshed_movies()
+        {
+            Subject.Execute(new RefreshMovieCommand(new List<int> { _movie.Id }));
+
+            VerifyCatalogRefreshQueued(new List<int> { _movie.Id });
+
+            ExceptionVerification.ExpectedErrors(1);
+        }
+
+        [Test]
+        public void should_queue_edition_catalog_refresh_for_all_movies_on_a_full_refresh()
+        {
+            Mocker.GetMock<IMovieService>()
+                  .Setup(s => s.GetAllMovies())
+                  .Returns(new List<Movie>());
+
+            Subject.Execute(new RefreshMovieCommand());
+
+            VerifyCatalogRefreshQueued(new List<int>());
+        }
+
+        [Test]
+        public void should_queue_edition_catalog_refresh_when_the_refresh_of_a_movie_fails()
+        {
+            Mocker.GetMock<IProvideMovieInfo>()
+                  .Setup(s => s.GetMovieInfo(It.IsAny<int>()))
+                  .Callback<int>((i) => { throw new InvalidOperationException("boom"); });
+
+            Assert.Throws<InvalidOperationException>(() => Subject.Execute(new RefreshMovieCommand(new List<int> { _movie.Id })));
+
+            VerifyCatalogRefreshQueued(new List<int> { _movie.Id });
+
+            ExceptionVerification.ExpectedErrors(1);
+        }
+
+        // krzw(edition-runtime-catalog) end
     }
 }

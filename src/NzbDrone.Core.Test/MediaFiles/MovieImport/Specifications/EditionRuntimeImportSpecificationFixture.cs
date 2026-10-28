@@ -193,6 +193,12 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
             Subject.IsSatisfiedBy(GivenFile(_default, "IMAX", 208), null).Message.Should().Be("Runtime 208 min matches the Extended edition of this movie");
         }
 
+        [Test]
+        public void should_accept_a_default_row_file_with_a_tag_the_catalog_does_not_know()
+        {
+            Subject.IsSatisfiedBy(GivenFile(_default, "Fan Edit", 207), null).Accepted.Should().BeTrue();
+        }
+
         [TestCase(178)]
         [TestCase(150)]
         [TestCase(260)]

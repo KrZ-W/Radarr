@@ -51,6 +51,8 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests
             _catalog = new List<EditionCatalogEntry>();
 
             Mocker.GetMock<IConfigService>().SetupGet(s => s.EditionRuntimeToleranceMinutes).Returns(3);
+            Mocker.GetMock<IConfigService>().SetupGet(s => s.EditionCatalogImdbEnabled).Returns(true);
+            Mocker.GetMock<IConfigService>().SetupGet(s => s.EditionCatalogWikidataEnabled).Returns(true);
             Mocker.GetMock<IMovieService>().Setup(s => s.GetAllMovies()).Returns(() => _rows);
             Mocker.GetMock<IMovieService>().Setup(s => s.GetMovie(It.IsAny<int>())).Returns<int>(id => _rows.Single(r => r.Id == id));
             Mocker.GetMock<IMovieService>().Setup(s => s.FindAllByTmdbId(TmdbId)).Returns(() => _rows.ToList());

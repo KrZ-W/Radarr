@@ -140,8 +140,10 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
         {
             var values = string.Join(" ", imdbIds.Select(id => "\"" + id + "\""));
 
-            return "SELECT ?imdb ?dur ?qualLabel WHERE { VALUES ?imdb { " + values + " } " +
+            // ps:P2047 is the bare amount; the unit comes from the full value (psv:) so hours or seconds are converted
+            return "SELECT ?imdb ?dur ?unit ?qualLabel WHERE { VALUES ?imdb { " + values + " } " +
                    "?film wdt:P345 ?imdb . ?film p:P2047 ?st . ?st ps:P2047 ?dur . OPTIONAL { ?st pq:P518 ?qual . } " +
+                   "OPTIONAL { ?st psv:P2047/wikibase:quantityUnit ?unit . } " +
                    "SERVICE wikibase:label { bd:serviceParam wikibase:language \"en\". } }";
         }
 
@@ -175,8 +177,15 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
                     continue;
                 }
 
-                // P2047 is nearly always in minutes; anything outside a feature length range is a unit or data error
-                var minutes = (int)Math.Round(value, MidpointRounding.AwayFromZero);
+                var factor = MinutesPerUnit(GetValue(binding, "unit"));
+
+                if (!factor.HasValue)
+                {
+                    continue;
+                }
+
+                // Anything outside a feature length range after the unit conversion is a data error
+                var minutes = (int)Math.Round(value * factor.Value, MidpointRounding.AwayFromZero);
 
                 if (minutes <= 0 || minutes > 1000)
                 {
@@ -207,6 +216,31 @@ namespace NzbDrone.Core.Movies.Editions.Catalog.Providers
             }
 
             return result;
+        }
+
+        // Minutes per unit of a P2047 amount: minute (Q7727, also assumed when the unit is missing), hour (Q25235),
+        // second (Q11574); null for any other unit
+        public static double? MinutesPerUnit(string unitUri)
+        {
+            if (unitUri.IsNullOrWhiteSpace())
+            {
+                return 1;
+            }
+
+            var entity = unitUri.Trim().TrimEnd('/');
+            entity = entity.Substring(entity.LastIndexOf('/') + 1);
+
+            switch (entity)
+            {
+                case "Q7727":
+                    return 1;
+                case "Q25235":
+                    return 60;
+                case "Q11574":
+                    return 1.0 / 60;
+                default:
+                    return null;
+            }
         }
 
         private static string GetValue(JsonElement binding, string name)

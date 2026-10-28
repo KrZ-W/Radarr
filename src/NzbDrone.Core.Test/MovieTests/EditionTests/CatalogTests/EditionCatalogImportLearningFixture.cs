@@ -116,6 +116,16 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
         }
 
         [Test]
+        public void should_not_learn_a_runtime_that_contradicts_the_expected_runtime_of_the_row()
+        {
+            _extended.ExpectedRuntimeMinutes = 208;
+
+            Subject.Handle(GivenImport(_extended, 178));
+
+            VerifyNotLearned();
+        }
+
+        [Test]
         public void should_not_learn_without_a_runtime()
         {
             Subject.Handle(GivenImport(_extended, 0));
