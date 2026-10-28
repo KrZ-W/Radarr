@@ -11,6 +11,7 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
         List<EditionCatalogEntry> GetByMetadata(int metadataId);
         List<EditionCatalogEntry> GetByMetadataIds(IEnumerable<int> metadataIds);
         void DeleteBySource(int metadataId, EditionCatalogSource source);
+        List<EditionCatalogEntry> GetBySources(IEnumerable<EditionCatalogSource> sources);
     }
 
     public class EditionCatalogRepository : BasicRepository<EditionCatalogEntry>, IEditionCatalogRepository
@@ -47,6 +48,19 @@ namespace NzbDrone.Core.Movies.Editions.Catalog
         public void DeleteBySource(int metadataId, EditionCatalogSource source)
         {
             Delete(x => x.MovieMetadataId == metadataId && x.Source == source);
+        }
+
+        // Catalog export: every entry of the given sources, across the library
+        public List<EditionCatalogEntry> GetBySources(IEnumerable<EditionCatalogSource> sources)
+        {
+            var list = (sources ?? Enumerable.Empty<EditionCatalogSource>()).Distinct().ToList();
+
+            if (list.Count == 0)
+            {
+                return new List<EditionCatalogEntry>();
+            }
+
+            return Query(x => list.Contains(x.Source));
         }
     }
 }

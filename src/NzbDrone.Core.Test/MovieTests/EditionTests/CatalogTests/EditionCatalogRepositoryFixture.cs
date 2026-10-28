@@ -87,5 +87,17 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests.CatalogTests
 
             insert.Should().Throw<Exception>().WithMessage("*UNIQUE*");
         }
+
+        [Test]
+        public void get_by_sources_should_only_return_those_sources()
+        {
+            Subject.Insert(Entry(2, "Extended", 200, EditionCatalogSource.Library));
+            Subject.Insert(Entry(3, "Final Cut", 117, EditionCatalogSource.User));
+
+            var exported = Subject.GetBySources(new[] { EditionCatalogSource.Library, EditionCatalogSource.User });
+
+            exported.Select(e => e.Source).Should().BeEquivalentTo(new[] { EditionCatalogSource.Library, EditionCatalogSource.User });
+            Subject.GetBySources(Array.Empty<EditionCatalogSource>()).Should().BeEmpty();
+        }
     }
 }
