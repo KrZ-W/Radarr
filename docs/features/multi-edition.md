@@ -225,7 +225,10 @@ returns only files with something to say; `?includeAll=true` returns every file.
 (monitored, quality profile and tags as on the default row, the given aliases, the runtime
 as its expected runtime, no search), records a
 `library` catalog entry (confidence 90; the given runtime, else the file's de-PAL'd runtime),
-and moves the default row's file to the edition row as *movefile* does. It answers
+and moves the default row's file to the edition row as *movefile* does, except that the
+rename (when renaming is on) runs before the request answers instead of being queued: a
+queued rename raced the scan of the shared folder that a newly created edition row starts,
+which logged *Couldn't rescan movie ... FileNotFoundException*. It answers
 `[{movieId, editionMovieId, movieFileId, ok, error}]`; items fail independently. No TMDb call,
 and nothing is created without this request.
 

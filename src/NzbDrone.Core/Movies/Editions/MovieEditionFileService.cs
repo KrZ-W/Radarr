@@ -90,6 +90,7 @@ namespace NzbDrone.Core.Movies.Editions
         private readonly IEditionCatalogService _catalogService;  // krzw(edition-runtime-catalog)
         private readonly IAddMovieEditionService _addMovieEditionService;  // krzw(edition-runtime-catalog)
         private readonly IConfigService _configService;  // krzw(edition-runtime-catalog)
+        private readonly IRenameMovieFileService _renameMovieFileService;  // krzw(edition-runtime-catalog)
         private readonly Logger _logger;
 
         public MovieEditionFileService(IMovieService movieService,
@@ -103,6 +104,7 @@ namespace NzbDrone.Core.Movies.Editions
                                        IEditionCatalogService catalogService,  // krzw(edition-runtime-catalog)
                                        IAddMovieEditionService addMovieEditionService,  // krzw(edition-runtime-catalog)
                                        IConfigService configService,  // krzw(edition-runtime-catalog)
+                                       IRenameMovieFileService renameMovieFileService,  // krzw(edition-runtime-catalog)
                                        Logger logger)
         {
             _movieService = movieService;
@@ -116,10 +118,17 @@ namespace NzbDrone.Core.Movies.Editions
             _catalogService = catalogService;  // krzw(edition-runtime-catalog)
             _addMovieEditionService = addMovieEditionService;  // krzw(edition-runtime-catalog)
             _configService = configService;  // krzw(edition-runtime-catalog)
+            _renameMovieFileService = renameMovieFileService;  // krzw(edition-runtime-catalog)
             _logger = logger;
         }
 
         public MovieFile MoveFileToEdition(int movieFileId, int targetMovieId)
+        {
+            return MoveFileToEdition(movieFileId, targetMovieId, false);  // krzw(edition-runtime-catalog)
+        }
+
+        // krzw(edition-runtime-catalog): renameNow renames before returning instead of queueing (audit apply)
+        private MovieFile MoveFileToEdition(int movieFileId, int targetMovieId, bool renameNow)
         {
             var movieFile = _mediaFileService.GetMovie(movieFileId);
             var source = _movieService.GetMovie(movieFile.MovieId);
@@ -159,9 +168,18 @@ namespace NzbDrone.Core.Movies.Editions
             _movieService.UpdateMovie(target);
 
             // The file name now has to carry the target row's {Edition Name}; the rename also renames its extras.
+            // krzw(edition-runtime-catalog): the audit apply renames now: a queued rename raced the scan of the edition
+            // row it had just created (MovieAddedEvent -> RefreshMovie -> DiskScan of the shared folder)
             if (_namingConfigService.GetConfig().RenameMovies)
             {
-                _commandQueueManager.Push(new RenameFilesCommand(target.Id, new List<int> { movieFile.Id }));
+                if (renameNow)
+                {
+                    _renameMovieFileService.RenameMovieFilesNow(target.Id, new List<int> { movieFile.Id });
+                }
+                else
+                {
+                    _commandQueueManager.Push(new RenameFilesCommand(target.Id, new List<int> { movieFile.Id }));
+                }
             }
 
             return movieFile;
@@ -348,7 +366,7 @@ namespace NzbDrone.Core.Movies.Editions
 
             result.EditionMovieId = target.Id;
 
-            MoveFileToEdition(source.MovieFileId, target.Id);
+            MoveFileToEdition(source.MovieFileId, target.Id, true);
             movedFiles.Add(source.MovieFileId);
 
             if (!runtime.HasValue)

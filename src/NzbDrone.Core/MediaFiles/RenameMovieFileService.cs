@@ -18,6 +18,9 @@ namespace NzbDrone.Core.MediaFiles
     public interface IRenameMovieFileService
     {
         List<RenameMovieFilePreview> GetRenamePreviews(List<int> movieIds);
+
+        // krzw(edition-runtime-catalog): renames these files of the movie now, on the caller's thread (RenameFilesCommand without the queue)
+        void RenameMovieFilesNow(int movieId, List<int> movieFileIds);
     }
 
     public class RenameMovieFileService : IRenameMovieFileService,
@@ -148,6 +151,15 @@ namespace NzbDrone.Core.MediaFiles
 
             _eventAggregator.PublishEvent(new RenameCompletedEvent());
         }
+
+        // krzw(edition-runtime-catalog) begin: the edition audit apply renames before it returns, so the scan of the new
+        // edition row (queued by its MovieAddedEvent) never meets a file that is being moved
+        public void RenameMovieFilesNow(int movieId, List<int> movieFileIds)
+        {
+            Execute(new RenameFilesCommand(movieId, movieFileIds));
+        }
+
+        // krzw(edition-runtime-catalog) end
 
         public void Execute(RenameMovieCommand message)
         {

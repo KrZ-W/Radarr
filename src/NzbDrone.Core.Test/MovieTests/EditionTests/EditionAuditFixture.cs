@@ -10,7 +10,9 @@ using NzbDrone.Core.Extras.Metadata.Files;
 using NzbDrone.Core.Extras.Others;
 using NzbDrone.Core.Extras.Subtitles;
 using NzbDrone.Core.MediaFiles;
+using NzbDrone.Core.MediaFiles.Commands;
 using NzbDrone.Core.MediaFiles.MediaInfo;
+using NzbDrone.Core.Messaging.Commands;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Movies.Editions;
 using NzbDrone.Core.Movies.Editions.Catalog;
@@ -401,6 +403,41 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests
                                                                      e.Source == EditionCatalogSource.Library &&
                                                                      e.Confidence == 90)),
                         Times.Once());
+        }
+
+        [Test]
+        public void apply_renames_the_moved_file_before_returning_instead_of_queueing_a_rename()
+        {
+            GivenFellowship();
+            GivenFile(228);
+            GivenAddEditionCreates(5);
+            Mocker.GetMock<INamingConfigService>().Setup(s => s.GetConfig()).Returns(new NamingConfig { RenameMovies = true });
+
+            int? ownerAtRename = null;
+            Mocker.GetMock<IRenameMovieFileService>()
+                  .Setup(s => s.RenameMovieFilesNow(5, It.Is<List<int>>(l => l.Single() == 100)))
+                  .Callback(() => ownerAtRename = _file.MovieId);
+
+            Subject.Apply(new List<EditionAuditApplyItem> { new EditionAuditApplyItem { MovieId = 1, EditionName = "Extended" } }).Single().Ok.Should().BeTrue();
+
+            ownerAtRename.Should().Be(5);
+            Mocker.GetMock<IRenameMovieFileService>().Verify(s => s.RenameMovieFilesNow(5, It.IsAny<List<int>>()), Times.Once());
+            Mocker.GetMock<IManageCommandQueue>()
+                  .Verify(s => s.Push(It.IsAny<RenameFilesCommand>(), It.IsAny<CommandPriority>(), It.IsAny<CommandTrigger>()), Times.Never());
+        }
+
+        [Test]
+        public void apply_renames_nothing_when_renaming_is_off()
+        {
+            GivenFellowship();
+            GivenFile(228);
+            GivenAddEditionCreates(5);
+
+            Subject.Apply(new List<EditionAuditApplyItem> { new EditionAuditApplyItem { MovieId = 1, EditionName = "Extended" } }).Single().Ok.Should().BeTrue();
+
+            Mocker.GetMock<IRenameMovieFileService>().Verify(s => s.RenameMovieFilesNow(It.IsAny<int>(), It.IsAny<List<int>>()), Times.Never());
+            Mocker.GetMock<IManageCommandQueue>()
+                  .Verify(s => s.Push(It.IsAny<RenameFilesCommand>(), It.IsAny<CommandPriority>(), It.IsAny<CommandTrigger>()), Times.Never());
         }
 
         [Test]
