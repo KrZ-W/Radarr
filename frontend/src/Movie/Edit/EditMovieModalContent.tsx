@@ -124,6 +124,27 @@ function EditMovieModalContent({
   );
   // krzw(multi-edition) end
 
+  // krzw(edition-runtime-catalog) begin: the API clears the expected runtime when it is omitted, so the
+  // top-level field and the edition object always carry the current value
+  const expectedRuntimeMinutes: number | null =
+    editionValue?.expectedRuntimeMinutes ?? null;
+
+  const handleExpectedRuntimeChange = useCallback(
+    ({ value }: InputChanged<number | null>) => {
+      if (!editionValue) {
+        return;
+      }
+
+      handleInputChange({ name: 'expectedRuntimeMinutes', value });
+      handleInputChange({
+        name: 'edition',
+        value: { ...editionValue, expectedRuntimeMinutes: value },
+      });
+    },
+    [editionValue, handleInputChange]
+  );
+  // krzw(edition-runtime-catalog) end
+
   const handleRootFolderPress = useCallback(() => {
     setIsRootFolderModalOpen(true);
   }, []);
@@ -266,6 +287,22 @@ function EditMovieModalContent({
                   value={editionValue.acceptUntagged}
                   helpText={translate('AcceptUntaggedReleasesHelpText')}
                   onChange={handleEditionChange}
+                />
+              </FormGroup>
+
+              {/* krzw(edition-runtime-catalog) */}
+              <FormGroup size={sizes.MEDIUM}>
+                <FormLabel>{translate('EditionExpectedRuntime')}</FormLabel>
+
+                <FormInputGroup
+                  type={inputTypes.NUMBER}
+                  name="expectedRuntimeMinutes"
+                  value={expectedRuntimeMinutes}
+                  unit={translate('Minutes')}
+                  min={1}
+                  max={1440}
+                  helpText={translate('EditionExpectedRuntimeHelpText')}
+                  onChange={handleExpectedRuntimeChange}
                 />
               </FormGroup>
 

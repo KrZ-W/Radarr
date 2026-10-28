@@ -62,6 +62,7 @@ export interface MovieEdition {
   name: string;
   aliases: string[];
   acceptUntagged: boolean;
+  expectedRuntimeMinutes?: number | null; // krzw(edition-runtime-catalog)
 }
 
 export interface MovieEditionSummary {
@@ -71,6 +72,7 @@ export interface MovieEditionSummary {
   hasFile: boolean;
   qualityProfileId: number;
   movieFileId: number;
+  expectedRuntimeMinutes?: number | null; // krzw(edition-runtime-catalog)
 }
 // krzw(multi-edition) end
 
@@ -119,6 +121,7 @@ interface Movie extends ModelBase {
   edition?: MovieEdition | null; // krzw(multi-edition): null on the default row
   editionParentId?: number | null; // krzw(multi-edition): id of the default row, null on default rows
   editions?: MovieEditionSummary[]; // krzw(multi-edition): only populated on default rows
+  expectedRuntimeMinutes?: number | null; // krzw(edition-runtime-catalog): null = unknown
 }
 
 export default Movie;

@@ -74,6 +74,12 @@ export const defaultState = {
       isVisible: true,
       isSortable: true
     },
+    // krzw(edition-runtime-catalog): file runtime from MediaInfo, in minutes
+    {
+      name: 'runTime',
+      label: () => translate('Runtime'),
+      isVisible: true
+    },
     {
       name: 'languages',
       label: () => translate('Languages'),

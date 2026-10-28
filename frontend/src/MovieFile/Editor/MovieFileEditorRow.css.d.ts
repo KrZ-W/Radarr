@@ -16,6 +16,7 @@ interface CssExports {
   'rejected': string;
   'relativePath': string;
   'releaseGroup': string;
+  'runTime': string;
   'size': string;
   'subtitles': string;
   'video': string;

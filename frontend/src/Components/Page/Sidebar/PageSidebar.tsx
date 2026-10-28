@@ -66,6 +66,11 @@ const LINKS: SidebarItem[] = [
         title: () => translate('Discover'),
         to: '/add/discover',
       },
+      // krzw(edition-runtime-catalog)
+      {
+        title: () => translate('EditionAudit'),
+        to: '/editionaudit',
+      },
     ],
   },
 

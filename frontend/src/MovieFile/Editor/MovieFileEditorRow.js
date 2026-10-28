@@ -9,6 +9,7 @@ import TableRow from 'Components/Table/TableRow';
 import Popover from 'Components/Tooltip/Popover';
 import Tooltip from 'Components/Tooltip/Tooltip';
 import { icons, kinds, tooltipPositions } from 'Helpers/Props';
+import { formatRuntimeMinutes, parseMediaInfoRuntime } from 'Movie/Edition/editionCatalog'; // krzw(edition-runtime-catalog)
 import IndexerFlags from 'Movie/IndexerFlags';
 import MovieFormats from 'Movie/MovieFormats';
 import MovieLanguages from 'Movie/MovieLanguages';
@@ -299,6 +300,22 @@ class MovieFileEditorRow extends Component {
                 </TableRowCell>
               );
             }
+
+            // krzw(edition-runtime-catalog) begin
+            if (name === 'runTime') {
+              const runTime = mediaInfo ? mediaInfo.runTime : null;
+
+              return (
+                <TableRowCell
+                  key={name}
+                  className={styles.runTime}
+                  title={runTime}
+                >
+                  {formatRuntimeMinutes(parseMediaInfoRuntime(runTime))}
+                </TableRowCell>
+              );
+            }
+            // krzw(edition-runtime-catalog) end
 
             if (name === 'releaseGroup') {
               return (

@@ -5,6 +5,7 @@ interface CssExports {
   'addButtonContainer': string;
   'container': string;
   'current': string;
+  'expectedRuntime': string;
   'monitored': string;
 }
 export const cssExports: CssExports;
