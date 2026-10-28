@@ -144,6 +144,140 @@ other row of the title that has no file: it moves the current row's file there. 
 It is refused (`400`) when the target belongs to another movie, already has a file, or already
 owns this file. Moving back to the default row works the same way.
 
+## Runtime and the edition catalog
+
+Tags only say what the release name claimed. The runtime of the file says which cut it is,
+once Radarr knows how long each cut of the title runs. That knowledge is the **edition
+catalog**: per title, a list of `{name, runtimeMinutes, source, confidence}` entries.
+
+### Where the catalog comes from
+
+| Source | What it holds | Confidence |
+|---|---|---|
+| `user` | entries typed through the API (`POST /api/v3/edition/catalog`) or imported with `source: "user"` | 100 |
+| `library` | confirmed on this instance: the audit's *Apply* (90), an import into an edition row whose cut the catalog did not know (60, only when the file matches the row's expected runtime, if one is set), or imported from another instance (90) | 60–90 |
+| `imdb` | every runtime IMDb lists for the title. The first unlabelled one is *Theatrical* (80); labelled ones go through a label table (*director's cut* → Director's Cut, *extended cut* → Extended, *unrated*, *uncut*, *final cut*, *special edition*, *workprint*...; 70, or 60 when the label has extra words, e.g. *Blu Ray Extended Edition*). Transfer and market labels (*TV*, *DVD*, *Germany*, *edited*, *re-release*...) are kept at 20 and never decide anything | 20–80 |
+| `wikidata` | durations (P2047) qualified with *applies to part* (P518), e.g. *extended cut*; unlabelled durations are ignored; hours and seconds are converted | 60–80 |
+| `tmdb` | the movie's TMDb runtime as entry *Default* (30), or 0 with the attribute `suspect` when it differs from IMDb's theatrical runtime by more than 50 % | 0 / 30 |
+
+Merging ranks `user` > `library` > `imdb` > `wikidata` > `tmdb`, then confidence. Two entries
+with the same cut name within the tolerance collapse into the stronger one; the same name
+further apart stays twice (two releases of one cut). Entries below confidence 30 are shown
+but never take part in matching. An edition row's **expected runtime** (`expectedRuntimeMinutes`,
+set in Add Edition or Edit Movie) counts as an entry of that row's cut too.
+
+**Refresh.** After every movie refresh, Radarr queues `RefreshEditionCatalog` for the same
+movies (all movies after a full refresh). It only re-asks titles whose catalog is older than
+30 days: IMDb in batches of 50 ids, 1.5 s apart, Wikidata 250 ids per query, then the TMDb
+baseline. A failed batch is retried once, then skipped; its titles keep their cached entries
+and are retried on the next refresh. After 3 failed IMDb batches in a row, IMDb is left alone
+for an hour, and the health check *Edition catalog: the last N IMDb runtime requests failed*
+appears. The Edition Audit page's *Refresh catalog* button sends the command with
+`force: true` (every title, whatever its age); the first fill of a 3000-title library takes
+a few minutes. Turning IMDb or Wikidata off in settings hides its entries at once (they stay
+stored, and come back when the source is turned on again).
+
+**IMDb terms.** The IMDb provider calls the GraphQL endpoint imdb.com's own pages use
+(`caching.graphql.imdb.com`), with the browser headers it expects. It is not a documented
+API: IMDb allows its data for personal, non-commercial use only, and may change or block
+the endpoint at any time. Cached runtimes survive an outage, Wikidata and library entries
+remain, and the provider can be switched off (*Fetch Editions from IMDb*).
+
+### Settings (Settings › Media Management › Editions)
+
+| Setting | Default | Meaning |
+|---|---|---|
+| Edition Runtime Tolerance | 3 min (0–30) | how far a file may be from a catalog runtime and still match it; PAL speed-up (×25/24, ×24/25) is tried on top |
+| Fetch Editions from IMDb | on | IMDb provider |
+| Fetch Editions from Wikidata | on | Wikidata provider |
+| Move Untagged Imports to Matching Edition | on | re-home at import, see below |
+
+### Matching
+
+A file of `r` minutes matches an entry of `R` minutes when `r`, `r × 25/24` or `r × 24/25` is
+within the tolerance of `R`. One cut name matching → *unique*; two or more → *ambiguous*,
+nothing is decided; none, with the file more than 8 minutes longer than every entry →
+*unknown longer cut*; else *none*.
+
+### Audit v2
+
+`GET /api/v3/edition/audit` now covers **every default-row file**, tagged or not, and adds
+`fileRuntimeMinutes`, `isPal`, `runtimeMatchKind`, `runtimeSuggestedEdition`,
+`runtimeSuggestedMinutes`, `catalogSource` and `verdict` to the fields above. By default it
+returns only files with something to say; `?includeAll=true` returns every file.
+
+| Verdict | Meaning | Example |
+|---|---|---|
+| `consistent` | tag and runtime agree, or an untagged file runs the theatrical length | Fellowship untagged at 178 |
+| `tagOnly` | tagged, but the runtime only matches the theatrical / TMDb runtime and the catalog does not know the tagged cut | Fast Five "Extended" at 131 |
+| `runtimeOnly` | untagged (or tagged Theatrical) and the runtime uniquely matches another cut, or is an unknown longer cut | Fellowship untagged at 228 → Extended; Waterworld at 176 → Director's Cut |
+| `conflict` | the tag names one cut, the runtime uniquely matches another | tagged Extended at 178, Extended known at 208 |
+| `pal` | the tagged / theatrical cut at 25 fps | Extended at 199.7 for 208 |
+| `checkIdentification` | runtime matches nothing and is more than 50 % away from the TMDb and IMDb theatrical runtimes: likely the wrong TMDb movie | Seven at 18 min (a short) vs 127 |
+| `unknown` | no runtime, no catalog, or an ambiguous match | |
+
+**Apply.** `POST /api/v3/edition/audit/apply` with `[{movieId, editionName, runtimeMinutes?, aliases?}]`
+(`movieId` = the default row): per item, it finds the edition row of that name or creates it
+(monitored, quality profile and tags as on the default row, the given aliases, the runtime
+as its expected runtime, no search), records a
+`library` catalog entry (confidence 90; the given runtime, else the file's de-PAL'd runtime),
+and moves the default row's file to the edition row as *movefile* does. It answers
+`[{movieId, editionMovieId, movieFileId, ok, error}]`; items fail independently. No TMDb call,
+and nothing is created without this request.
+
+**Edition Audit page** (Movies › Edition Audit, `/editionaudit`): the same list with a verdict
+filter (*Needs action* by default), the suggested edition with its minutes and source, a
+picker to override it, multi-select and *Apply selected*, *Refresh catalog*, and a CSV export
+shown in a text box to copy.
+
+### At import
+
+MediaInfo is read before the import decision, so the runtime is known there (not at grab
+time: routing by release name is unchanged). `EditionRuntimeImportSpecification` runs after
+the edition gate, and skips files without a runtime, existing files and manual picks
+(*edition override*):
+
+- **Tagged file, runtime matches another cut.** Rejected: *Tagged Extended (208 min) but
+  runtime 178 min matches Theatrical (178 min)*. Choose the row by hand in Manual Import to
+  import it anyway.
+- **Untagged file on the default row, runtime uniquely matches a sibling row's expected
+  runtime** (and not the default row's own). With *Move Untagged Imports to Matching Edition*
+  on and that row monitored, the file is **re-homed** to the edition row (logged at Info);
+  otherwise it is rejected for the default row: *Runtime 208 min matches the Extended edition
+  of this movie*. A release variant tag (IMAX, Remastered...) counts as untagged; any other
+  tag the catalog does not know (a fan edit) leaves the file where it is.
+- Ambiguous, unknown or longer runtimes are accepted as before; the audit lists them.
+
+### Catalog API
+
+| Where | What |
+|---|---|
+| `GET /api/v3/edition/catalog?movieId=` | `{movieId, movieMetadataId, tmdbId, toleranceMinutes, merged[], entries[]}`: `merged` is what matching uses, `entries` every stored row with its `source`; each entry has `informational` (below confidence 30) |
+| `POST /api/v3/edition/catalog` | `{movieId, name, runtimeMinutes}` adds or updates a `user` entry |
+| `DELETE /api/v3/edition/catalog/{id}` | `user` entries only (`400` otherwise) |
+| `GET /api/v3/edition/catalog/export` | every `library` and `user` entry as `{tmdbId, imdbId, title, year, name, runtimeMinutes, source, confidence, attributes}` |
+| `POST /api/v3/edition/catalog/import` | the same list; stored as `library` unless `source` is `user`, matched by TMDb id, never weakens a stronger local entry; answers `{added, updated, unchanged, skipped, errors[]}` |
+| `POST /api/v3/command` `{"name":"RefreshEditionCatalog","movieIds":[],"force":false}` | refresh the catalog (empty `movieIds` = whole library) |
+| movie resources | `expectedRuntimeMinutes` on every row, in `edition` and in `editions[]`; settable by `POST /movie` (add edition) and `PUT /movie/{id}`. A `PUT` that leaves it out clears it, like the other edition fields |
+| `/api/v3/config/mediamanagement` | `editionRuntimeToleranceMinutes`, `editionCatalogImdbEnabled`, `editionCatalogWikidataEnabled`, `editionRehomeOnImport` |
+
+Copying confirmed entries from one instance to another:
+
+```bash
+curl -s -H "X-Api-Key: $KEY_A" http://radarr-a:7878/api/v3/edition/catalog/export \
+ | curl -s -H "X-Api-Key: $KEY_B" -H 'Content-Type: application/json' \
+        -d @- http://radarr-b:7878/api/v3/edition/catalog/import
+```
+
+### Limits
+
+- The IMDb failure count behind the health check lives in memory and resets on restart.
+- Manual Import's preview of a re-homed file, after you change its quality or language,
+  can show the edition gate's *does not accept untagged releases* reason; the import itself
+  goes through.
+- Migration 249 (`MovieEditionCatalog`, `Movies.ExpectedRuntimeMinutes`) was only run on
+  SQLite.
+
 ## Naming
 
 New token **`{Edition Name}`** = the edition configured on the row, rendered verbatim
@@ -170,7 +304,9 @@ when the format contains the token.
 | `POST /api/v3/movie` | with `edition` adds an edition to an existing movie; without it always creates a default row |
 | `PUT /api/v3/movie/{id}` | edition fields editable, path not; a default row cannot be turned into an edition |
 | `DELETE /api/v3/movie/{id}` | `400` on a default row that still has editions |
-| `GET /api/v3/edition/audit` | default-row files that carry an edition, classified `cut` / `theatrical` / `variant` / `unrecognised` (see *Existing files*) |
+| `GET /api/v3/edition/audit` | default-row files that carry an edition, classified `cut` / `theatrical` / `variant` / `unrecognised` (see *Existing files*), with a runtime `verdict` (see *Runtime and the edition catalog*); `includeAll=true` lists every default-row file |
+| `POST /api/v3/edition/audit/apply` | create the edition row if needed, record the runtime, move the file (see *Audit v2*) |
+| `/api/v3/edition/catalog` | the edition catalog (see *Catalog API*) |
 | `POST /api/v3/edition/movefile` | `{movieFileId, movieId}`: move a file and its extras to another row of the same movie, then rename it; `400` for another movie, a row that has a file, or the owning row |
 | `GET /api/v3/calendar` | `includeEditions` (default `false`) |
 | `GET /feed/v3/calendar/radarr.ics` | one event per title (an edition stands in when it is the only monitored row) |
@@ -212,6 +348,13 @@ Audit and move-file-to-edition: branch `feat/edition-file-reassign-master` (`3f7
 merged as `e4973c93d` (release `v6.4.4.10685+krzw.3`), files
 `Movies/Editions/MovieEditionFileService`, `Radarr.Api.V3/Movies/MovieEditionFileController`,
 `frontend/src/Movie/Edition/MovieEditions.tsx`, marked `krzw(edition-file-reassign)`.
+Runtime catalog: branch `feat/edition-runtime-catalog-master` (plan
+[docs/design/edition-runtime-catalog.md](../design/edition-runtime-catalog.md)), files
+`Movies/Editions/Catalog/*` (catalog, providers, refresh, label table, matcher),
+`Movies/Editions/EditionAudit.cs`, `MediaFiles/MovieImport/EditionRuntimeImportEvaluator` and
+`Specifications/EditionRuntimeImportSpecification`, `Datastore/Migration/249_add_edition_catalog`,
+`Radarr.Api.V3/Movies/EditionCatalogController`, `frontend/src/Movie/Edition/Audit/*`, marked
+`krzw(edition-runtime-catalog)`.
 Key files: `Movies/Movie.cs` (`Edition`,
 `EditionAliases`, `EditionAcceptUntagged`), `Movies/Editions/*` (`EditionNormalizer`,
 `EditionPresets`, `EditionMatcher`, `EditionGate`, `EditionValidation`,
