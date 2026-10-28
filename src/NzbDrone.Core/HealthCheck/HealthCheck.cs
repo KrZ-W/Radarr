@@ -124,5 +124,6 @@ namespace NzbDrone.Core.HealthCheck
         // krzw(imdb-title-provider): explicit values so upstream additions cannot renumber them
         ImdbTitleDatasetMissing = 1000,
         ImdbTitleDatasetStale = 1001,
+        EditionCatalogImdbFailing = 1002, // krzw(edition-runtime-catalog)
     }
 }

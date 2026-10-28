@@ -15,6 +15,7 @@ using NzbDrone.Core.Movies.AlternativeTitles;
 using NzbDrone.Core.Movies.Collections;
 using NzbDrone.Core.Movies.Commands;
 using NzbDrone.Core.Movies.Credits;
+using NzbDrone.Core.Movies.Editions.Catalog; // krzw(edition-runtime-catalog)
 using NzbDrone.Core.Movies.Events;
 using NzbDrone.Core.Movies.Translations;
 using NzbDrone.Core.RootFolders;
@@ -35,6 +36,7 @@ namespace NzbDrone.Core.Movies
         private readonly IDiskScanService _diskScanService;
         private readonly ICheckIfMovieShouldBeRefreshed _checkIfMovieShouldBeRefreshed;
         private readonly IConfigService _configService;
+        private readonly IManageCommandQueue _commandQueueManager; // krzw(edition-runtime-catalog)
         private readonly Logger _logger;
 
         public RefreshMovieService(IProvideMovieInfo movieInfo,
@@ -49,6 +51,7 @@ namespace NzbDrone.Core.Movies
                                     IDiskScanService diskScanService,
                                     ICheckIfMovieShouldBeRefreshed checkIfMovieShouldBeRefreshed,
                                     IConfigService configService,
+                                    IManageCommandQueue commandQueueManager, // krzw(edition-runtime-catalog)
                                     Logger logger)
         {
             _movieInfo = movieInfo;
@@ -63,6 +66,7 @@ namespace NzbDrone.Core.Movies
             _diskScanService = diskScanService;
             _checkIfMovieShouldBeRefreshed = checkIfMovieShouldBeRefreshed;
             _configService = configService;
+            _commandQueueManager = commandQueueManager; // krzw(edition-runtime-catalog)
             _logger = logger;
         }
 
@@ -295,6 +299,9 @@ namespace NzbDrone.Core.Movies
                     }
                 }
             }
+
+            // krzw(edition-runtime-catalog): stale edition catalogs of the refreshed movies (all movies on a full refresh), queued so a slow IMDb never holds up the movie refresh
+            _commandQueueManager.Push(new RefreshEditionCatalogCommand { MovieIds = message.MovieIds.ToList() });
 
             _eventAggregator.PublishEvent(new MovieRefreshCompleteEvent());
         }

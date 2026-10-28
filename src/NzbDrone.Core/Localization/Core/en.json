@@ -229,6 +229,7 @@
   "Certification": "Certification",
   "CertificationCountry": "Certification Country",
   "CertificationCountryHelpText": "Select Country for Movie Certifications",
+  "EditionCatalogImdbFailingHealthCheckMessage": "Edition catalog: the last {count} IMDb runtime requests failed. Cached runtimes are kept; check the logs, IMDb may have changed or blocked its endpoint.",
   "ImdbTitleDatasetMissingHealthCheckMessage": "IMDb Title Provider is enabled but the title dataset has not been downloaded yet. Run the Imdb Title Dataset Refresh task.",
   "ImdbTitleDatasetStaleHealthCheckMessage": "IMDb Title Provider dataset is {days} days old (refresh interval {interval} days). Check the Imdb Title Dataset Refresh task logs.",
   "ImdbTitleProvider": "IMDb Title Provider",
