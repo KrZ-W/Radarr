@@ -164,6 +164,10 @@ function AddEditionModalContent({
   const [isCatalogFetching, setIsCatalogFetching] = useState(true);
   const [catalogError, setCatalogError] = useState(false);
   const catalogMovieId = movie?.editionParentId ?? movie?.id;
+  const knownEditions = useMemo(
+    () => (catalog?.merged ?? []).filter((entry) => !entry.informational),
+    [catalog]
+  );
 
   useEffect(() => {
     if (!catalogMovieId) {
@@ -194,7 +198,7 @@ function AddEditionModalContent({
   const handleCatalogEntryPress = useCallback(
     (entry: EditionCatalogEntry) => {
       const preset = findEditionPreset(entry.name);
-      const rawAttributes = (catalog?.raw ?? [])
+      const rawAttributes = (catalog?.entries ?? [])
         .filter((r) => r.name.toLowerCase() === entry.name.toLowerCase())
         .flatMap((r) => r.attributes ?? []);
 
@@ -326,15 +330,13 @@ function AddEditionModalContent({
                 </div>
               ) : null}
 
-              {!isCatalogFetching &&
-              !catalogError &&
-              !(catalog?.merged ?? []).length ? (
+              {!isCatalogFetching && !catalogError && !knownEditions.length ? (
                 <div className={styles.knownEditionsMessage}>
                   {translate('KnownEditionsNone')}
                 </div>
               ) : null}
 
-              {(catalog?.merged ?? []).map((entry) => {
+              {knownEditions.map((entry) => {
                 const isUsed = usedNames.includes(entry.name.toLowerCase());
                 const isPicked =
                   form.name.toLowerCase() === entry.name.toLowerCase();

@@ -16,11 +16,13 @@ export interface EditionCatalogEntry {
   source: EditionCatalogSource;
   confidence: number;
   attributes: string[];
+  // Below the matching confidence (transfer labels, suspect TMDb runtime): not offered as a cut to pick
+  informational?: boolean;
 }
 
 export interface EditionCatalogResponse {
   merged: EditionCatalogEntry[];
-  raw: EditionCatalogEntry[];
+  entries: EditionCatalogEntry[];
 }
 
 const sourceTranslationKeys: Record<EditionCatalogSource, string> = {
