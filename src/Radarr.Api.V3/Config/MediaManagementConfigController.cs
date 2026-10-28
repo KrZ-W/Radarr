@@ -44,6 +44,9 @@ namespace Radarr.Api.V3.Config
             SharedValidator.RuleFor(c => c.AudioLanguageVerificationClipOffset).GreaterThanOrEqualTo(0);
             SharedValidator.RuleFor(c => c.AudioLanguageVerificationClipLength).InclusiveBetween(1, 600);
             SharedValidator.RuleFor(c => c.AudioLanguageVerificationTimeout).InclusiveBetween(1, 3600);
+
+            // krzw(edition-runtime-catalog)
+            SharedValidator.RuleFor(c => c.EditionRuntimeToleranceMinutes).InclusiveBetween(0, 30);
         }
 
         protected override MediaManagementConfigResource ToResource(IConfigService model)

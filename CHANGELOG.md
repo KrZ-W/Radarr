@@ -10,7 +10,26 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+
+- **Runtime-aware editions.** A per-title *edition catalog* of cut runtimes, filled from IMDb
+  (per-cut runtimes from imdb.com's GraphQL endpoint), Wikidata (labelled durations), the
+  TMDb runtime, confirmed library files and user entries (migration 249). Matching allows a
+  configurable tolerance (default 3 min) and PAL speed-up.
+  - **Audit v2**: `GET /api/v3/edition/audit` covers every default-row file and gives a
+    runtime verdict (`consistent`, `tagOnly`, `runtimeOnly`, `conflict`, `pal`,
+    `checkIdentification`); `POST /api/v3/edition/audit/apply` creates the edition row,
+    records the runtime and moves the file. New page *Movies › Edition Audit*.
+  - **Import**: a tagged file whose runtime matches another cut is rejected; an untagged
+    file whose runtime matches a sibling edition's expected runtime is moved to that edition
+    (setting, on by default) or rejected.
+  - Edition rows carry an **expected runtime**, pre-filled from the catalog in Add Edition.
+  - `GET/POST/DELETE /api/v3/edition/catalog`, catalog export/import between instances,
+    `RefreshEditionCatalog` command (queued after every movie refresh), health check when
+    IMDb keeps failing, four settings under *Media Management › Editions*.
+  See [docs/features/multi-edition.md](docs/features/multi-edition.md#runtime-and-the-edition-catalog).
+  IMDb's endpoint is undocumented and its data is for personal, non-commercial use; the
+  provider can be switched off.
 
 ## [v6.4.4.10685+krzw.3] — based on Radarr 6.4.4.10685
 

@@ -10,6 +10,7 @@ namespace Radarr.Api.V3.Movies
         public string Name { get; set; }
         public List<string> Aliases { get; set; }
         public bool AcceptUntagged { get; set; }
+        public int? ExpectedRuntimeMinutes { get; set; }  // krzw(edition-runtime-catalog)
     }
 
     public class MovieEditionSummaryResource
@@ -20,6 +21,7 @@ namespace Radarr.Api.V3.Movies
         public bool HasFile { get; set; }
         public int QualityProfileId { get; set; }
         public int MovieFileId { get; set; }
+        public int? ExpectedRuntimeMinutes { get; set; }  // krzw(edition-runtime-catalog)
     }
 
     public static class MovieEditionResourceMapper
@@ -36,7 +38,8 @@ namespace Radarr.Api.V3.Movies
             {
                 Name = model.Edition,
                 Aliases = model.EditionAliases.ToList(),
-                AcceptUntagged = model.EditionAcceptUntagged
+                AcceptUntagged = model.EditionAcceptUntagged,
+                ExpectedRuntimeMinutes = model.ExpectedRuntimeMinutes  // krzw(edition-runtime-catalog)
             };
         }
 
@@ -49,7 +52,8 @@ namespace Radarr.Api.V3.Movies
                 Monitored = model.Monitored,
                 HasFile = model.HasFile,
                 QualityProfileId = model.QualityProfileId,
-                MovieFileId = model.MovieFileId
+                MovieFileId = model.MovieFileId,
+                ExpectedRuntimeMinutes = model.ExpectedRuntimeMinutes  // krzw(edition-runtime-catalog)
             };
         }
 

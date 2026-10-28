@@ -63,3 +63,11 @@
 
   width: 50px;
 }
+
+/* krzw(edition-runtime-catalog) */
+.runTime {
+  composes: cell from '~Components/Table/Cells/TableRowCell.css';
+
+  width: 80px;
+  white-space: nowrap;
+}

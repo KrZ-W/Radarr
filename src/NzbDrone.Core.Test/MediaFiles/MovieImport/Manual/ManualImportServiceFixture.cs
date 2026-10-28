@@ -235,6 +235,26 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Manual
                   .Verify(v => v.GetDecision(It.Is<LocalMovie>(l => !l.EditionOverride && l.Movie == _extended), It.IsAny<DownloadClientItem>()), Times.Once());
         }
 
+        // krzw(edition-runtime-catalog) begin
+        [Test]
+        public void reprocess_item_without_a_user_pick_should_keep_a_runtime_rehome()
+        {
+            GivenEditionRows();
+
+            Mocker.GetMock<IEditionRuntimeImportEvaluator>()
+                  .Setup(s => s.IsRehomeTarget(It.Is<LocalMovie>(l => l.Movie == _extended)))
+                  .Returns(true);
+
+            var path = @"C:\Test\Downloads\Movie (2010)\Movie (2010).mkv".AsOsAgnostic();
+
+            Subject.ReprocessItem(path, null, _extended.Id, null, new QualityModel(Quality.Bluray1080p), new List<Language> { Language.English }, 0, false);
+
+            Mocker.GetMock<IMakeImportDecision>()
+                  .Verify(v => v.GetDecision(It.Is<LocalMovie>(l => !l.EditionOverride && l.EditionRuntimeRehomed && l.Movie == _extended), It.IsAny<DownloadClientItem>()), Times.Once());
+        }
+
+        // krzw(edition-runtime-catalog) end
+
         [Test]
         public void folder_without_a_user_pick_should_route_each_file_by_its_own_edition()
         {

@@ -1,0 +1,119 @@
+/* krzw(edition-runtime-catalog): edition audit page */
+.filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+  gap: 20px;
+}
+
+.filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: 0;
+  font-weight: normal;
+}
+
+.filterLabel {
+  white-space: nowrap;
+}
+
+.filterSelect {
+  composes: select from '~Components/Form/SelectInput.css';
+
+  min-width: 180px;
+}
+
+.count {
+  margin-left: auto;
+  color: var(--helpTextColor);
+}
+
+.results {
+  ul {
+    margin: 5px 0;
+    padding-left: 20px;
+  }
+}
+
+.dismiss {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.select {
+  composes: cell from '~Components/Table/Cells/TableRowCell.css';
+
+  width: 36px;
+}
+
+.title {
+  composes: cell from '~Components/Table/Cells/TableRowCell.css';
+
+  word-break: break-word;
+}
+
+.year,
+.runtime,
+.verdict {
+  composes: cell from '~Components/Table/Cells/TableRowCell.css';
+
+  white-space: nowrap;
+}
+
+.fileEdition,
+.suggestion,
+.editionRow {
+  composes: cell from '~Components/Table/Cells/TableRowCell.css';
+
+  span {
+    margin-right: 6px;
+  }
+}
+
+.pal {
+  margin-left: 6px;
+}
+
+.minutes {
+  color: var(--helpTextColor);
+}
+
+.applyAs {
+  composes: cell from '~Components/Table/Cells/TableRowCell.css';
+
+  width: 220px;
+}
+
+.applyAsInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.applyAsSelect {
+  composes: select from '~Components/Form/SelectInput.css';
+
+  height: 30px;
+}
+
+.applyAsText {
+  composes: input from '~Components/Form/TextInput.css';
+
+  height: 30px;
+}
+
+.csv {
+  composes: input from '~Components/Form/TextArea.css';
+
+  min-height: 400px;
+  white-space: pre;
+  font-size: $smallFontSize;
+  font-family: $monoSpaceFontFamily;
+}

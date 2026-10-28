@@ -121,4 +121,47 @@ public class MovieResourceEditionMapperFixture
         model.Edition.Should().Be("IMAX");
         model.EditionAliases.Should().NotBeNull().And.BeEmpty();
     }
+
+    // krzw(edition-runtime-catalog) begin
+    [Test]
+    public void Expected_runtime_is_carried_on_the_resource_the_edition_object_and_the_editions_summary()
+    {
+        var main = Row(1, "");
+        var extended = Row(2, "Extended");
+        main.ExpectedRuntimeMinutes = 178;
+        extended.ExpectedRuntimeMinutes = 208;
+
+        var mainResource = main.ToResource(0).LinkEditions(main, new List<Movie> { main, extended });
+        var extendedResource = extended.ToResource(0);
+
+        mainResource.ExpectedRuntimeMinutes.Should().Be(178);
+        mainResource.Editions.Should().ContainSingle().Which.ExpectedRuntimeMinutes.Should().Be(208);
+        extendedResource.ExpectedRuntimeMinutes.Should().Be(208);
+        extendedResource.Edition.ExpectedRuntimeMinutes.Should().Be(208);
+    }
+
+    [Test]
+    public void Model_takes_the_expected_runtime_from_the_resource_then_from_the_edition_object()
+    {
+        new MovieResource { TmdbId = 603, ExpectedRuntimeMinutes = 120, Edition = new MovieEditionResource { Name = "IMAX", ExpectedRuntimeMinutes = 130 } }
+            .ToModel().ExpectedRuntimeMinutes.Should().Be(120);
+
+        new MovieResource { TmdbId = 603, Edition = new MovieEditionResource { Name = "IMAX", ExpectedRuntimeMinutes = 130 } }
+            .ToModel().ExpectedRuntimeMinutes.Should().Be(130);
+
+        new MovieResource { TmdbId = 603 }.ToModel().ExpectedRuntimeMinutes.Should().BeNull();
+    }
+
+    [Test]
+    public void Update_sets_the_expected_runtime_of_an_edition_row()
+    {
+        var extended = Row(2, "Extended");
+
+        var resource = extended.ToResource(0);
+        resource.ExpectedRuntimeMinutes = 208;
+
+        resource.ToModel(extended).ExpectedRuntimeMinutes.Should().Be(208);
+    }
+
+    // krzw(edition-runtime-catalog) end
 }

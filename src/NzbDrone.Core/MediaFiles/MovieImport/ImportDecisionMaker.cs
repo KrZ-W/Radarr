@@ -32,6 +32,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
         private readonly IDetectSample _detectSample;
         private readonly ITrackedDownloadService _trackedDownloadService;
         private readonly ICustomFormatCalculationService _formatCalculator;
+        private readonly IEditionRuntimeImportEvaluator _editionRuntimeEvaluator;  // krzw(edition-runtime-catalog)
         private readonly Logger _logger;
 
         public ImportDecisionMaker(IEnumerable<IImportDecisionEngineSpecification> specifications,
@@ -41,6 +42,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                                    IDetectSample detectSample,
                                    ITrackedDownloadService trackedDownloadService,
                                    ICustomFormatCalculationService formatCalculator,
+                                   IEditionRuntimeImportEvaluator editionRuntimeEvaluator,  // krzw(edition-runtime-catalog)
                                    Logger logger)
         {
             _specifications = specifications;
@@ -50,6 +52,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
             _detectSample = detectSample;
             _trackedDownloadService = trackedDownloadService;
             _formatCalculator = formatCalculator;
+            _editionRuntimeEvaluator = editionRuntimeEvaluator;  // krzw(edition-runtime-catalog)
             _logger = logger;
         }
 
@@ -141,6 +144,8 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                 }
                 else
                 {
+                    RehomeByRuntime(localMovie);  // krzw(edition-runtime-catalog)
+
                     if (downloadClientItem?.DownloadId.IsNotNullOrWhiteSpace() == true)
                     {
                         var trackedDownload = _trackedDownloadService.Find(downloadClientItem.DownloadId);
@@ -212,6 +217,41 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
 
             return null;
         }
+
+        // krzw(edition-runtime-catalog) begin
+        // MediaInfo is only read by Augment, so the runtime re-home happens here rather than in the per-file edition
+        // router: an untagged default-row file whose runtime matches exactly one sibling edition row's expected
+        // runtime moves to that row (setting EditionRehomeOnImport, the row must be monitored).
+        private void RehomeByRuntime(LocalMovie localMovie)
+        {
+            Movie target;
+
+            try
+            {
+                target = _editionRuntimeEvaluator.FindRehomeTarget(localMovie);
+            }
+            catch (Exception ex)
+            {
+                _logger.Warn(ex, "Edition runtime re-home failed for {0}, keeping the {1} row", localMovie.Path, localMovie.Movie.Title);
+                return;
+            }
+
+            if (target == null)
+            {
+                return;
+            }
+
+            _logger.Info("Runtime {0:0.#} min of {1} matches the {2} edition of {3}, importing it there",
+                EditionRuntimeImportEvaluator.FileMinutes(localMovie),
+                localMovie.Path,
+                target.Edition,
+                localMovie.Movie.Title);
+
+            localMovie.Movie = target;
+            localMovie.EditionRuntimeRehomed = true;
+        }
+
+        // krzw(edition-runtime-catalog) end
 
         private int GetNonSampleVideoFileCount(List<string> videoFiles, MovieMetadata movie)
         {

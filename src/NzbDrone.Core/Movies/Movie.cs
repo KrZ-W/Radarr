@@ -61,6 +61,18 @@ namespace NzbDrone.Core.Movies
 
         // krzw(multi-edition) end
 
+        // krzw(edition-runtime-catalog) begin: runtime in minutes the file of this row should have (edition rows: copied from the
+        // catalog entry they were created from, editable); null = unknown, zero or negative is stored as unknown
+        private int? _expectedRuntimeMinutes;
+
+        public int? ExpectedRuntimeMinutes
+        {
+            get => _expectedRuntimeMinutes;
+            set => _expectedRuntimeMinutes = value > 0 ? value : null;
+        }
+
+        // krzw(edition-runtime-catalog) end
+
         // compatibility properties
         public string Title
         {
@@ -187,6 +199,7 @@ namespace NzbDrone.Core.Movies
             Edition = otherMovie.Edition;
             EditionAliases = otherMovie.EditionAliases;
             EditionAcceptUntagged = otherMovie.EditionAcceptUntagged;
+            ExpectedRuntimeMinutes = otherMovie.ExpectedRuntimeMinutes;  // krzw(edition-runtime-catalog)
 
             // krzw(multi-edition) end
         }

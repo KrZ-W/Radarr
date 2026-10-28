@@ -223,8 +223,14 @@ namespace NzbDrone.Common.Http.Dispatchers
                     case "Transfer-Encoding":
                         webRequest.Headers.TransferEncoding.ParseAdd(header.Value);
                         break;
+
+                    // krzw(edition-runtime-catalog): begin - an explicit User-Agent replaces Radarr's (IMDb wants a browser one, Wikidata a contact one)
                     case "User-Agent":
-                        throw new NotSupportedException("User-Agent other than Radarr not allowed.");
+                        webRequest.Headers.Remove("User-Agent");
+                        webRequest.Headers.TryAddWithoutValidation("User-Agent", header.Value);
+                        break;
+
+                    // krzw(edition-runtime-catalog): end
                     case "Proxy-Connection":
                         throw new NotImplementedException();
                     default:

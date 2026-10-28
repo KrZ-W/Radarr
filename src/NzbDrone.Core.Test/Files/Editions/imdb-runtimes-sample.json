@@ -1,0 +1,210 @@
+{
+ "data": {
+  "titles": [
+   {
+    "id": "tt0114898",
+    "titleText": {
+     "text": "Waterworld"
+    },
+    "runtime": {
+     "seconds": 8100
+    },
+    "runtimes": {
+     "edges": [
+      {
+       "node": {
+        "seconds": 8100,
+        "attributes": []
+       }
+      },
+      {
+       "node": {
+        "seconds": 10560,
+        "attributes": [
+         {
+          "text": "director's cut"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "tt0120737",
+    "titleText": {
+     "text": "The Lord of the Rings: The Fellowship of the Ring"
+    },
+    "runtime": {
+     "seconds": 10680
+    },
+    "runtimes": {
+     "edges": [
+      {
+       "node": {
+        "seconds": 10680,
+        "attributes": []
+       }
+      },
+      {
+       "node": {
+        "seconds": 12480,
+        "attributes": [
+         {
+          "text": "Special DVD Extended Edition"
+         }
+        ]
+       }
+      },
+      {
+       "node": {
+        "seconds": 13680,
+        "attributes": [
+         {
+          "text": "Blu Ray Extended Edition"
+         }
+        ]
+       }
+      },
+      {
+       "node": {
+        "seconds": 10260,
+        "attributes": [
+         {
+          "text": "DVD Widescreen Edition"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "tt0084726",
+    "titleText": {
+     "text": "Star Trek II: The Wrath of Khan"
+    },
+    "runtime": {
+     "seconds": 6780
+    },
+    "runtimes": {
+     "edges": [
+      {
+       "node": {
+        "seconds": 6780,
+        "attributes": []
+       }
+      },
+      {
+       "node": {
+        "seconds": 6960,
+        "attributes": [
+         {
+          "text": "director's cut"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "tt0320661",
+    "titleText": {
+     "text": "Kingdom of Heaven"
+    },
+    "runtime": {
+     "seconds": 8640
+    },
+    "runtimes": {
+     "edges": [
+      {
+       "node": {
+        "seconds": 8640,
+        "attributes": []
+       }
+      },
+      {
+       "node": {
+        "seconds": 11400,
+        "attributes": [
+         {
+          "text": "director's cut"
+         }
+        ]
+       }
+      },
+      {
+       "node": {
+        "seconds": 11640,
+        "attributes": [
+         {
+          "text": "director's cut roadshow"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "tt0070047",
+    "titleText": {
+     "text": "The Exorcist"
+    },
+    "runtime": {
+     "seconds": 7320
+    },
+    "runtimes": {
+     "edges": [
+      {
+       "node": {
+        "seconds": 7320,
+        "attributes": []
+       }
+      },
+      {
+       "node": {
+        "seconds": 7920,
+        "attributes": [
+         {
+          "text": "director's cut"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   },
+   {
+    "id": "tt0083658",
+    "titleText": {
+     "text": "Blade Runner"
+    },
+    "runtime": {
+     "seconds": 7020
+    },
+    "runtimes": {
+     "edges": [
+      {
+       "node": {
+        "seconds": 7020,
+        "attributes": []
+       }
+      },
+      {
+       "node": {
+        "seconds": 6600,
+        "attributes": [
+         {
+          "text": "Workprint Version"
+         }
+        ]
+       }
+      }
+     ]
+    }
+   }
+  ]
+ }
+}

@@ -1,5 +1,6 @@
 // krzw(multi-edition): editions box on the movie details page (default row and its edition rows with monitor toggles, file status and links)
 // krzw(edition-file-reassign): "move file here" on a sibling row without a file moves the current row's file to it
+// krzw(edition-runtime-catalog): expected runtime shown next to the edition name
 import React, { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import FieldSet from 'Components/FieldSet';
@@ -23,6 +24,7 @@ import { fetchMovieFiles } from 'Store/Actions/movieFileActions';
 import createAllMoviesSelector from 'Store/Selectors/createAllMoviesSelector';
 import createAjaxRequest from 'Utilities/createAjaxRequest';
 import translate from 'Utilities/String/translate';
+import { formatRuntimeMinutes } from './editionCatalog'; // krzw(edition-runtime-catalog)
 import getMoviePath from './getMoviePath';
 import styles from './MovieEditions.css';
 
@@ -92,6 +94,7 @@ function MovieEditionRow({
     hasFile,
     qualityProfileId,
     isSaving = false,
+    expectedRuntimeMinutes, // krzw(edition-runtime-catalog)
   } = movie;
 
   const handleMonitorTogglePress = useCallback(
@@ -125,6 +128,15 @@ function MovieEditionRow({
 
       <TableRowCell>
         <span className={isCurrent ? styles.current : undefined}>{name}</span>
+        {/* krzw(edition-runtime-catalog) */}
+        {expectedRuntimeMinutes == null ? null : (
+          <span
+            className={styles.expectedRuntime}
+            title={translate('EditionExpectedRuntime')}
+          >
+            {formatRuntimeMinutes(expectedRuntimeMinutes)}
+          </span>
+        )}
       </TableRowCell>
 
       <TableRowCell>

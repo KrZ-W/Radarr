@@ -70,6 +70,9 @@ namespace NzbDrone.Core.Test.MovieTests.EditionTests
 
             Mocker.GetMock<IManageCommandQueue>()
                 .Verify(s => s.Push(It.Is<RenameFilesCommand>(c => c.MovieId == 2 && c.Files.Single() == 100), It.IsAny<CommandPriority>(), It.IsAny<CommandTrigger>()), Times.Once());
+
+            // krzw(edition-runtime-catalog): only the audit apply renames on the caller's thread
+            Mocker.GetMock<IRenameMovieFileService>().Verify(s => s.RenameMovieFilesNow(It.IsAny<int>(), It.IsAny<List<int>>()), Times.Never());
         }
 
         [Test]

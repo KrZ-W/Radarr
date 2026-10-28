@@ -6,6 +6,7 @@ using NzbDrone.Core.Languages;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.AudioLanguage;
 using NzbDrone.Core.MediaFiles.MediaInfo;
+using NzbDrone.Core.MediaFiles.MovieImport;  // krzw(edition-runtime-catalog)
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Qualities;
 
@@ -56,6 +57,13 @@ namespace NzbDrone.Core.Parser.Model
         // listing opened for one row); the edition gate then trusts the row instead of comparing it with the
         // parsed edition. Rows resolved by title, tag or grab history leave it false.
         public bool EditionOverride { get; set; }
+
+        // krzw(edition-runtime-catalog): true when ImportDecisionMaker moved this untagged file from the default row to the
+        // sibling edition row its runtime matches; the edition gate and the runtime check then trust the row
+        public bool EditionRuntimeRehomed { get; set; }
+
+        // krzw(edition-runtime-catalog): the runtime evaluation of this file for one row, shared by the re-home and the import spec
+        public EditionRuntimeEvaluation EditionRuntimeEvaluation { get; set; }
 
         // krzw(grabbed-release-title): sanitised title of the release this file was grabbed as.
         // CustomFormats above is the scoring ladder's result - the formats CustomFormatScore is computed

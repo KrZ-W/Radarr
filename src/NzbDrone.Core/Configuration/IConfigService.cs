@@ -60,6 +60,12 @@ namespace NzbDrone.Core.Configuration
         // krzw(symlink-import-guard)
         bool RejectSymlinkImportSources { get; set; }
 
+        // krzw(edition-runtime-catalog)
+        int EditionRuntimeToleranceMinutes { get; set; }
+        bool EditionCatalogImdbEnabled { get; set; }
+        bool EditionCatalogWikidataEnabled { get; set; }
+        bool EditionRehomeOnImport { get; set; }
+
         bool UseScriptImport { get; set; }
         string ScriptImportPath { get; set; }
         bool ImportExtraFiles { get; set; }

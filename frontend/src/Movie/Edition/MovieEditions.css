@@ -25,3 +25,10 @@
   margin-top: 10px;
   text-align: right;
 }
+
+/* krzw(edition-runtime-catalog) */
+.expectedRuntime {
+  margin-left: 8px;
+  color: var(--helpTextColor);
+  font-size: $smallFontSize;
+}

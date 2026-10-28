@@ -316,5 +316,64 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport
         }
 
         // krzw(multi-edition) end
+
+        // krzw(edition-runtime-catalog) begin
+        [Test]
+        public void should_rehome_the_file_to_the_row_its_runtime_names_before_the_specifications_run()
+        {
+            var extended = Builder<Movie>.CreateNew()
+                                         .With(e => e.Id = 77)
+                                         .With(e => e.Edition = "Extended")
+                                         .With(e => e.Path = _movie.Path)
+                                         .With(e => e.QualityProfile = _movie.QualityProfile)
+                                         .Build();
+
+            Movie seenBySpec = null;
+
+            _pass1.Setup(c => c.IsSatisfiedBy(It.IsAny<LocalMovie>(), It.IsAny<DownloadClientItem>()))
+                  .Callback<LocalMovie, DownloadClientItem>((l, d) => seenBySpec = l.Movie)
+                  .Returns(ImportSpecDecision.Accept());
+
+            Mocker.GetMock<IEditionRuntimeImportEvaluator>()
+                  .Setup(s => s.FindRehomeTarget(It.Is<LocalMovie>(l => l.Movie == _movie)))
+                  .Returns(extended);
+
+            GivenSpecifications(_pass1);
+
+            var decision = Subject.GetImportDecisions(_videoFiles, _movie).Single();
+
+            decision.LocalMovie.Movie.Should().BeSameAs(extended);
+            decision.LocalMovie.EditionRuntimeRehomed.Should().BeTrue();
+            seenBySpec.Should().BeSameAs(extended);
+        }
+
+        [Test]
+        public void should_keep_the_row_when_no_runtime_rehome_applies()
+        {
+            GivenSpecifications(_pass1);
+
+            var decision = Subject.GetImportDecisions(_videoFiles, _movie).Single();
+
+            decision.LocalMovie.Movie.Should().BeSameAs(_movie);
+            decision.LocalMovie.EditionRuntimeRehomed.Should().BeFalse();
+        }
+
+        [Test]
+        public void should_keep_the_row_when_the_runtime_rehome_throws()
+        {
+            Mocker.GetMock<IEditionRuntimeImportEvaluator>()
+                  .Setup(s => s.FindRehomeTarget(It.IsAny<LocalMovie>()))
+                  .Throws(new System.InvalidOperationException("boom"));
+
+            GivenSpecifications(_pass1);
+
+            var decision = Subject.GetImportDecisions(_videoFiles, _movie).Single();
+
+            decision.Approved.Should().BeTrue();
+            decision.LocalMovie.Movie.Should().BeSameAs(_movie);
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        // krzw(edition-runtime-catalog) end
     }
 }

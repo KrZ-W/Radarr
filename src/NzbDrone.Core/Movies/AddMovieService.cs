@@ -130,6 +130,7 @@ namespace NzbDrone.Core.Movies
             movie.Edition = "";
             movie.EditionAliases = new List<string>();
             movie.EditionAcceptUntagged = false;
+            movie.ExpectedRuntimeMinutes = null;  // krzw(edition-runtime-catalog)
 
             // krzw(multi-edition) end
             return movie;

@@ -303,5 +303,21 @@ namespace NzbDrone.Core.Test.MovieTests.MovieRepositoryTests
             all.Should().OnlyContain(m => m.MovieMetadata.Value.TmdbId == TmdbId);
             all.Should().OnlyContain(m => m.QualityProfile != null);
         }
+
+        // krzw(edition-runtime-catalog) begin
+        [Test]
+        public void expected_runtime_should_round_trip_and_null_should_stay_null()
+        {
+            _extended.ExpectedRuntimeMinutes = 208;
+            Subject.Update(_extended);
+
+            _default.ExpectedRuntimeMinutes = null;
+            Subject.Update(_default);
+
+            Subject.Get(_extended.Id).ExpectedRuntimeMinutes.Should().Be(208);
+            Subject.Get(_default.Id).ExpectedRuntimeMinutes.Should().BeNull();
+        }
+
+        // krzw(edition-runtime-catalog) end
     }
 }

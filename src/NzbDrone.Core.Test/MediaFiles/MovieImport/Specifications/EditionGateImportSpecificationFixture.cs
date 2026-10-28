@@ -345,5 +345,20 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
 
             VerifySiblingQueries(Times.Never());
         }
+
+        // krzw(edition-runtime-catalog) begin
+        [Test]
+        public void should_accept_an_untagged_file_the_runtime_rehome_moved_to_an_edition_row()
+        {
+            var file = GivenFile(_extended, "");
+
+            Subject.IsSatisfiedBy(file, null).Accepted.Should().BeFalse();
+
+            file.EditionRuntimeRehomed = true;
+
+            Subject.IsSatisfiedBy(file, null).Accepted.Should().BeTrue();
+        }
+
+        // krzw(edition-runtime-catalog) end
     }
 }
