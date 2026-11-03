@@ -10,7 +10,17 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed
+
+- **Audio Language Verification read an Id-only profile on most import paths (Sonarr F11b
+  ported).** `Movie.QualityProfile` comes hydrated only from `MovieRepository.All()`; `Get`,
+  `FindByTitles` and the paged queries join the row through Dapper and bypass
+  `QualityProfileRepository.Query`, so the format items had no `Specifications`: the
+  custom-format half of the fast path was always false and the expected-language list from
+  custom formats was empty. Masked on radarr-fr by the profile *Language* column (a profile set
+  to *Any* relying on a language format alone would never have probed). The augmenter now
+  resolves the profile through `IQualityProfileService.Get`. Tests: joined Id-only profile still
+  probes with the Contradiction trigger, language-free profile still skips, service fallback.
 
 ## [v6.4.4.10685+krzw.5] — based on Radarr 6.4.4.10685
 
