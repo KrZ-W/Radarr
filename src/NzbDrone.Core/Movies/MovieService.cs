@@ -232,7 +232,7 @@ namespace NzbDrone.Core.Movies
 
             var rows = new List<Movie> { defaultRow };
 
-            rows.AddRange(_movieRepository.GetEditionSiblings(defaultRow.Id));
+            rows.AddRange(_movieRepository.GetEditionSiblings(defaultRow));
 
             return EditionMatcher.SelectRow(rows, edition) ?? defaultRow;
         }

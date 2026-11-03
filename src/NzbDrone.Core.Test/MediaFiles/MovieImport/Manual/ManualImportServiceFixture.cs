@@ -133,11 +133,11 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Manual
                   .Returns(_extended);
 
             Mocker.GetMock<IMovieService>()
-                  .Setup(s => s.GetEditionSiblings(_default.Id))
+                  .Setup(s => s.GetEditionSiblings(_default))
                   .Returns(new List<Movie> { _extended });
 
             Mocker.GetMock<IMovieService>()
-                  .Setup(s => s.GetEditionSiblings(_extended.Id))
+                  .Setup(s => s.GetEditionSiblings(_extended))
                   .Returns(new List<Movie> { _default });
 
             Mocker.GetMock<IDiskScanService>()
@@ -301,7 +301,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Manual
             GivenEditionRows();
 
             Mocker.GetMock<IMovieService>()
-                  .Setup(s => s.GetEditionSiblings(_default.Id))
+                  .Setup(s => s.GetEditionSiblings(_default))
                   .Returns(new List<Movie>());
 
             var folder = GivenDownloadFolder("Movie (2010)", "Movie (2010) {edition-Extended}.mkv");
@@ -319,8 +319,9 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Manual
         }
 
         [Test]
-        public void folder_with_a_user_picked_row_should_keep_that_row_for_every_file_and_flag_it()
+        public void folder_opened_for_an_edition_row_should_scope_to_it_but_not_skip_the_gate()
         {
+            // Manage Files on an edition row's page: movieId scopes the listing, the edition gate still judges
             GivenEditionRows();
 
             var folder = GivenDownloadFolder("Movie (2010)", "Movie (2010).mkv", "Movie (2010) {edition-Extended}.mkv");
@@ -331,7 +332,25 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Manual
             items.Should().OnlyContain(i => i.Movie == _extended);
 
             Mocker.GetMock<IParsingService>().Verify(v => v.GetMovie(It.IsAny<string>()), Times.Never());
-            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(_extended), Times.Once());
+            Mocker.GetMock<IMakeImportDecision>()
+                  .Verify(v => v.GetImportDecisions(It.IsAny<List<string>>(), _extended, null, It.IsAny<ParsedMovieInfo>(), It.IsAny<bool>(), true, false, It.IsNotNull<Func<string, Movie>>()), Times.Once());
+        }
+
+        [Test]
+        public void folder_with_a_user_picked_row_should_keep_that_row_for_every_file_and_flag_it()
+        {
+            GivenEditionRows();
+
+            var folder = GivenDownloadFolder("Movie (2010)", "Movie (2010).mkv", "Movie (2010) {edition-Extended}.mkv");
+
+            var items = Subject.GetMediaFiles(folder, null, _extended.Id, true, editionOverride: true);
+
+            items.Should().HaveCount(2);
+            items.Should().OnlyContain(i => i.Movie == _extended);
+
+            Mocker.GetMock<IParsingService>().Verify(v => v.GetMovie(It.IsAny<string>()), Times.Never());
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<Movie>()), Times.Never());
             Mocker.GetMock<IMakeImportDecision>()
                   .Verify(v => v.GetImportDecisions(It.IsAny<List<string>>(), _extended, null, It.IsAny<ParsedMovieInfo>(), It.IsAny<bool>(), true, true, null), Times.Once());
         }
@@ -372,7 +391,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Manual
 
             items.Single().Movie.Should().BeSameAs(_extended);
 
-            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<Movie>()), Times.Never());
         }
 
         [Test]

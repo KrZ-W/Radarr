@@ -61,7 +61,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
         private void GivenSiblings(Movie row, params Movie[] siblings)
         {
             Mocker.GetMock<IMovieService>()
-                  .Setup(s => s.GetEditionSiblings(row.Id))
+                  .Setup(s => s.GetEditionSiblings(row))
                   .Returns(siblings.ToList());
         }
 
@@ -94,7 +94,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
 
         private void VerifySiblingQueries(Times times)
         {
-            Mocker.GetMock<IMovieService>().Verify(s => s.GetEditionSiblings(It.IsAny<int>()), times);
+            Mocker.GetMock<IMovieService>().Verify(s => s.GetEditionSiblings(It.IsAny<Movie>()), times);
         }
 
         // skips
@@ -257,7 +257,7 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Specifications
         {
             Subject.IsSatisfiedBy(GivenFile(_default, "Extended"), null);
 
-            Mocker.GetMock<IMovieService>().Verify(s => s.GetEditionSiblings(_default.Id), Times.Once());
+            Mocker.GetMock<IMovieService>().Verify(s => s.GetEditionSiblings(_default), Times.Once());
             VerifySiblingQueries(Times.Once());
         }
 

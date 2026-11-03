@@ -95,6 +95,10 @@ select the whole family in the bulk editor.
    the row it was grabbed for. Only changing the movie counts as a pick: editing a row's
    quality, languages, release group or flags re-evaluates it with the preselected row and
    keeps its edition verdict (the reprocess request carries `editionOverride`).
+   Opening *Manage Files* or the import dialog from a row's page is not a pick either: the
+   `movieId` only scopes the listing to that row, files route by their names and the gate
+   still judges them; an API client that really means "this row" sends `editionOverride=true`
+   on the listing request.
 
 ### Shared folder
 
@@ -324,6 +328,7 @@ when the format contains the token.
 | `GET /api/v3/calendar` | `includeEditions` (default `false`) |
 | `GET /feed/v3/calendar/radarr.ics` | one event per title (an edition stands in when it is the only monitored row) |
 | `/api/v3/wanted/missing`, `/wanted/cutoff`, queue, history, blocklist, manual import, parse | edition rows always included, resources carry `edition` |
+| `GET /api/v3/manualimport` | `editionOverride` (default `false`): `movieId` alone scopes the listing to a row without skipping the edition gate; `true` marks the row as the caller's pick (same meaning as on the reprocess `POST`) |
 | SignalR `movie` channel | broadcasts edition rows regardless of `includeEditions` (the fork UI asks for them) |
 | Webhook | `movie.edition` (string, `""` on default rows); Discord and the generic notification body append ` [Extended]` |
 

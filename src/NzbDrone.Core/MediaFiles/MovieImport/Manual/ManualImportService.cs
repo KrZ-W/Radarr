@@ -24,7 +24,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
     public interface IManualImportService
     {
         List<ManualImportItem> GetMediaFiles(int movieId);
-        List<ManualImportItem> GetMediaFiles(string path, string downloadId, int? movieId, bool filterExistingFiles);
+        List<ManualImportItem> GetMediaFiles(string path, string downloadId, int? movieId, bool filterExistingFiles, bool editionOverride = false);  // krzw(multi-edition): editionOverride = the caller picked the movie row; a page opened for a row only scopes the listing
         ManualImportItem ReprocessItem(string path, string downloadId, int movieId, string releaseGroup, QualityModel quality, List<Language> languages, int indexerFlags, bool editionOverride);  // krzw(multi-edition): editionOverride = the user picked the movie row
     }
 
@@ -105,7 +105,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
             return items;
         }
 
-        public List<ManualImportItem> GetMediaFiles(string path, string downloadId, int? movieId, bool filterExistingFiles)
+        public List<ManualImportItem> GetMediaFiles(string path, string downloadId, int? movieId, bool filterExistingFiles, bool editionOverride = false)
         {
             if (downloadId.IsNotNullOrWhiteSpace())
             {
@@ -130,7 +130,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
                 return new List<ManualImportItem> { ProcessFile(rootFolder, rootFolder, path, downloadId) };
             }
 
-            return ProcessFolder(path, path, downloadId, movieId, filterExistingFiles);
+            return ProcessFolder(path, path, downloadId, movieId, filterExistingFiles, editionOverride);
         }
 
         public ManualImportItem ReprocessItem(string path, string downloadId, int movieId, string releaseGroup, QualityModel quality, List<Language> languages, int indexerFlags, bool editionOverride)  // krzw(multi-edition)
@@ -209,7 +209,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
 
         // krzw(edition-runtime-catalog) end
 
-        private List<ManualImportItem> ProcessFolder(string rootFolder, string baseFolder, string downloadId, int? movieId, bool filterExistingFiles)
+        private List<ManualImportItem> ProcessFolder(string rootFolder, string baseFolder, string downloadId, int? movieId, bool filterExistingFiles, bool editionOverride)
         {
             DownloadClientItem downloadClientItem = null;
             Movie movie = null;
@@ -266,14 +266,17 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
                 var subfolders = _diskScanService.FilterPaths(rootFolder, _diskProvider.GetDirectories(baseFolder));
 
                 var processedFiles = files.Select(file => ProcessFile(rootFolder, baseFolder, file, downloadId));
-                var processedFolders = subfolders.SelectMany(subfolder => ProcessFolder(rootFolder, subfolder, downloadId, null, filterExistingFiles));
+                var processedFolders = subfolders.SelectMany(subfolder => ProcessFolder(rootFolder, subfolder, downloadId, null, filterExistingFiles, false));
 
                 return processedFiles.Concat(processedFolders).Where(i => i != null).ToList();
             }
 
             var folderInfo = Parser.Parser.ParseMovieTitle(directoryInfo.Name);
             var movieFiles = _diskScanService.FilterPaths(rootFolder, _diskScanService.GetVideoFiles(baseFolder).ToList());
-            var decisions = _importDecisionMaker.GetImportDecisions(movieFiles, movie, downloadClientItem, folderInfo, SceneSource(movie, baseFolder), filterExistingFiles, movieId.HasValue, EditionRouter(movie, folderInfo, movieId.HasValue));  // krzw(multi-edition)
+
+            // krzw(multi-edition): a movieId scopes the listing to that row (Manage Files, a movie page); it is not a pick.
+            // Only an explicit editionOverride (the user chose the row, or an API client says so) skips the edition gate.
+            var decisions = _importDecisionMaker.GetImportDecisions(movieFiles, movie, downloadClientItem, folderInfo, SceneSource(movie, baseFolder), filterExistingFiles, editionOverride, EditionRouter(movie, folderInfo, editionOverride));
 
             return decisions.Select(decision => MapItem(decision, rootFolder, downloadId, directoryInfo.Name)).ToList();
         }
@@ -408,7 +411,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Manual
                 return null;
             }
 
-            var rows = _movieService.GetEditionSiblings(folderRow.Id);
+            var rows = _movieService.GetEditionSiblings(folderRow);
 
             if (rows == null || rows.Count == 0)
             {

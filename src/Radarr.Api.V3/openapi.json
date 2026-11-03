@@ -83,6 +83,47 @@
         }
       }
     },
+    "/api/v3/alttitle/user/import": {
+      "post": {
+        "tags": [
+          "AlternativeTitle"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/UserAlternativeTitleImportResource"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAlternativeTitleImportSummaryResource"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAlternativeTitleImportSummaryResource"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAlternativeTitleImportSummaryResource"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v3/alttitle/{id}": {
       "get": {
         "tags": [
@@ -701,6 +742,14 @@
             "schema": {
               "type": "string",
               "default": ""
+            }
+          },
+          {
+            "name": "includeEditions",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -2258,6 +2307,137 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DownloadClientConfigResource"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v3/edition/catalog": {
+      "get": {
+        "tags": [
+          "EditionCatalog"
+        ],
+        "parameters": [
+          {
+            "name": "movieId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EditionCatalogResource"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "EditionCatalog"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditionCatalogUserEntryResource"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EditionCatalogEntryResource"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v3/edition/catalog/{id}": {
+      "delete": {
+        "tags": [
+          "EditionCatalog"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v3/edition/catalog/export": {
+      "get": {
+        "tags": [
+          "EditionCatalog"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EditionCatalogExchangeItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v3/edition/catalog/import": {
+      "post": {
+        "tags": [
+          "EditionCatalog"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/EditionCatalogExchangeItem"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EditionCatalogImportResult"
                 }
               }
             }
@@ -4291,6 +4471,14 @@
               "type": "boolean",
               "default": true
             }
+          },
+          {
+            "name": "editionOverride",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -4924,6 +5112,14 @@
               "type": "integer",
               "format": "int32"
             }
+          },
+          {
+            "name": "includeEditions",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -5099,6 +5295,100 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/MovieResource"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v3/edition/audit": {
+      "get": {
+        "tags": [
+          "MovieEditionFile"
+        ],
+        "parameters": [
+          {
+            "name": "includeAll",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EditionAuditItem"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v3/edition/audit/apply": {
+      "post": {
+        "tags": [
+          "MovieEditionFile"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/EditionAuditApplyItem"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EditionAuditApplyResult"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v3/edition/movefile": {
+      "post": {
+        "tags": [
+          "MovieEditionFile"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveFileToEditionResource"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MoveFileToEditionResource"
                 }
               }
             }
@@ -8194,6 +8484,47 @@
           }
         }
       }
+    },
+    "/api/v3/translation/user/import": {
+      "post": {
+        "tags": [
+          "UserTranslation"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/UserAlternativeTitleImportResource"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAlternativeTitleImportSummaryResource"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAlternativeTitleImportSummaryResource"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserAlternativeTitleImportSummaryResource"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8276,6 +8607,137 @@
           "replace"
         ],
         "type": "string"
+      },
+      "AudioLanguageVerification": {
+        "type": "object",
+        "properties": {
+          "streamIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "taggedLanguage": {
+            "type": "string",
+            "nullable": true
+          },
+          "detectedLanguage": {
+            "type": "string",
+            "nullable": true
+          },
+          "confidence": {
+            "type": "number",
+            "format": "double"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "probedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AudioLanguageVerifyTaggedMode": {
+        "enum": [
+          "never",
+          "forReleaseGroups",
+          "always"
+        ],
+        "type": "string"
+      },
+      "AudioTrackRetag": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "$ref": "#/components/schemas/AudioTrackRetagHardlinkMode"
+          },
+          "result": {
+            "type": "string",
+            "nullable": true
+          },
+          "tracks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AudioTrackRetagTrack"
+            },
+            "nullable": true
+          },
+          "skippedTracks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AudioTrackRetagSkippedTrack"
+            },
+            "nullable": true
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "remuxed": {
+            "type": "boolean"
+          },
+          "originalContainer": {
+            "type": "string",
+            "nullable": true
+          },
+          "isDone": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AudioTrackRetagHardlinkMode": {
+        "enum": [
+          "skip",
+          "copyThenRetag",
+          "retagInPlace"
+        ],
+        "type": "string"
+      },
+      "AudioTrackRetagNonMkvMode": {
+        "enum": [
+          "skip",
+          "remuxToMkv"
+        ],
+        "type": "string"
+      },
+      "AudioTrackRetagSkippedTrack": {
+        "type": "object",
+        "properties": {
+          "streamIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AudioTrackRetagTrack": {
+        "type": "object",
+        "properties": {
+          "streamIndex": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "from": {
+            "type": "string",
+            "nullable": true
+          },
+          "to": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "AuthenticationRequiredType": {
         "enum": [
@@ -9281,6 +9743,341 @@
         ],
         "type": "string"
       },
+      "EditionAuditApplyItem": {
+        "type": "object",
+        "properties": {
+          "movieId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "editionName": {
+            "type": "string",
+            "nullable": true
+          },
+          "runtimeMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EditionAuditApplyResult": {
+        "type": "object",
+        "properties": {
+          "movieId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "editionMovieId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "movieFileId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EditionAuditItem": {
+        "type": "object",
+        "properties": {
+          "movieId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "movieFileId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "relativePath": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileEdition": {
+            "type": "string",
+            "nullable": true
+          },
+          "suggestedEdition": {
+            "type": "string",
+            "nullable": true
+          },
+          "kind": {
+            "$ref": "#/components/schemas/EditionAuditKind"
+          },
+          "ambiguous": {
+            "type": "boolean"
+          },
+          "editionRowId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "editionRowHasFile": {
+            "type": "boolean"
+          },
+          "fileRuntimeMinutes": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "isPal": {
+            "type": "boolean"
+          },
+          "runtimeMatchKind": {
+            "$ref": "#/components/schemas/RuntimeMatchKind"
+          },
+          "runtimeSuggestedEdition": {
+            "type": "string",
+            "nullable": true
+          },
+          "runtimeSuggestedMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "catalogSource": {
+            "$ref": "#/components/schemas/EditionCatalogSource"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/EditionAuditVerdict"
+          },
+          "expectedRuntimeMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EditionAuditKind": {
+        "enum": [
+          "theatrical",
+          "cut",
+          "variant",
+          "unrecognised",
+          "untagged"
+        ],
+        "type": "string"
+      },
+      "EditionAuditVerdict": {
+        "enum": [
+          "consistent",
+          "tagOnly",
+          "runtimeOnly",
+          "conflict",
+          "pal",
+          "checkIdentification",
+          "unknown"
+        ],
+        "type": "string"
+      },
+      "EditionCatalogEntryResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "movieMetadataId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "runtimeMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "source": {
+            "$ref": "#/components/schemas/EditionCatalogSource"
+          },
+          "confidence": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "updated": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "informational": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EditionCatalogExchangeItem": {
+        "type": "object",
+        "properties": {
+          "tmdbId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "imdbId": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "runtimeMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "source": {
+            "$ref": "#/components/schemas/EditionCatalogSource"
+          },
+          "confidence": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "attributes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EditionCatalogImportResult": {
+        "type": "object",
+        "properties": {
+          "added": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "updated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unchanged": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "skipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EditionCatalogResource": {
+        "type": "object",
+        "properties": {
+          "movieId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "movieMetadataId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "tmdbId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "toleranceMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "merged": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EditionCatalogEntryResource"
+            },
+            "nullable": true
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EditionCatalogEntryResource"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EditionCatalogSource": {
+        "enum": [
+          "tmdb",
+          "wikidata",
+          "imdb",
+          "library",
+          "user"
+        ],
+        "type": "string"
+      },
+      "EditionCatalogUserEntryResource": {
+        "type": "object",
+        "properties": {
+          "movieId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "runtimeMinutes": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "ExtraFileResource": {
         "type": "object",
         "properties": {
@@ -9572,6 +10369,10 @@
           "authenticationRequired": {
             "$ref": "#/components/schemas/AuthenticationRequiredType"
           },
+          "allowedHosts": {
+            "type": "string",
+            "nullable": true
+          },
           "analyticsEnabled": {
             "type": "boolean"
           },
@@ -9616,6 +10417,10 @@
             "nullable": true
           },
           "urlBase": {
+            "type": "string",
+            "nullable": true
+          },
+          "trustedNetworks": {
             "type": "string",
             "nullable": true
           },
@@ -10054,6 +10859,10 @@
           "whitelistedHardcodedSubs": {
             "type": "string",
             "nullable": true
+          },
+          "indexerCooldownPeriods": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -10349,6 +11158,9 @@
             "type": "integer",
             "format": "int32"
           },
+          "editionOverride": {
+            "type": "boolean"
+          },
           "rejections": {
             "type": "array",
             "items": {
@@ -10616,6 +11428,71 @@
           },
           "enableMediaInfo": {
             "type": "boolean"
+          },
+          "regionalTranslationVariants": {
+            "type": "string",
+            "nullable": true
+          },
+          "regionalTranslationSearchMode": {
+            "$ref": "#/components/schemas/RegionalTranslationSearchMode"
+          },
+          "audioLanguageVerificationEnabled": {
+            "type": "boolean"
+          },
+          "audioLanguageVerificationEndpoint": {
+            "type": "string",
+            "nullable": true
+          },
+          "audioLanguageVerificationConfidenceThreshold": {
+            "type": "number",
+            "format": "double"
+          },
+          "audioLanguageVerificationClipOffset": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "audioLanguageVerificationClipLength": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "audioLanguageVerificationVerifyTagged": {
+            "$ref": "#/components/schemas/AudioLanguageVerifyTaggedMode"
+          },
+          "audioLanguageVerificationVerifyTaggedGroups": {
+            "type": "string",
+            "nullable": true
+          },
+          "audioLanguageVerificationTimeout": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "audioTrackRetagEnabled": {
+            "type": "boolean"
+          },
+          "audioTrackRetagHardlinkMode": {
+            "$ref": "#/components/schemas/AudioTrackRetagHardlinkMode"
+          },
+          "audioTrackRetagNonMkvMode": {
+            "$ref": "#/components/schemas/AudioTrackRetagNonMkvMode"
+          },
+          "scoreFilesByGrabbedReleaseTitle": {
+            "type": "boolean"
+          },
+          "rejectSymlinkImportSources": {
+            "type": "boolean"
+          },
+          "editionRuntimeToleranceMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "editionCatalogImdbEnabled": {
+            "type": "boolean"
+          },
+          "editionCatalogWikidataEnabled": {
+            "type": "boolean"
+          },
+          "editionRehomeOnImport": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -10629,6 +11506,21 @@
           },
           "certificationCountry": {
             "$ref": "#/components/schemas/TMDbCountryCode"
+          },
+          "imdbTitleProviderEnabled": {
+            "type": "boolean"
+          },
+          "imdbTitleProviderRegions": {
+            "type": "string",
+            "nullable": true
+          },
+          "imdbTitleProviderLanguages": {
+            "type": "string",
+            "nullable": true
+          },
+          "imdbTitleProviderRefreshInterval": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -10711,6 +11603,20 @@
         ],
         "type": "string"
       },
+      "MoveFileToEditionResource": {
+        "type": "object",
+        "properties": {
+          "movieFileId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "movieId": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "MovieCollectionResource": {
         "type": "object",
         "properties": {
@@ -10721,6 +11627,64 @@
           "tmdbId": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MovieEditionResource": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "acceptUntagged": {
+            "type": "boolean"
+          },
+          "expectedRuntimeMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MovieEditionSummaryResource": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "monitored": {
+            "type": "boolean"
+          },
+          "hasFile": {
+            "type": "boolean"
+          },
+          "qualityProfileId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "movieFileId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expectedRuntimeMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -10884,6 +11848,20 @@
           },
           "mediaInfo": {
             "$ref": "#/components/schemas/MediaInfoResource"
+          },
+          "audioLanguageVerification": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AudioLanguageVerification"
+            },
+            "nullable": true
+          },
+          "audioTrackRetag": {
+            "$ref": "#/components/schemas/AudioTrackRetag"
+          },
+          "grabbedReleaseTitle": {
+            "type": "string",
+            "nullable": true
           },
           "originalFilePath": {
             "type": "string",
@@ -11120,6 +12098,26 @@
           },
           "statistics": {
             "$ref": "#/components/schemas/MovieStatisticsResource"
+          },
+          "edition": {
+            "$ref": "#/components/schemas/MovieEditionResource"
+          },
+          "editionParentId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "editions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MovieEditionSummaryResource"
+            },
+            "nullable": true
+          },
+          "expectedRuntimeMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -11178,6 +12176,13 @@
             "type": "array",
             "items": {
               "type": "string"
+            },
+            "nullable": true
+          },
+          "movieFileQualities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Quality"
             },
             "nullable": true
           }
@@ -11508,6 +12513,9 @@
           "score": {
             "type": "integer",
             "format": "int32"
+          },
+          "priority": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -11658,6 +12666,21 @@
           },
           "allowed": {
             "type": "boolean"
+          },
+          "minSize": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "maxSize": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "preferredSize": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -11977,12 +13000,36 @@
         },
         "additionalProperties": false
       },
+      "RegionalTranslationSearchMode": {
+        "enum": [
+          "standard",
+          "onePerRegion",
+          "allTitles"
+        ],
+        "type": "string"
+      },
       "RejectionType": {
         "enum": [
           "permanent",
           "temporary"
         ],
         "type": "string"
+      },
+      "ReleaseHistoryResource": {
+        "type": "object",
+        "properties": {
+          "grabbed": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "failed": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
       },
       "ReleaseProfileResource": {
         "type": "object",
@@ -12044,6 +13091,9 @@
           "customFormatScore": {
             "type": "integer",
             "format": "int32"
+          },
+          "history": {
+            "$ref": "#/components/schemas/ReleaseHistoryResource"
           },
           "qualityWeight": {
             "type": "integer",
@@ -12312,6 +13362,15 @@
         },
         "additionalProperties": false
       },
+      "RuntimeMatchKind": {
+        "enum": [
+          "none",
+          "unique",
+          "ambiguous",
+          "unknownLonger"
+        ],
+        "type": "string"
+      },
       "RuntimeMode": {
         "enum": [
           "console",
@@ -12422,6 +13481,9 @@
             "type": "boolean"
           },
           "isDocker": {
+            "type": "boolean"
+          },
+          "isContainerized": {
             "type": "boolean"
           },
           "mode": {
@@ -12811,6 +13873,104 @@
           },
           "hash": {
             "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserAlternativeTitleImportEntryResource": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "region": {
+            "type": "string",
+            "nullable": true
+          },
+          "language": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserAlternativeTitleImportResource": {
+        "type": "object",
+        "properties": {
+          "tmdbId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "imdbId": {
+            "type": "string",
+            "nullable": true
+          },
+          "movieTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "year": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "missingFrenchTitles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserAlternativeTitleImportEntryResource"
+            },
+            "nullable": true
+          },
+          "titles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UserAlternativeTitleImportEntryResource"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UserAlternativeTitleImportSummaryResource": {
+        "type": "object",
+        "properties": {
+          "moviesProcessed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "titlesAdded": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "titlesSkipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "titlesGuarded": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "titlesUnknownLanguage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "titlesAlreadyPresent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "moviesNotFound": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "moviesFailed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
             "nullable": true
           }
         },

@@ -45,7 +45,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Specifications
             // this row even when neither the client title nor the file name carries the edition.
             var grabbedForRow = localMovie.Release?.MovieIds?.Contains(movie.Id) == true;
 
-            var rejection = EditionGate.Evaluate(movie, localMovie.Edition, () => _movieService.GetEditionSiblings(movie.Id), grabbedForRow);
+            var rejection = EditionGate.Evaluate(movie, localMovie.Edition, () => _movieService.GetEditionSiblings(movie), grabbedForRow);
 
             if (rejection != null)
             {

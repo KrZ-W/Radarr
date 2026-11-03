@@ -51,11 +51,11 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
                   .Returns(_default);
 
             Mocker.GetMock<IMovieService>()
-                  .Setup(s => s.GetEditionSiblings(_default.Id))
+                  .Setup(s => s.GetEditionSiblings(_default))
                   .Returns(new List<Movie> { _extended });
 
             Mocker.GetMock<IMovieService>()
-                  .Setup(s => s.GetEditionSiblings(_extended.Id))
+                  .Setup(s => s.GetEditionSiblings(_extended))
                   .Returns(new List<Movie> { _default });
 
             Mocker.GetMock<IMovieService>()
@@ -138,7 +138,7 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
         {
             Subject.Map(Parsed(""), ImdbId, 0).Movie.Should().BeSameAs(_default);
 
-            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<Movie>()), Times.Never());
         }
 
         [Test]
@@ -174,7 +174,7 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
             remoteMovie.Movie.Should().BeSameAs(_extended);
             remoteMovie.MovieRequested.Should().BeTrue();
 
-            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<Movie>()), Times.Never());
         }
 
         [Test]
@@ -185,11 +185,11 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
             var untagged = Subject.Map(Parsed(""), ImdbId, 0, SearchFor(otherMovie));
             untagged.Movie.Should().BeSameAs(_default);
             untagged.MovieRequested.Should().BeFalse();
-            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<Movie>()), Times.Never());
 
             var tagged = Subject.Map(Parsed("Extended"), ImdbId, 0, SearchFor(otherMovie));
             tagged.Movie.Should().BeSameAs(_extended);
-            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(_default.Id), Times.Once());
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(_default), Times.Once());
         }
 
         [TestCase("")]
@@ -211,7 +211,7 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
             remoteMovie.Movie.Should().BeSameAs(_default);
             remoteMovie.MovieRequested.Should().BeTrue();
 
-            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<Movie>()), Times.Never());
         }
 
         [Test]
@@ -276,7 +276,7 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
 
             remoteMovie.Movie.Should().BeSameAs(_extended);
             remoteMovie.EditionSiblings.Should().BeEquivalentTo(new List<Movie> { _default });
-            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(_default.Id), Times.Once());
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(_default), Times.Once());
         }
 
         [Test]
@@ -288,7 +288,7 @@ namespace NzbDrone.Core.Test.ParserTests.ParsingServiceTests
             // search for a row of the title: only the default and the searched row are known
             Subject.Map(Parsed("Extended"), ImdbId, 0, SearchFor(_extended)).EditionSiblings.Should().BeNull();
 
-            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<IMovieService>().Verify(v => v.GetEditionSiblings(It.IsAny<Movie>()), Times.Never());
         }
 
         [Test]

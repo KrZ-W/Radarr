@@ -46,7 +46,7 @@ namespace NzbDrone.Core.Test.MovieTests.MovieServiceTests
                   .Returns(_default);
 
             Mocker.GetMock<IMovieRepository>()
-                  .Setup(s => s.GetEditionSiblings(_default.Id))
+                  .Setup(s => s.GetEditionSiblings(_default))
                   .Returns(new List<Movie> { _extended });
         }
 
@@ -125,7 +125,7 @@ namespace NzbDrone.Core.Test.MovieTests.MovieServiceTests
         {
             Subject.FindByImdbId("tt0133093", edition).Should().BeSameAs(_default);
 
-            Mocker.GetMock<IMovieRepository>().Verify(v => v.GetEditionSiblings(It.IsAny<int>()), Times.Never());
+            Mocker.GetMock<IMovieRepository>().Verify(v => v.GetEditionSiblings(It.IsAny<Movie>()), Times.Never());
         }
 
         [Test]
