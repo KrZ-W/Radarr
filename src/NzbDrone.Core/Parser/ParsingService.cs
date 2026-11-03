@@ -265,7 +265,7 @@ namespace NzbDrone.Core.Parser
 
             if (parsedMovieInfo.Edition.IsNotNullOrWhiteSpace())
             {
-                rows.AddRange(_movieService.GetEditionSiblings(defaultRow.Id));
+                rows.AddRange(_movieService.GetEditionSiblings(defaultRow));
                 allRowsLoaded = true;
             }
 

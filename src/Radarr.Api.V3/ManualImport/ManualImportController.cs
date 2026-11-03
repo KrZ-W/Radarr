@@ -24,14 +24,14 @@ namespace Radarr.Api.V3.ManualImport
 
         [HttpGet]
         [Produces("application/json")]
-        public List<ManualImportResource> GetMediaFiles(string folder, string downloadId, int? movieId, bool filterExistingFiles = true)
+        public List<ManualImportResource> GetMediaFiles(string folder, string downloadId, int? movieId, bool filterExistingFiles = true, bool editionOverride = false)  // krzw(multi-edition): editionOverride = the client picked the movie row
         {
             if (movieId.HasValue && downloadId.IsNullOrWhiteSpace())
             {
                 return _manualImportService.GetMediaFiles(movieId.Value).ToResource().Select(AddQualityWeight).ToList();
             }
 
-            return _manualImportService.GetMediaFiles(folder, downloadId, movieId, filterExistingFiles).ToResource().Select(AddQualityWeight).ToList();
+            return _manualImportService.GetMediaFiles(folder, downloadId, movieId, filterExistingFiles, editionOverride).ToResource().Select(AddQualityWeight).ToList();
         }
 
         [HttpPost]

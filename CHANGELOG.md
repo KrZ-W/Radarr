@@ -10,6 +10,20 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+### Fixed
+
+- **Multi-edition: opening Manage Files or the import dialog from an edition row no longer
+  counts as picking that row.** `GET /api/v3/manualimport?movieId=` used `movieId` as the
+  edition override, so every file listed for an edition row bypassed the edition gate in the
+  preview. `movieId` now only scopes the listing; a new `editionOverride` query parameter
+  (default `false`) carries an explicit pick, exactly like the reprocess `POST`.
+- Multi-edition: the import edition gate, the manual-import router and the IMDb/title lookups
+  fetch a title's sibling rows through the row they already hold (one query) instead of
+  re-reading the row by id first.
+- `openapi.json` regenerated from the built API: it now describes the fork's endpoints
+  (editions, edition audit and catalog, move file, user titles, IMDb title provider, scene
+  mapping import) and the fork's extra fields.
+
 ### Changed
 
 - Image: the frontend build stage moves from `node:20.11.1` to `node:20.19.5` ahead of the next
