@@ -10,7 +10,13 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- Image: the frontend build stage moves from `node:20.11.1` to `node:20.19.5` ahead of the next
+  upstream rebase (current upstream lockfiles require node 20.19+; the Prowlarr fork's
+  2.7.0 rebase failed on the old pin).
+- CI: `docker-image.yml` builds only `personal/**`; topic-branch pushes no longer publish
+  `:<branch>` / `sha-` images (use *Run workflow* on a branch when one is needed).
 
 ## [v6.4.4.10685+krzw.6] — based on Radarr 6.4.4.10685
 
