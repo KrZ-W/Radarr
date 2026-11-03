@@ -29,5 +29,7 @@ public enum ImportRejectionReason
     WantedLanguage,  // krzw(import-enforcement)
     CustomFormatMinimumScore,  // krzw(import-enforcement)
     SourceIsSymlink,  // krzw(symlink-import-guard)
+    SourceIsSymlinkToLibraryFile,  // krzw(symlink-import-guard): the link resolves to a tracked library file of another movie
+    SourceIsSymlinkToCurrentFile,  // krzw(symlink-import-guard): the link resolves to the current file of the very movie it maps to
     EditionMismatch  // krzw(multi-edition)
 }

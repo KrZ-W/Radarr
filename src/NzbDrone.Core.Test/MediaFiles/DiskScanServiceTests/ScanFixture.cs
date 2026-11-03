@@ -12,6 +12,7 @@ using NzbDrone.Core.MediaFiles.Events;
 using NzbDrone.Core.MediaFiles.MovieImport;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Movies;
+using NzbDrone.Core.Parser.Model;
 using NzbDrone.Core.RootFolders;
 using NzbDrone.Core.Test.Framework;
 using NzbDrone.Test.Common;
@@ -485,6 +486,35 @@ namespace NzbDrone.Core.Test.MediaFiles.DiskScanServiceTests
 
             Mocker.GetMock<IEventAggregator>()
                 .Verify(v => v.PublishEvent(It.Is<MovieScannedEvent>(c => c.Movie != null && c.PossibleExtraFiles.Count == 0)), Times.Once());
+        }
+
+        // krzw(symlink-import-guard): a library rescan goes through the same funnel, so an untracked symlink in
+        // the movie folder is never registered as a movie file even if a decision came back approved.
+        [Test]
+        public void should_not_register_an_untracked_symlink_found_by_a_rescan()
+        {
+            GivenMovieFolder();
+
+            var linkPath = Path.Combine(_movie.Path, "Movie (2010).mkv");
+            GivenFiles(new List<string> { linkPath });
+
+            var localMovie = new LocalMovie { Path = linkPath, Movie = _movie, FileMovieInfo = new ParsedMovieInfo() };
+
+            Mocker.GetMock<IMakeImportDecision>()
+                  .Setup(s => s.GetImportDecisions(It.IsAny<List<string>>(), _movie, false))
+                  .Returns(new List<ImportDecision> { new ImportDecision(localMovie) });
+
+            Mocker.GetMock<ISymlinkImportGuard>()
+                  .Setup(s => s.Check(localMovie))
+                  .Returns(new SymlinkImportCheck { Target = "target", Reason = ImportRejectionReason.SourceIsSymlink, Message = "Source is a symbolic link → target" });
+
+            Mocker.SetConstant<IImportApprovedMovie>(Mocker.Resolve<ImportApprovedMovie>());
+
+            Subject.Scan(_movie);
+
+            Mocker.GetMock<IMediaFileService>().Verify(v => v.Add(It.IsAny<MovieFile>()), Times.Never());
+
+            ExceptionVerification.ExpectedWarns(1);
         }
     }
 }

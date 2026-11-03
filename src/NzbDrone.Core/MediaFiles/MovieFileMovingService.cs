@@ -33,6 +33,7 @@ namespace NzbDrone.Core.MediaFiles
         private readonly IRootFolderService _rootFolderService;
         private readonly IEventAggregator _eventAggregator;
         private readonly IConfigService _configService;
+        private readonly ISymlinkImportGuard _symlinkImportGuard;  // krzw(symlink-import-guard)
         private readonly Logger _logger;
 
         public MovieFileMovingService(IUpdateMovieFileService updateMovieFileService,
@@ -44,6 +45,7 @@ namespace NzbDrone.Core.MediaFiles
                                 IRootFolderService rootFolderService,
                                 IEventAggregator eventAggregator,
                                 IConfigService configService,
+                                ISymlinkImportGuard symlinkImportGuard,
                                 Logger logger)
         {
             _updateMovieFileService = updateMovieFileService;
@@ -55,6 +57,7 @@ namespace NzbDrone.Core.MediaFiles
             _rootFolderService = rootFolderService;
             _eventAggregator = eventAggregator;
             _configService = configService;
+            _symlinkImportGuard = symlinkImportGuard;
             _logger = logger;
         }
 
@@ -72,6 +75,8 @@ namespace NzbDrone.Core.MediaFiles
 
         public MovieFile MoveMovieFile(MovieFile movieFile, LocalMovie localMovie)
         {
+            EnsureImportSourceIsNotSymlink(localMovie);  // krzw(symlink-import-guard)
+
             // krzw(grabbed-release-title): naming renders the legacy ladder, never the scoring one
             var newFileName = _buildFileNames.BuildFileName(localMovie.Movie, movieFile, null, localMovie.NamingCustomFormats);
             var filePath = _buildFileNames.BuildFilePath(localMovie.Movie, newFileName, Path.GetExtension(localMovie.Path));
@@ -85,6 +90,8 @@ namespace NzbDrone.Core.MediaFiles
 
         public MovieFile CopyMovieFile(MovieFile movieFile, LocalMovie localMovie)
         {
+            EnsureImportSourceIsNotSymlink(localMovie);  // krzw(symlink-import-guard)
+
             // krzw(grabbed-release-title): naming renders the legacy ladder, never the scoring one
             var newFileName = _buildFileNames.BuildFileName(localMovie.Movie, movieFile, null, localMovie.NamingCustomFormats);
             var filePath = _buildFileNames.BuildFilePath(localMovie.Movie, newFileName, Path.GetExtension(localMovie.Path));
@@ -99,6 +106,19 @@ namespace NzbDrone.Core.MediaFiles
 
             _logger.Debug("Copying movie file: {0} to {1}", movieFile.Path, filePath);
             return TransferFile(movieFile, localMovie.Movie, filePath, TransferMode.Copy, localMovie);
+        }
+
+        // krzw(symlink-import-guard): last line of defence, evaluated right before the transfer. The import
+        // overloads only; renaming or moving a file that already belongs to the library is not an import.
+        private void EnsureImportSourceIsNotSymlink(LocalMovie localMovie)
+        {
+            var check = _symlinkImportGuard.Check(localMovie);
+
+            if (check != null)
+            {
+                _logger.Warn("Refusing to transfer {0} into the library: {1}", localMovie.Path, check.Message);
+                throw new SymlinkImportSourceException(check.Message);
+            }
         }
 
         private MovieFile TransferFile(MovieFile movieFile, Movie movie, string destinationFilePath, TransferMode mode, LocalMovie localMovie = null)
