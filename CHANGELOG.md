@@ -10,6 +10,10 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
+_Nothing yet._
+
+## [v6.4.4.10685+krzw.6] — based on Radarr 6.4.4.10685
+
 ### Fixed
 
 - **Audio Language Verification read an Id-only profile on most import paths (Sonarr F11b
@@ -828,7 +832,8 @@ First documented fork release. Bundles every feature currently merged into
   fixes container start failure when `PGID=100` (a common Proxmox/LXC default)
   collides with Debian's `users` group.
 
-[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.4.4.10685+krzw.5...HEAD
+[Unreleased]: https://github.com/KrZ-W/Radarr/compare/v6.4.4.10685+krzw.6...HEAD
+[v6.4.4.10685+krzw.6]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.6
 [v6.4.4.10685+krzw.5]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.5
 [v6.4.4.10685+krzw.4]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.4
 [v6.4.4.10685+krzw.3]: https://github.com/KrZ-W/Radarr/releases/tag/v6.4.4.10685%2Bkrzw.3
