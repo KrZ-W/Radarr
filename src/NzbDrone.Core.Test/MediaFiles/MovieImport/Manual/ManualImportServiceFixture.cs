@@ -431,5 +431,89 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Manual
         }
 
         // krzw(multi-edition) end
+
+        // krzw(symlink-import-guard): the final Manual Import step builds approved decisions without running the
+        // specs. Wire the real import funnel in and make sure a symlinked source still never becomes a movie file.
+        private ManualImportCommand GivenManualImportOfSymlink(string downloadId = null)
+        {
+            var path = @"C:\seed\Movie.2010.1080p-GROUP\Movie.2010.mkv".AsOsAgnostic();
+
+            _movie.QualityProfile = null;
+
+            Mocker.SetConstant<IImportApprovedMovie>(Mocker.Resolve<ImportApprovedMovie>());
+
+            Mocker.GetMock<IAggregationService>()
+                  .Setup(s => s.Augment(It.IsAny<LocalMovie>(), It.IsAny<DownloadClientItem>()))
+                  .Returns<LocalMovie, DownloadClientItem>((l, d) => l);
+
+            Mocker.GetMock<ISymlinkImportGuard>()
+                  .Setup(s => s.Check(It.Is<LocalMovie>(l => l.Path == path)))
+                  .Returns(new SymlinkImportCheck
+                  {
+                      Target = @"C:\Test\Movies\Other Movie (2010)\Other Movie (2010).mkv".AsOsAgnostic(),
+                      Reason = ImportRejectionReason.SourceIsSymlinkToLibraryFile,
+                      Message = "Source is a symbolic link → target, which is already the library file of Other Movie (2010)"
+                  });
+
+            return new ManualImportCommand
+            {
+                ImportMode = ImportMode.Auto,
+                Files = new List<ManualImportFile>
+                {
+                    new ManualImportFile
+                    {
+                        Path = path,
+                        MovieId = _movie.Id,
+                        Quality = new QualityModel(Quality.WEBDL1080p),
+                        Languages = new List<Language> { Language.English },
+                        DownloadId = downloadId
+                    }
+                }
+            };
+        }
+
+        [Test]
+        public void should_not_import_a_symlinked_source_from_an_untracked_manual_import()
+        {
+            // The receiver is evaluated before the argument: wire the real funnel in before Subject is built
+            var command = GivenManualImportOfSymlink();
+
+            Subject.Execute(command);
+
+            Mocker.GetMock<IUpgradeMediaFiles>().Verify(v => v.UpgradeMovieFile(It.IsAny<MovieFile>(), It.IsAny<LocalMovie>(), It.IsAny<bool>()), Times.Never());
+            Mocker.GetMock<IMediaFileService>().Verify(v => v.Add(It.IsAny<MovieFile>()), Times.Never());
+
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public void should_not_import_a_symlinked_source_from_a_queue_manual_import()
+        {
+            var downloadItem = Builder<DownloadClientItem>.CreateNew()
+                                                           .With(d => d.DownloadId = "abc123")
+                                                           .With(d => d.OutputPath = new OsPath(@"C:\seed\Movie.2010.1080p-GROUP".AsOsAgnostic()))
+                                                           .Build();
+
+            var trackedDownload = Builder<TrackedDownload>.CreateNew()
+                                                         .With(t => t.State = TrackedDownloadState.ImportBlocked)
+                                                         .With(t => t.DownloadItem = downloadItem)
+                                                         .With(t => t.ImportItem = downloadItem)
+                                                         .With(t => t.RemoteMovie = new RemoteMovie { Movie = _movie })
+                                                         .Build();
+
+            Mocker.GetMock<ITrackedDownloadService>()
+                  .Setup(s => s.Find("abc123"))
+                  .Returns(trackedDownload);
+
+            var command = GivenManualImportOfSymlink("abc123");
+
+            Subject.Execute(command);
+
+            Mocker.GetMock<IUpgradeMediaFiles>().Verify(v => v.UpgradeMovieFile(It.IsAny<MovieFile>(), It.IsAny<LocalMovie>(), It.IsAny<bool>()), Times.Never());
+            Mocker.GetMock<IMediaFileService>().Verify(v => v.Add(It.IsAny<MovieFile>()), Times.Never());
+            trackedDownload.State.Should().NotBe(TrackedDownloadState.Imported);
+
+            ExceptionVerification.ExpectedWarns(1);
+        }
     }
 }

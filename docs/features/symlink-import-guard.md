@@ -1,6 +1,6 @@
 # Symlink Import Guard
 
-> **Status:** stable · **Since:** `v6.3.0.10514+krzw.14` · **Surface:** Settings → Media Management → Importing (advanced), `/api/v3/config/mediamanagement`
+> **Status:** stable · **Since:** `v6.3.0.10514+krzw.14` (import-path hardening and the already-imported rule: `v6.4.4.10685+krzw.5`) · **Surface:** Settings → Media Management → Importing (advanced), `/api/v3/config/mediamanagement`
 
 ## What it does
 
@@ -17,6 +17,24 @@ download *Import Blocked* with that message in the queue, and Manual Import list
 the rejection like any other. Each rejection is also logged at **Warn** with the link path and
 its resolved target, so the log alone tells you what the link pointed at. In the Manual Import
 API, `rejections[].reason` carries the message text, with `type: permanent`.
+
+Since `v6.4.4.10685+krzw.5` the guard also says **what the link points at** when the target is a file
+Radarr already tracks, with its own reason:
+
+| Resolved target | Reason | Message suffix |
+|---|---|---|
+| not a library file | `SourceIsSymlink` | *(none)* |
+| a tracked file of another movie (or edition row) | `SourceIsSymlinkToLibraryFile` | `, which is already the library file of <Title (Year) [Edition]>` |
+| the **current file of the very movie the candidate maps to** | `SourceIsSymlinkToCurrentFile` | `, which is already the current file of this movie` |
+
+The third case is the normal outcome of this stack's seed pipeline (a `/seed` payload replaced
+by a link to the library copy it was imported as, or deduplicated against it): there is nothing
+left to import, so **completed download handling treats such a download as imported** (state
+*Imported*, `DownloadCompletedEvent` with the movie's current file, download history row, removal
+from the client per the client's *Remove Completed* setting) instead of leaving it *Import
+Blocked* and re-evaluating it every pass. The link must resolve to the current file of the movie row the download is tracked for; a link to an edition sibling's file stays blocked.
+That case is logged at **Debug** by the spec and at **Info** once when the download is marked
+imported; the other two cases keep the **Warn**.
 
 **Hardlinks are not affected.** A hardlink is a regular directory entry; only symbolic links
 (including relative, chained and looping ones) are rejected by this check. A *broken* link
@@ -57,14 +75,24 @@ behaviour returns, including the data-loss case above.
 
 ## Behavior & edge cases
 
-- **Where it applies.** The spec runs in the import decision engine, so it covers completed
-  download handling, the *Downloaded Movies Scan* command, the Manual Import listing and
-  the Manual Import re-evaluation that runs when you change a row's movie, quality,
-  language or release group. It also applies to library rescans: an *untracked*
-  symlink found in a movie folder is not added as a movie file while the setting is on
-  (files already tracked are not re-evaluated). The *Manage Files* listing on a movie page does not run import
-  specs for untracked files, so a symlink there shows no rejection until one of the row's
-  fields is changed and it is re-evaluated.
+- **Where it applies.** Three layers, all driven by one shared check (`SymlinkImportGuard`,
+  which reads the setting, `lstat`s the candidate and resolves the target against the library):
+  1. the import-decision spec `NotSymlinkSpecification`, so completed download handling, the
+     *Downloaded Movies Scan* command, the Manual Import listing and re-evaluation, and library rescans
+     all show the rejection;
+  2. the import funnel `ImportApprovedMovie.Import`, which every path that turns a source file into
+     a movie file goes through, including the **final Manual Import step** (the `ManualImport`
+     command builds approved decisions without running the specs, so before `v6.4.4.10685+krzw.5` a
+     symlinked row that was left ticked, or posted by an API client, was imported as a link);
+  3. the file mover (`MovieFileMovingService.MoveMovieFile` / `CopyMovieFile` for imports only),
+     evaluated immediately before the transfer, so a payload that becomes a link *between* the
+     decision and the copy (seed relinking racing an import) is refused as well, with the result
+     "Failed to import" and the link message.
+
+  Renaming or moving a file that already belongs to the library is not an import and is not
+  checked. The *Manage Files* listing on a movie page does not run import specs for untracked
+  files, so a symlink there shows no rejection until one of the row's fields is changed and
+  it is re-evaluated; it is still refused by layer 2 if imported.
 - **Only matched candidates.** Like every import spec, it runs once the file has been matched
   to a movie. A link that cannot be matched is still rejected, by the usual
   "Unknown Movie" / "Invalid movie" reasons.
@@ -79,14 +107,16 @@ behaviour returns, including the data-loss case above.
   Warn naming the target). It is still rejected and never imported.
 - **Repeated warnings.** Completed download handling re-checks an *Import Blocked* download
   on every pass, so the Warn line repeats until the download is removed from the client or
-  imported manually. Library rescans also re-evaluate untracked files, so an untracked symlink
+  imported manually (links to the download's own current file no longer get here: they are
+  treated as imported, see above). Library rescans also re-evaluate untracked files, so an untracked symlink
   in a movie folder logs the Warn on every rescan or refresh until it is removed or the setting is
   turned off.
-- **Manual Import does not block it.** The rejection is shown in the Manual Import listing,
-  but, as with every other spec rejection, it does not stop a manual import: the dialog
-  pre-selects every fully matched row whether or not it has rejections, and the final import
-  step does not re-run the specs. **Untick symlink rows before pressing Import**, or the
-  incident replays. The same applies to any API client posting a `ManualImport` command.
+- **Manual Import cannot bypass it.** The rejection is shown in the Manual Import listing and
+  the dialog still pre-selects every fully matched row, but since `v6.4.4.10685+krzw.5` the final
+  import step re-checks each row: a symlinked source is rejected with the same reason and
+  never copied as a link, whether ticked in the UI or posted as a `ManualImport` command by an
+  API client. The command itself only logs at Trace; the refusal is a **Warn**
+  (`Refusing to import <path>: Source is a symbolic link → …`).
 
 ## Upstream
 
@@ -105,7 +135,15 @@ Commit on `personal/all-features-master` (release `v6.3.0.10514+krzw.14`). Key f
 `Configuration/ConfigService` (`RejectSymlinkImportSources`),
 `Radarr.Api.V3/Config/MediaManagementConfigResource`,
 `frontend/src/Settings/MediaManagement/MediaManagement.tsx` (+ `typings/Settings/MediaManagement.ts`).
-Tests: `NotSymlinkSpecificationFixture`, `NotSymlinkImportDecisionFixture`, and the
+`v6.4.4.10685+krzw.5` adds `MediaFiles/MovieImport/SymlinkImportGuard` (`ISymlinkImportGuard`, `SymlinkImportCheck`),
+`MediaFiles/SymlinkImportSourceException`, `ImportDecision.Reject`, the gate in
+`ImportApprovedMovie.Import`, the transfer-time check in `MovieFileMovingService`, the reasons
+`SourceIsSymlinkToLibraryFile` / `SourceIsSymlinkToCurrentFile` and the already-imported rule in
+`Download/CompletedDownloadService.VerifyImport`.
+Tests: `NotSymlinkSpecificationFixture`, `NotSymlinkImportDecisionFixture`, `SymlinkImportGuardFixture`,
+the symlink cases in `ImportApprovedMoviesFixture` (funnel), `MoveMovieFileFixture` (mover),
+`ManualImportServiceFixture` (final Manual Import step, untracked and queue), `ScanFixture`
+(rescan), `CompletedDownloadServiceTests.ImportFixture` (already-imported rule), and the
 `GetSymbolicLinkTarget_*` cases in `NzbDrone.Mono.Test` `DiskProviderFixture` (real links on
 disk: absolute, relative, chained, broken, looping, hardlink, file inside a linked folder).
 

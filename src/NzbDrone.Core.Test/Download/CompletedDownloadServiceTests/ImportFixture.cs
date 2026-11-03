@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using FizzWare.NBuilder;
 using FluentAssertions;
 using Moq;
@@ -224,6 +225,82 @@ namespace NzbDrone.Core.Test.Download
             Subject.Import(_trackedDownload);
 
             AssertImported();
+        }
+
+        // krzw(symlink-import-guard): a seed payload replaced by a link to the very file the movie already has
+        // is nothing left to import; the download is treated as imported instead of blocked forever.
+        private ImportResult GivenResult(Movie movie, ImportRejectionReason? reason)
+        {
+            var localMovie = new LocalMovie { Path = @"C:\TestPath\Droned.1998.mkv", Movie = movie };
+
+            if (reason == null)
+            {
+                return new ImportResult(new ImportDecision(localMovie));
+            }
+
+            return new ImportResult(new ImportDecision(localMovie, new ImportRejection(reason.Value, "Source is a symbolic link → target")), "Source is a symbolic link → target");
+        }
+
+        private void GivenImportResults(params ImportResult[] results)
+        {
+            Mocker.GetMock<IDownloadedMovieImportService>()
+                  .Setup(v => v.ProcessPath(It.IsAny<string>(), It.IsAny<ImportMode>(), It.IsAny<Movie>(), It.IsAny<DownloadClientItem>()))
+                  .Returns(results.ToList());
+        }
+
+        [Test]
+        public void should_mark_as_imported_when_the_file_is_a_link_to_the_movies_current_file()
+        {
+            _trackedDownload.RemoteMovie.Movie = new Movie { Id = 42, MovieFileId = 7 };
+
+            GivenImportResults(GivenResult(_trackedDownload.RemoteMovie.Movie, ImportRejectionReason.SourceIsSymlinkToCurrentFile));
+
+            Subject.Import(_trackedDownload);
+
+            AssertImported();
+
+            Mocker.GetMock<IEventAggregator>()
+                  .Verify(v => v.PublishEvent(It.Is<DownloadCompletedEvent>(e => e.MovieId == 42)), Times.Once());
+
+            _trackedDownload.StatusMessages.Should().BeEmpty();
+        }
+
+        [Test]
+        public void should_stay_blocked_when_a_link_points_at_another_movies_library_file()
+        {
+            _trackedDownload.RemoteMovie.Movie = new Movie { Id = 42 };
+
+            GivenImportResults(GivenResult(_trackedDownload.RemoteMovie.Movie, ImportRejectionReason.SourceIsSymlinkToLibraryFile));
+
+            Subject.Import(_trackedDownload);
+
+            AssertNotImported();
+            _trackedDownload.StatusMessages.Should().NotBeEmpty();
+        }
+
+        [Test]
+        public void should_stay_blocked_for_a_plain_symlink()
+        {
+            _trackedDownload.RemoteMovie.Movie = new Movie { Id = 42 };
+
+            GivenImportResults(GivenResult(_trackedDownload.RemoteMovie.Movie, ImportRejectionReason.SourceIsSymlink));
+
+            Subject.Import(_trackedDownload);
+
+            AssertNotImported();
+        }
+
+        [Test]
+        public void should_stay_blocked_when_the_own_file_link_belongs_to_a_different_movie_row()
+        {
+            // e.g. an edition sibling: the link is that row's current file, not this download's movie
+            _trackedDownload.RemoteMovie.Movie = new Movie { Id = 42 };
+
+            GivenImportResults(GivenResult(new Movie { Id = 43, MovieFileId = 9 }, ImportRejectionReason.SourceIsSymlinkToCurrentFile));
+
+            Subject.Import(_trackedDownload);
+
+            AssertNotImported();
         }
 
         private void AssertNotImported()

@@ -8,6 +8,7 @@ using NzbDrone.Common.Extensions;
 using NzbDrone.Core.CustomFormats;
 using NzbDrone.Core.MediaFiles;
 using NzbDrone.Core.MediaFiles.Events;
+using NzbDrone.Core.MediaFiles.MovieImport;
 using NzbDrone.Core.Messaging.Events;
 using NzbDrone.Core.Movies;
 using NzbDrone.Core.Organizer;
@@ -169,6 +170,62 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieFileMovingServiceTests
                   .Verify(s => s.PublishEvent<MovieFolderCreatedEvent>(It.Is<MovieFolderCreatedEvent>(p =>
                       p.MovieFolder.IsNotNullOrWhiteSpace())),
                       Times.Never());
+        }
+
+        // krzw(symlink-import-guard): last line of defence, right before the bytes move
+        private void GivenImportSourceIsSymlink()
+        {
+            Mocker.GetMock<ISymlinkImportGuard>()
+                  .Setup(s => s.Check(_localMovie))
+                  .Returns(new SymlinkImportCheck
+                  {
+                      Target = @"C:\Test\Movies\Movie\Other.avi".AsOsAgnostic(),
+                      Reason = ImportRejectionReason.SourceIsSymlink,
+                      Message = "Source is a symbolic link → target"
+                  });
+        }
+
+        [Test]
+        public void should_refuse_to_move_an_import_whose_source_is_a_symlink()
+        {
+            GivenImportSourceIsSymlink();
+
+            Assert.Throws<SymlinkImportSourceException>(() => Subject.MoveMovieFile(_movieFile, _localMovie));
+
+            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TransferMode>(), It.IsAny<bool>()), Times.Never());
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public void should_refuse_to_copy_an_import_whose_source_is_a_symlink()
+        {
+            GivenImportSourceIsSymlink();
+
+            Assert.Throws<SymlinkImportSourceException>(() => Subject.CopyMovieFile(_movieFile, _localMovie));
+
+            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TransferMode>(), It.IsAny<bool>()), Times.Never());
+            ExceptionVerification.ExpectedWarns(1);
+        }
+
+        [Test]
+        public void should_transfer_an_import_whose_source_is_a_regular_file()
+        {
+            Mocker.GetMock<IImportScript>()
+                  .Setup(s => s.TryImport(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<LocalMovie>(), It.IsAny<MovieFile>(), It.IsAny<TransferMode>()))
+                  .Returns(ScriptImportDecision.DeferMove);
+
+            Subject.MoveMovieFile(_movieFile, _localMovie);
+
+            Mocker.GetMock<ISymlinkImportGuard>().Verify(v => v.Check(_localMovie), Times.Once());
+            Mocker.GetMock<IDiskTransferService>().Verify(v => v.TransferFile(It.IsAny<string>(), It.IsAny<string>(), TransferMode.Move, It.IsAny<bool>()), Times.Once());
+        }
+
+        [Test]
+        public void should_not_consult_the_guard_when_renaming_an_existing_library_file()
+        {
+            Subject.MoveMovieFile(_movieFile, _movie);
+
+            Mocker.GetMock<ISymlinkImportGuard>().Verify(v => v.Check(It.IsAny<LocalMovie>()), Times.Never());
         }
     }
 }

@@ -265,8 +265,32 @@ namespace NzbDrone.Core.Download
                 return true;
             }
 
+            // krzw(symlink-import-guard): the seed payload has been replaced by a link to the very file this
+            // movie already has in the library (seed relinking after an earlier import, or seed deduplication
+            // against the library). Nothing is left to import: treat the download as imported instead of leaving
+            // it blocked and re-evaluated forever.
+            if (AlreadyCurrentFile(trackedDownload, importResults))
+            {
+                _logger.Info("The file of '{0}' is a symbolic link to the movie's current library file, treating the download as imported", trackedDownload.DownloadItem.Title);
+
+                trackedDownload.State = TrackedDownloadState.Imported;
+                _eventAggregator.PublishEvent(new DownloadCompletedEvent(trackedDownload, trackedDownload.RemoteMovie.Movie.Id));
+
+                return true;
+            }
+
             _logger.Debug("Not all movies have been imported for {0}", trackedDownload.DownloadItem.Title);
             return false;
+        }
+
+        // krzw(symlink-import-guard)
+        private static bool AlreadyCurrentFile(TrackedDownload trackedDownload, List<ImportResult> importResults)
+        {
+            var movieId = trackedDownload.RemoteMovie.Movie.Id;
+
+            return importResults.Any(r => r.Result == ImportResultType.Rejected &&
+                                          r.ImportDecision.LocalMovie?.Movie?.Id == movieId &&
+                                          r.ImportDecision.Rejections.Any(x => x.Reason == ImportRejectionReason.SourceIsSymlinkToCurrentFile));
         }
 
         private void SetStateToImportBlocked(TrackedDownload trackedDownload)

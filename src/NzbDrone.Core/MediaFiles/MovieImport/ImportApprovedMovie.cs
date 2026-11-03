@@ -33,6 +33,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
         private readonly IHistoryService _historyService;
         private readonly IEventAggregator _eventAggregator;
         private readonly IManageCommandQueue _commandQueueManager;
+        private readonly ISymlinkImportGuard _symlinkImportGuard;  // krzw(symlink-import-guard)
         private readonly Logger _logger;
 
         public ImportApprovedMovie(IUpgradeMediaFiles movieFileUpgrader,
@@ -43,6 +44,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                                    IHistoryService historyService,
                                    IEventAggregator eventAggregator,
                                    IManageCommandQueue commandQueueManager,
+                                   ISymlinkImportGuard symlinkImportGuard,
                                    Logger logger)
         {
             _movieFileUpgrader = movieFileUpgrader;
@@ -53,12 +55,28 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
             _historyService = historyService;
             _eventAggregator = eventAggregator;
             _commandQueueManager = commandQueueManager;
+            _symlinkImportGuard = symlinkImportGuard;
             _logger = logger;
         }
 
         public List<ImportResult> Import(List<ImportDecision> decisions, bool newDownload, DownloadClientItem downloadClientItem = null, ImportMode importMode = ImportMode.Auto)
         {
             _logger.Debug("Decisions: {0}", decisions.Count);
+
+            // krzw(symlink-import-guard): every path that creates a movie file from a source on disk ends here
+            // (completed download handling, Downloaded Movies Scan, library rescan and the final Manual Import
+            // step, which builds approved decisions without running the specs). Re-check right before the file is
+            // touched so a symbolic link is never copied into the library as a link.
+            foreach (var decision in decisions.Where(d => d.Approved))
+            {
+                var symlink = _symlinkImportGuard.Check(decision.LocalMovie);
+
+                if (symlink != null)
+                {
+                    _logger.Warn("Refusing to import {0}: {1}", decision.LocalMovie.Path, symlink.Message);
+                    decision.Reject(new ImportRejection(symlink.Reason, symlink.Message));
+                }
+            }
 
             // I added a null op for the rare case that the quality is null. TODO: find out why that would even happen in the first place.
             var qualifiedImports = decisions
@@ -228,6 +246,12 @@ namespace NzbDrone.Core.MediaFiles.MovieImport
                     _eventAggregator.PublishEvent(new MovieImportFailedEvent(e, localMovie, newDownload, downloadClientItem));
 
                     importResults.Add(new ImportResult(importDecision, "Failed to import movie, unable to move existing file to the Recycle Bin."));
+                }
+                catch (SymlinkImportSourceException e)
+                {
+                    // krzw(symlink-import-guard): the source became a link between the decision and the transfer
+                    _logger.Warn("Couldn't import movie {0}: {1}", localMovie, e.Message);
+                    importResults.Add(new ImportResult(importDecision, e.Message));
                 }
                 catch (Exception e)
                 {

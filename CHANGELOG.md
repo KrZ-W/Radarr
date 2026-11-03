@@ -10,7 +10,26 @@ and this fork's versioning is described in [FORK.md](FORK.md#versioning):
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed
+
+- **Symlink Import Guard: every import path now refuses a symbolic link, and a link to the
+  movie's own file counts as imported.** Incident 2026-11-02 on this stack: a single-movie
+  seed payload that the seed pipeline had replaced by a link into the library was imported
+  **as a 130-byte symlink** into the library. The decision spec was the only check, and the final
+  Manual Import step (`ManualImport` command, UI or API) builds approved decisions without
+  running the specs; a payload relinked between the decision and the copy slipped past it too.
+  - One shared `SymlinkImportGuard` now backs three layers: the spec, a gate in
+    `ImportApprovedMovie.Import` (the funnel every entry point uses: completed download handling,
+    *Downloaded Movies Scan*, library rescan, Manual Import) and a last check in the file mover right
+    before the transfer, which throws `SymlinkImportSourceException` ("Failed to import …").
+  - The reason now says what the link resolves to: `SourceIsSymlinkToLibraryFile` (… *which is
+    already the library file of* `<Title (Year)>`) or `SourceIsSymlinkToCurrentFile` (… *the current
+    file of this movie*); unknown targets keep `SourceIsSymlink`.
+  - Queue items whose payload is a link to **that same movie's current file** no longer sit in
+    *Import Pending* / *Import Blocked* forever: completed download handling marks the download
+    imported (download history row, `DownloadCompletedEvent`, client removal per settings) and
+    logs once at Info. Links to another movie's file stay blocked with the new, explicit reason.
+  - Docs: `docs/features/symlink-import-guard.md` (layers, reasons table, already-imported rule).
 
 ## [v6.4.4.10685+krzw.4] — based on Radarr 6.4.4.10685
 
