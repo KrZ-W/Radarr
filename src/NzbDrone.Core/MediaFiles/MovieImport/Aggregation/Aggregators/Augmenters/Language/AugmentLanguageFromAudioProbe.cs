@@ -10,6 +10,7 @@ using NzbDrone.Core.History;
 using NzbDrone.Core.MediaFiles.AudioLanguage;
 using NzbDrone.Core.Parser;
 using NzbDrone.Core.Parser.Model;
+using NzbDrone.Core.Profiles.Qualities;
 
 namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenters.Language
 {
@@ -26,6 +27,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenter
         private readonly IAudioLanguageProbeCache _cache;
         private readonly IHistoryService _historyService;
         private readonly ICustomFormatCalculationService _formatCalculator;
+        private readonly IQualityProfileService _qualityProfileService;
         private readonly AudioLanguageTriggerPolicy _policy;
         private readonly Logger _logger;
 
@@ -35,6 +37,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenter
                                              IAudioLanguageProbeCache cache,
                                              IHistoryService historyService,
                                              ICustomFormatCalculationService formatCalculator,
+                                             IQualityProfileService qualityProfileService,
                                              Logger logger)
         {
             _configService = configService;
@@ -43,6 +46,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenter
             _cache = cache;
             _historyService = historyService;
             _formatCalculator = formatCalculator;
+            _qualityProfileService = qualityProfileService;
             _policy = new AudioLanguageTriggerPolicy();
             _logger = logger;
         }
@@ -70,7 +74,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenter
 
             // Verification is an import-time decision: files already in the library (rescan, DB rebuild)
             // are never probed and never get their stored record rewritten.
-            if (localMovie.ExistingFile || localMovie.MediaInfo == null || localMovie.Movie?.QualityProfile == null)
+            if (localMovie.ExistingFile || localMovie.MediaInfo == null || localMovie.Movie == null)
             {
                 return null;
             }
@@ -82,7 +86,18 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenter
                 return null;
             }
 
-            var profile = localMovie.Movie.QualityProfile;
+            // Movie.QualityProfile is filled by MovieRepository: All() attaches hydrated profiles, but every
+            // other query joins the row through Dapper, so its FormatItems carry Id-only CustomFormats with no
+            // Specifications (CustomFormatIntConverter). Only QualityProfileRepository.Query hydrates them. Read
+            // through the service, or every language condition is invisible (the profile Language column
+            // masks this today; a profile set to Any that relies on a language format alone would never probe).
+            var profile = GetProfile(localMovie);
+
+            if (profile == null)
+            {
+                return null;
+            }
+
             var originalLanguage = localMovie.Movie.MovieMetadata?.Value?.OriginalLanguage ?? Languages.Language.Unknown;
             var evidence = tracks.Select(t => t.TaggedLanguage).Where(l => l != null).Distinct().ToList();
             var formatLanguages = GetFormatLanguages(profile, out var hasLanguageFormat);
@@ -97,7 +112,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenter
                 OriginalLanguage = originalLanguage,
                 HasLanguageCustomFormat = hasLanguageFormat,
                 CustomFormatLanguages = formatLanguages,
-                ImpendingRejection = WouldBeRejected(localMovie, evidence, hasLanguageFormat),
+                ImpendingRejection = WouldBeRejected(localMovie, profile, evidence, hasLanguageFormat),
                 ReleaseGroup = GetReleaseGroup(localMovie),
                 VerifyTaggedMode = _configService.AudioLanguageVerificationVerifyTagged,
                 VerifyTaggedReleaseGroups = _configService.AudioLanguageVerificationVerifyTaggedGroups
@@ -202,7 +217,7 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenter
             return claimed.Distinct().ToList();
         }
 
-        private static List<Languages.Language> GetFormatLanguages(Profiles.Qualities.QualityProfile profile, out bool hasLanguageFormat)
+        private static List<Languages.Language> GetFormatLanguages(QualityProfile profile, out bool hasLanguageFormat)
         {
             hasLanguageFormat = false;
             var languages = new List<Languages.Language>();
@@ -233,9 +248,8 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenter
         }
 
         /// <summary>Mirrors the import-time LanguageSpecification and MinimumCustomFormatScoreSpecification on the tagged languages only.</summary>
-        private bool WouldBeRejected(LocalMovie localMovie, List<Languages.Language> evidence, bool hasLanguageFormat)
+        private bool WouldBeRejected(LocalMovie localMovie, QualityProfile profile, List<Languages.Language> evidence, bool hasLanguageFormat)
         {
-            var profile = localMovie.Movie.QualityProfile;
             var wanted = profile.Language ?? Languages.Language.Any;
 
             if (wanted == Languages.Language.Original)
@@ -283,6 +297,24 @@ namespace NzbDrone.Core.MediaFiles.MovieImport.Aggregation.Aggregators.Augmenter
             {
                 localMovie.Languages = previous;
             }
+        }
+
+        private QualityProfile GetProfile(LocalMovie localMovie)
+        {
+            var movie = localMovie.Movie;
+
+            if (movie.QualityProfileId > 0)
+            {
+                var hydrated = _qualityProfileService.Get(movie.QualityProfileId);
+
+                if (hydrated != null)
+                {
+                    return hydrated;
+                }
+            }
+
+            // Tests and callers that attach a fully built profile themselves
+            return movie.QualityProfile;
         }
 
         private static string GetReleaseGroup(LocalMovie localMovie)

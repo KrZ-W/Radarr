@@ -69,6 +69,95 @@ namespace NzbDrone.Core.Test.MediaFiles.MovieImport.Aggregation.Aggregators.Augm
             Mocker.GetMock<ICustomFormatCalculationService>().Setup(c => c.ParseCustomFormatForScoring(It.IsAny<LocalMovie>())).Returns(new List<CustomFormat>());
 
             Mocker.SetConstant<IAudioLanguageProbeCache>(new AudioLanguageProbeCache());
+
+            // The augmenter reads the profile through the service (hydrated custom formats), not the movie's
+            // joined copy. Hand it the same object so tests that edit _movie.QualityProfile keep working.
+            Mocker.GetMock<IQualityProfileService>()
+                  .Setup(s => s.Get(_movie.QualityProfileId))
+                  .Returns(() => _movie.QualityProfile);
+        }
+
+        // krzw(audio-language-verification) F11b: what Movie.QualityProfile looks like when the movie came from
+        // MovieRepository.Query (FindByTitles, Get): the joined row bypasses QualityProfileRepository.Query, so
+        // every ProfileFormatItem carries an Id-only CustomFormat (CustomFormatIntConverter) with no Specifications.
+        private QualityProfile GivenIdOnlyJoinedProfileAndHydratedService(params ICustomFormatSpecification[] specifications)
+        {
+            var hydrated = new QualityProfile
+            {
+                Id = _movie.QualityProfileId,
+                Language = Core.Languages.Language.Any,
+                MinFormatScore = 10,
+                FormatItems = new List<ProfileFormatItem>
+                {
+                    new ProfileFormatItem { Score = 100, Format = new CustomFormat("Fmt", specifications) { Id = 7 } }
+                }
+            };
+
+            _movie.QualityProfile = new QualityProfile
+            {
+                Id = _movie.QualityProfileId,
+                Language = Core.Languages.Language.Any,
+                MinFormatScore = 10,
+                FormatItems = new List<ProfileFormatItem>
+                {
+                    new ProfileFormatItem { Score = 100, Format = new CustomFormat { Id = 7 } }
+                }
+            };
+
+            Mocker.GetMock<IQualityProfileService>()
+                  .Setup(s => s.Get(_movie.QualityProfileId))
+                  .Returns(hydrated);
+
+            return hydrated;
+        }
+
+        [Test]
+        public void should_probe_when_the_joined_profile_carries_id_only_formats_but_the_hydrated_one_has_a_language_condition()
+        {
+            GivenIdOnlyJoinedProfileAndHydratedService(new Core.CustomFormats.LanguageSpecification { Value = Core.Languages.Language.French.Id });
+            GivenProbe("fr", 0.97);
+
+            // Sanity: the joined copy alone would never trigger with Language=Any (this is the latent bug)
+            _movie.QualityProfile.FormatItems[0].Format.Specifications.Should().BeNull();
+
+            var result = Subject.AugmentLanguage(_localMovie, _downloadClientItem);
+
+            result.Should().NotBeNull();
+            result.Languages.Should().Equal(new List<Core.Languages.Language> { Core.Languages.Language.French });
+            _localMovie.AudioLanguageTrigger.Should().Be(AudioLanguageTrigger.Contradiction);
+            VerifyProbeCount(1);
+        }
+
+        [Test]
+        public void should_read_the_profile_through_the_service_not_the_joined_copy()
+        {
+            GivenIdOnlyJoinedProfileAndHydratedService(new Core.CustomFormats.LanguageSpecification { Value = Core.Languages.Language.French.Id });
+            GivenProbe("fr", 0.97);
+
+            Subject.AugmentLanguage(_localMovie, _downloadClientItem);
+
+            Mocker.GetMock<IQualityProfileService>().Verify(s => s.Get(_movie.QualityProfileId), Times.Once());
+        }
+
+        [Test]
+        public void should_still_skip_a_genuinely_language_free_profile()
+        {
+            GivenIdOnlyJoinedProfileAndHydratedService(new Core.CustomFormats.ReleaseTitleSpecification { Value = "x265" });
+            _tracks.Add(new AudioTrackInfo { StreamIndex = 1, Codec = "aac", Channels = 2, Language = "und" });
+
+            Subject.AugmentLanguage(_localMovie, _downloadClientItem).Should().BeNull();
+
+            VerifyProbeCount(0);
+            _localMovie.AudioLanguageVerification.Should().BeNull();
+        }
+
+        [Test]
+        public void should_fall_back_to_the_movies_profile_when_the_service_has_none()
+        {
+            Mocker.GetMock<IQualityProfileService>().Setup(s => s.Get(It.IsAny<int>())).Returns((QualityProfile)null);
+            GivenProbe("fr", 0.97);
+
+            Subject.AugmentLanguage(_localMovie, _downloadClientItem).Should().NotBeNull();
         }
 
         private void GivenProbe(string code, double confidence)

@@ -93,6 +93,16 @@ the library (rescan / existing file), MediaInfo is missing, **or the profile Lan
 *Any* and no custom format in the profile has a Language condition** (fast path). Otherwise
 the first rule that applies decides which tracks are sent:
 
+> **Fixed after `v6.4.4.10685+krzw.5` (latent, Sonarr bug F11b ported).** The augmenter read
+> the profile from `Movie.QualityProfile`. `MovieRepository.All()` attaches hydrated profiles,
+> but every other query (`Get`, `FindByTitles`, the paged ones) joins the row through Dapper
+> and bypasses `QualityProfileRepository.Query`, the only place that replaces the Id-only
+> `CustomFormat` stubs with the real formats. On that path no format item had `Specifications`,
+> so "no language condition" was always true and `CustomFormatLanguages` was empty. Radarr kept
+> probing only because the profile *Language* column satisfies the fast path on its own; a
+> profile set to *Any* that relied on a language format alone would never have probed. The
+> profile is now resolved through `IQualityProfileService.Get(movie.QualityProfileId)`.
+
 | # | Trigger | Probed tracks |
 |---|---|---|
 | a | **Contradiction** — the claim contains a language no track is tagged with | every track (none carries the claimed language) |
